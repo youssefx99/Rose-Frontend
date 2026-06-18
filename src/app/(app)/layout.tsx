@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Building2, LayoutDashboard, Users } from "lucide-react";
+import { Building2, FileText, LayoutDashboard, Users } from "lucide-react";
 
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/claims", label: "Claims", icon: FileText },
   { href: "/clients", label: "Clients", icon: Users },
   { href: "/payers", label: "Payers", icon: Building2 },
 ];
