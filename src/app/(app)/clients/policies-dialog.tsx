@@ -8,13 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { SlideOver } from "@/components/ui/slide-over";
 import {
   Select,
   SelectContent,
@@ -32,6 +26,7 @@ import {
   type PolicyType,
 } from "@/lib/clients";
 import { listPayers, type Payer } from "@/lib/payers";
+import { useAuth } from "@/lib/auth-context";
 import { isAxiosError } from "axios";
 
 interface PoliciesDialogProps {
@@ -45,6 +40,8 @@ export function PoliciesDialog({
   onOpenChange,
   client,
 }: PoliciesDialogProps) {
+  const { can } = useAuth();
+  const canEdit = can("clients.edit");
   const [policies, setPolicies] = useState<InsurancePolicy[]>([]);
   const [payers, setPayers] = useState<Payer[]>([]);
   const [payerId, setPayerId] = useState("");
@@ -110,15 +107,22 @@ export function PoliciesDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Insurance Policies</DialogTitle>
-          <DialogDescription>
-            {client ? client.displayName : ""}
-          </DialogDescription>
-        </DialogHeader>
-
+    <SlideOver
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Insurance Policies"
+      description={client ? client.displayName : ""}
+      footer={
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => onOpenChange(false)}
+        >
+          Done
+        </Button>
+      }
+    >
+      <div className="space-y-6">
         <div className="space-y-3">
           {policies.length === 0 ? (
             <p className="text-sm text-muted-foreground">
@@ -141,19 +145,22 @@ export function PoliciesDialog({
                       : "No member ID"}
                   </p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleRemove(policy)}
-                  aria-label="Remove policy"
-                >
-                  <Trash2 className="size-4" />
-                </Button>
+                {canEdit && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleRemove(policy)}
+                    aria-label="Remove policy"
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                )}
               </div>
             ))
           )}
         </div>
 
+        {canEdit && (
         <div className="space-y-3 border-t pt-4">
           <p className="text-sm font-medium">Add policy</p>
           <div className="space-y-2">
@@ -203,7 +210,8 @@ export function PoliciesDialog({
             {saving ? "Adding…" : "Add Policy"}
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+        )}
+      </div>
+    </SlideOver>
   );
 }

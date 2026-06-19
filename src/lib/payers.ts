@@ -19,6 +19,12 @@ export interface Payer {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  _count?: {
+    claims: number;
+    insurancePolicies: number;
+    remittances: number;
+    bankDeposits: number;
+  };
 }
 
 export interface PaginatedResult<T> {
@@ -56,4 +62,9 @@ export async function updatePayer(
 
 export async function deactivatePayer(id: string): Promise<void> {
   await api.delete(`/payers/${id}`);
+}
+
+/** Permanently deletes the payer. Blocked if referenced by any records. */
+export async function deletePayer(id: string): Promise<void> {
+  await api.delete(`/payers/${id}`, { params: { hard: true } });
 }

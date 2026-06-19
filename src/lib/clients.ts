@@ -39,7 +39,7 @@ export interface Client {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-  _count?: { insurancePolicies: number };
+  _count?: { insurancePolicies: number; claims?: number };
   insurancePolicies?: InsurancePolicy[];
 }
 
@@ -92,6 +92,11 @@ export async function updateClient(
 
 export async function deactivateClient(id: string): Promise<void> {
   await api.delete(`/clients/${id}`);
+}
+
+/** Permanently deletes the client (and its policies). Blocked if it has claims. */
+export async function deleteClient(id: string): Promise<void> {
+  await api.delete(`/clients/${id}`, { params: { hard: true } });
 }
 
 export async function listPolicies(

@@ -67,9 +67,22 @@ interface ClaimFormProps {
   mode: "create" | "edit";
   claim?: Claim;
   onSaved: (claim: Claim) => void;
+  /** When hosted in a slide-over, the footer submit button targets this id. */
+  formId?: string;
+  /** Hide the form's own submit button (the host renders one instead). */
+  hideSubmit?: boolean;
+  /** Reports submitting state so a host footer button can disable itself. */
+  onSubmittingChange?: (submitting: boolean) => void;
 }
 
-export function ClaimForm({ mode, claim, onSaved }: ClaimFormProps) {
+export function ClaimForm({
+  mode,
+  claim,
+  onSaved,
+  formId,
+  hideSubmit,
+  onSubmittingChange,
+}: ClaimFormProps) {
   const [clients, setClients] = useState<Client[]>([]);
   const [payers, setPayers] = useState<Payer[]>([]);
   const [policies, setPolicies] = useState<InsurancePolicy[]>([]);
@@ -102,6 +115,11 @@ export function ClaimForm({ mode, claim, onSaved }: ClaimFormProps) {
   });
 
   const clientId = watch("clientId");
+
+  // Surface submitting state to a host (slide-over) footer button.
+  useEffect(() => {
+    onSubmittingChange?.(isSubmitting);
+  }, [isSubmitting, onSubmittingChange]);
 
   // Load reference data for the selects (create mode only needs the lists).
   useEffect(() => {
@@ -191,7 +209,7 @@ export function ClaimForm({ mode, claim, onSaved }: ClaimFormProps) {
   const isEdit = mode === "edit";
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6" noValidate>
+    <form id={formId} onSubmit={onSubmit} className="space-y-6" noValidate>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label>Client</Label>
@@ -376,9 +394,11 @@ export function ClaimForm({ mode, claim, onSaved }: ClaimFormProps) {
         <Textarea id="internalNote" {...register("internalNote")} />
       </div>
 
-      <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Saving…" : isEdit ? "Save Changes" : "Create Claim"}
-      </Button>
+      {!hideSubmit && (
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Saving…" : isEdit ? "Save Changes" : "Create Claim"}
+        </Button>
+      )}
     </form>
   );
 }

@@ -10,14 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { SlideOver } from "@/components/ui/slide-over";
 import {
   Select,
   SelectContent,
@@ -40,6 +33,8 @@ const schema = z.object({
 });
 
 type Values = z.infer<typeof schema>;
+
+const FORM_ID = "payer-form";
 
 interface PayerFormDialogProps {
   open: boolean;
@@ -102,17 +97,29 @@ export function PayerFormDialog({
   });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{payer ? "Edit Payer" : "New Payer"}</DialogTitle>
-          <DialogDescription>
-            Insurance company or payer entity.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-4" noValidate>
-          <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+    <SlideOver
+      open={open}
+      onOpenChange={onOpenChange}
+      title={payer ? "Edit Payer" : "New Payer"}
+      description="Insurance company or payer entity."
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" form={FORM_ID} disabled={isSubmitting}>
+            {isSubmitting ? "Saving…" : "Save"}
+          </Button>
+        </>
+      }
+    >
+      <form id={FORM_ID} onSubmit={onSubmit} className="space-y-4" noValidate>
+        <div className="space-y-2">
+          <Label htmlFor="name">Name</Label>
             <Input id="name" {...register("name")} />
             {errors.name && (
               <p className="text-sm text-destructive">{errors.name.message}</p>
@@ -148,17 +155,11 @@ export function PayerFormDialog({
               )}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea id="notes" {...register("notes")} />
-          </div>
-          <DialogFooter>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving…" : "Save"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        <div className="space-y-2">
+          <Label htmlFor="notes">Notes</Label>
+          <Textarea id="notes" {...register("notes")} />
+        </div>
+      </form>
+    </SlideOver>
   );
 }

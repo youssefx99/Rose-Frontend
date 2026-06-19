@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { ClaimFormPanel } from "./claim-form-panel";
 import {
   Select,
   SelectContent,
@@ -27,20 +27,22 @@ import {
   listClaims,
   formatMoney,
   formatDate,
-  statusVariant,
   CLAIM_STATUSES,
   type Claim,
   type ClaimStatus,
 } from "@/lib/claims";
+import { useAuth } from "@/lib/auth-context";
 
 const ALL = "__all__";
 
 export default function ClaimsPage() {
   const router = useRouter();
+  const { can } = useAuth();
   const [claims, setClaims] = useState<Claim[]>([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<ClaimStatus | typeof ALL>(ALL);
   const [loading, setLoading] = useState(true);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const load = useCallback(
     async (term: string, statusFilter: ClaimStatus | typeof ALL) => {
@@ -68,10 +70,10 @@ export default function ClaimsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Claims</h1>
-        <Button asChild>
-          <Link href="/claims/new">New Claim</Link>
-        </Button>
+        <h1 className="text-xl font-semibold text-zinc-950">Claims</h1>
+        {can("claims.create") && (
+          <Button onClick={() => setCreateOpen(true)}>New Claim</Button>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -101,10 +103,10 @@ export default function ClaimsPage() {
         </Select>
       </div>
 
-      <div className="rounded-md border bg-background">
+      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="bg-zinc-50">
               <TableHead>Reference</TableHead>
               <TableHead>Client</TableHead>
               <TableHead>Payer</TableHead>
@@ -134,25 +136,27 @@ export default function ClaimsPage() {
                   className="cursor-pointer"
                   onClick={() => router.push(`/claims/${claim.id}`)}
                 >
-                  <TableCell className="font-medium">
+                  <TableCell className="font-mono text-xs text-zinc-900">
                     {claim.claimReference}
                   </TableCell>
-                  <TableCell>{claim.client?.displayName ?? "—"}</TableCell>
-                  <TableCell>{claim.payer?.shortCode ?? "—"}</TableCell>
-                  <TableCell>
+                  <TableCell className="text-zinc-700">
+                    {claim.client?.displayName ?? "—"}
+                  </TableCell>
+                  <TableCell className="text-zinc-700">
+                    {claim.payer?.shortCode ?? "—"}
+                  </TableCell>
+                  <TableCell className="text-zinc-600">
                     {formatDate(claim.serviceDateStart)} –{" "}
                     {formatDate(claim.serviceDateEnd)}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right font-mono tabular-nums text-zinc-900">
                     {formatMoney(claim.chargeAmount)}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right font-mono tabular-nums text-zinc-900">
                     {formatMoney(claim.payerPaidAmount)}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={statusVariant(claim.status)}>
-                      {claim.status}
-                    </Badge>
+                    <StatusBadge status={claim.status} />
                   </TableCell>
                 </TableRow>
               ))
@@ -160,6 +164,13 @@ export default function ClaimsPage() {
           </TableBody>
         </Table>
       </div>
+
+      <ClaimFormPanel
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        mode="create"
+        onSaved={(claim) => router.push(`/claims/${claim.id}`)}
+      />
     </div>
   );
 }

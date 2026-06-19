@@ -10,20 +10,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { SlideOver } from "@/components/ui/slide-over";
 import {
   createClient,
   updateClient,
   type Client,
   type ClientInput,
 } from "@/lib/clients";
+
+const FORM_ID = "client-form";
 
 const schema = z.object({
   firstName: z.string().min(1, "First name is required."),
@@ -116,16 +111,28 @@ export function ClientFormDialog({
   });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{client ? "Edit Client" : "New Client"}</DialogTitle>
-          <DialogDescription>
-            Person or entity served by the organization.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-4" noValidate>
-          <div className="grid grid-cols-2 gap-4">
+    <SlideOver
+      open={open}
+      onOpenChange={onOpenChange}
+      title={client ? "Edit Client" : "New Client"}
+      description="Person or entity served by the organization."
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" form={FORM_ID} disabled={isSubmitting}>
+            {isSubmitting ? "Saving…" : "Save"}
+          </Button>
+        </>
+      }
+    >
+      <form id={FORM_ID} onSubmit={onSubmit} className="space-y-4" noValidate>
+        <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="firstName">First Name</Label>
               <Input id="firstName" {...register("firstName")} />
@@ -166,17 +173,11 @@ export function ClientFormDialog({
               {...register("clientAccountNumber")}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea id="notes" {...register("notes")} />
-          </div>
-          <DialogFooter>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving…" : "Save"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        <div className="space-y-2">
+          <Label htmlFor="notes">Notes</Label>
+          <Textarea id="notes" {...register("notes")} />
+        </div>
+      </form>
+    </SlideOver>
   );
 }

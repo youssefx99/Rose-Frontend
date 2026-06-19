@@ -14,7 +14,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { deactivateClient, listClients, type Client } from "@/lib/clients";
+import { DeleteConfirm } from "@/components/ui/delete-confirm";
+import { useAuth } from "@/lib/auth-context";
+import {
+  deactivateClient,
+  deleteClient,
+  listClients,
+  type Client,
+} from "@/lib/clients";
 import { ClientFormDialog } from "./client-form-dialog";
 import { PoliciesDialog } from "./policies-dialog";
 
@@ -23,6 +30,7 @@ function formatDate(value: string | null): string {
 }
 
 export default function ClientsPage() {
+  const { can } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -30,6 +38,7 @@ export default function ClientsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [policiesClient, setPoliciesClient] = useState<Client | null>(null);
   const [policiesOpen, setPoliciesOpen] = useState(false);
+  const [deleting, setDeleting] = useState<Client | null>(null);
 
   const load = useCallback(async (term: string) => {
     setLoading(true);
@@ -63,21 +72,13 @@ export default function ClientsPage() {
     setPoliciesOpen(true);
   };
 
-  const handleDeactivate = async (client: Client) => {
-    try {
-      await deactivateClient(client.id);
-      toast.success(`${client.displayName} deactivated.`);
-      load(search);
-    } catch {
-      toast.error("Failed to deactivate client.");
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Clients</h1>
-        <Button onClick={handleNew}>New Client</Button>
+        <h1 className="text-xl font-semibold text-zinc-950">Clients</h1>
+        {can("clients.create") && (
+          <Button onClick={handleNew}>New Client</Button>
+        )}
       </div>
 
       <Input
@@ -87,10 +88,10 @@ export default function ClientsPage() {
         className="max-w-sm"
       />
 
-      <div className="rounded-md border bg-background">
+      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="bg-zinc-50">
               <TableHead>Name</TableHead>
               <TableHead>Date of Birth</TableHead>
               <TableHead>Account #</TableHead>
@@ -132,20 +133,25 @@ export default function ClientsPage() {
                     >
                       Policies
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(client)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeactivate(client)}
-                    >
-                      Deactivate
-                    </Button>
+                    {can("clients.edit") && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEdit(client)}
+                      >
+                        Edit
+                      </Button>
+                    )}
+                    {can("clients.delete") && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                        onClick={() => setDeleting(client)}
+                      >
+                        Delete
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))
@@ -165,6 +171,38 @@ export default function ClientsPage() {
         onOpenChange={setPoliciesOpen}
         client={policiesClient}
       />
+
+      <DeleteConfirm
+        open={deleting !== null}
+        onOpenChange={(open) => !open && setDeleting(null)}
+        title="Delete client"
+        entityName={deleting?.displayName ?? ""}
+        canHardDelete={(deleting?._count?.claims ?? 0) === 0}
+        blockedReason={
+          (deleting?._count?.claims ?? 0) > 0
+            ? `This client has ${deleting?._count?.claims} claim(s), so it can't be permanently deleted. Deactivate it to hide it while keeping all history.`
+            : undefined
+        }
+        onDeactivate={
+          deleting ? () => deactivateClient(deleting.id) : undefined
+        }
+        onDelete={() => deleteClient(deleting!.id)}
+        onDone={() => load(search)}
+      >
+        <p>
+          <span className="font-medium text-zinc-900">Deactivate</span> hides the
+          client from active lists but keeps all history, and can be reactivated
+          later.
+        </p>
+        <p>
+          <span className="font-medium text-zinc-900">Delete permanently</span>{" "}
+          removes the client
+          {(deleting?._count?.insurancePolicies ?? 0) > 0
+            ? ` and its ${deleting?._count?.insurancePolicies} insurance policy(ies)`
+            : ""}
+          . This cannot be undone.
+        </p>
+      </DeleteConfirm>
     </div>
   );
 }

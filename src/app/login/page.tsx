@@ -61,8 +61,9 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl">RoseSystem</CardTitle>
+        <CardHeader className="items-center text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/roselogo.png" alt="RoseSystem" width={140} height={48} className="object-contain" />
           <CardDescription>Sign in to your account</CardDescription>
         </CardHeader>
         <CardContent>

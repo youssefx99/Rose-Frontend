@@ -92,6 +92,7 @@ export interface Claim {
   insurancePolicy?: PolicyRef | null;
   createdBy?: UserRef | null;
   updatedBy?: UserRef | null;
+  _count?: { remittanceLines: number; arNotes: number };
 }
 
 export interface ArNote {
@@ -174,6 +175,11 @@ export async function changeClaimStatus(
     note,
   });
   return data;
+}
+
+/** Permanently deletes a claim. Blocked if linked to remittance payment lines. */
+export async function deleteClaim(id: string): Promise<void> {
+  await api.delete(`/claims/${id}`);
 }
 
 export async function listClaimNotes(id: string): Promise<ArNote[]> {
