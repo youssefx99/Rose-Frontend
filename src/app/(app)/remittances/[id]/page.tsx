@@ -7,12 +7,8 @@ import { ArrowLeft, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { Section, DataList, DataRow } from "@/components/ui/detail";
 import {
   Table,
   TableBody,
@@ -29,15 +25,6 @@ import {
 } from "@/lib/remittances";
 import { formatDate, formatMoney } from "@/lib/format";
 import { useAuth } from "@/lib/auth-context";
-
-function SummaryRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between gap-4">
-      <span className="text-zinc-500">{label}</span>
-      <span className="font-mono tabular-nums text-zinc-900">{value}</span>
-    </div>
-  );
-}
 
 export default function RemittanceDetailPage() {
   const params = useParams<{ id: string }>();
@@ -59,126 +46,127 @@ export default function RemittanceDetailPage() {
     })();
   }, [params.id]);
 
-  if (loading) return <p className="text-zinc-500">Loading…</p>;
-  if (!remittance) return <p className="text-zinc-500">Remittance not found.</p>;
+  if (loading) return <p className="type-body-01 text-text-secondary">Loading…</p>;
+  if (!remittance)
+    return (
+      <p className="type-body-01 text-text-secondary">Remittance not found.</p>
+    );
 
   return (
     <div className="space-y-6">
       <Link
         href="/remittances"
-        className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900"
+        className="inline-flex items-center gap-1 type-body-compact-01 text-text-secondary transition-colors duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] hover:text-text-primary"
       >
         <ArrowLeft className="size-4" /> Back to remittances
       </Link>
 
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-950">
-            {remittance.payer?.name ?? "Remittance"}
-          </h1>
-          <p className="text-sm text-zinc-500">
-            Check {remittance.checkNumber ?? "—"} ·{" "}
-            {formatDate(remittance.checkDate)} · from {remittance.sourceFileName}
-          </p>
-        </div>
+      <PageHeader
+        title={remittance.payer?.name ?? "Remittance"}
+        description={`Check ${remittance.checkNumber ?? "—"} · ${formatDate(
+          remittance.checkDate,
+        )} · from ${remittance.sourceFileName}`}
+      >
         {can("remittances.delete") && (
           <Button
             variant="ghost"
             size="sm"
-            className="text-red-600 hover:bg-red-50 hover:text-red-700"
+            className="text-support-error hover:bg-support-error-bg hover:text-support-error"
             onClick={() => setDeleteOpen(true)}
           >
             <Trash2 className="size-3.5" /> Delete
           </Button>
         )}
-      </div>
+      </PageHeader>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>Payment Summary</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <SummaryRow
-              label="Check #"
-              value={remittance.checkNumber ?? "—"}
-            />
-            <SummaryRow
+        <Section
+          title="Payment Summary"
+          className="lg:col-span-1"
+          bodyClassName="px-5 py-1"
+        >
+          <DataList>
+            <DataRow label="Payer" value={remittance.payer?.name ?? "—"} />
+            <DataRow label="Check #" value={remittance.checkNumber ?? "—"} mono />
+            <DataRow
               label="Check Date"
               value={formatDate(remittance.checkDate)}
             />
-            <div className="border-t border-zinc-200 pt-2">
-              <SummaryRow
-                label="Check Amount"
-                value={formatMoney(remittance.checkAmount)}
-              />
-            </div>
-          </CardContent>
-        </Card>
+            <DataRow
+              label="Check Amount"
+              value={formatMoney(remittance.checkAmount)}
+              mono
+            />
+          </DataList>
+        </Section>
 
-        <div className="lg:col-span-2">
-          <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-zinc-500">
-            Claim Lines
-          </h2>
-          <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-zinc-50">
-                  <TableHead>Client</TableHead>
-                  <TableHead>Claim #</TableHead>
-                  <TableHead>DOS</TableHead>
-                  <TableHead className="text-right">Billed</TableHead>
-                  <TableHead className="text-right">Paid</TableHead>
-                  <TableHead>Matched</TableHead>
+        <Section
+          title="Claim Lines"
+          className="lg:col-span-2"
+          bodyClassName="p-0"
+        >
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Client</TableHead>
+                <TableHead>Claim #</TableHead>
+                <TableHead>DOS</TableHead>
+                <TableHead className="text-right">Billed</TableHead>
+                <TableHead className="text-right">Paid</TableHead>
+                <TableHead>Matched</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {remittance.claimLines.length === 0 ? (
+                <TableRow className="hover:bg-transparent">
+                  <TableCell
+                    colSpan={6}
+                    className="py-12 text-center type-body-01 text-text-secondary"
+                  >
+                    No claim lines.
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {remittance.claimLines.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="py-8 text-center text-zinc-500">
-                      No claim lines.
+              ) : (
+                remittance.claimLines.map((line) => (
+                  <TableRow key={line.id}>
+                    <TableCell className="text-text-primary">
+                      {line.patientNameOnEob}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-text-secondary">
+                      {line.externalClaimNumber}
+                    </TableCell>
+                    <TableCell className="text-text-secondary">
+                      {formatDate(line.dateOfService)}
+                    </TableCell>
+                    <TableCell className="text-right font-mono tabular-nums text-text-secondary">
+                      {formatMoney(line.billedAmount)}
+                    </TableCell>
+                    <TableCell className="text-right font-mono tabular-nums text-text-primary">
+                      {formatMoney(line.paidAmount)}
+                    </TableCell>
+                    <TableCell>
+                      {line.claim ? (
+                        <Link
+                          href={`/claims/${line.claim.id}`}
+                          className="inline-flex items-center gap-2 type-body-compact-01 text-link transition-colors duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] hover:text-link-hover"
+                        >
+                          <span className="font-mono text-xs">
+                            {line.claim.claimReference}
+                          </span>
+                          <StatusBadge status={line.claim.status} />
+                        </Link>
+                      ) : (
+                        <span className="type-label-01 text-text-helper">
+                          Unmatched
+                        </span>
+                      )}
                     </TableCell>
                   </TableRow>
-                ) : (
-                  remittance.claimLines.map((line) => (
-                    <TableRow key={line.id}>
-                      <TableCell className="text-zinc-800">
-                        {line.patientNameOnEob}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs text-zinc-700">
-                        {line.externalClaimNumber}
-                      </TableCell>
-                      <TableCell className="text-zinc-600">
-                        {formatDate(line.dateOfService)}
-                      </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-zinc-700">
-                        {formatMoney(line.billedAmount)}
-                      </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-zinc-900">
-                        {formatMoney(line.paidAmount)}
-                      </TableCell>
-                      <TableCell>
-                        {line.claim ? (
-                          <Link
-                            href={`/claims/${line.claim.id}`}
-                            className="inline-flex items-center gap-2 text-sm text-rose-600 hover:text-rose-700"
-                          >
-                            <span className="font-mono text-xs">
-                              {line.claim.claimReference}
-                            </span>
-                            <StatusBadge status={line.claim.status} />
-                          </Link>
-                        ) : (
-                          <span className="text-xs text-zinc-400">Unmatched</span>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </Section>
       </div>
 
       <CascadeDeleteDialog

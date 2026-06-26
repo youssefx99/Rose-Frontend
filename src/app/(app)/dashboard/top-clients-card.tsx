@@ -29,15 +29,15 @@ function ColumnTooltip({ client }: { client: TopClient }) {
     },
   ];
   return (
-    <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden w-44 -translate-x-1/2 rounded-lg border border-zinc-200 bg-white p-2.5 text-xs shadow-md group-hover:block">
-      <p className="mb-1.5 truncate font-medium text-zinc-900">
+    <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden w-44 -translate-x-1/2 rounded-md border border-border-subtle bg-card p-3 type-label-01 shadow-md group-hover:block">
+      <p className="mb-2 truncate font-medium text-text-primary">
         {client.clientName}
       </p>
       <dl className="space-y-1">
         {rows.map((r) => (
           <div key={r.label} className="flex items-center justify-between gap-3">
-            <dt className="text-zinc-500">{r.label}</dt>
-            <dd className="font-mono tabular-nums text-zinc-900">{r.value}</dd>
+            <dt className="text-text-secondary">{r.label}</dt>
+            <dd className="font-mono tabular-nums text-text-primary">{r.value}</dd>
           </div>
         ))}
       </dl>
@@ -69,11 +69,11 @@ export function TopClientsCard({ data }: { data: TopClient[] }) {
                   className="group relative flex h-full flex-1 flex-col items-center justify-end"
                 >
                   <ColumnTooltip client={c} />
-                  <span className="mb-1.5 font-mono text-xs font-semibold tabular-nums text-zinc-700">
+                  <span className="mb-2 font-mono type-label-01 font-semibold tabular-nums text-text-secondary">
                     {compactMoney(c.billed)}
                   </span>
                   <div
-                    className="flex w-full max-w-[52px] flex-col-reverse overflow-hidden rounded-t-md ring-1 ring-inset ring-black/5 transition-[height] duration-500 ease-out"
+                    className="flex w-full max-w-[52px] flex-col-reverse overflow-hidden rounded-t-md ring-1 ring-inset ring-border-subtle transition-[height] duration-500 ease-out"
                     style={{ height: barH, backgroundColor: OUTSTANDING }}
                   >
                     <div
@@ -96,16 +96,16 @@ export function TopClientsCard({ data }: { data: TopClient[] }) {
                 <Link
                   href={`/clients/${c.clientId}`}
                   title={c.clientName}
-                  className="line-clamp-1 max-w-full text-xs font-medium text-zinc-700 transition-colors hover:text-rose-600 hover:underline"
+                  className="line-clamp-1 max-w-full type-label-01 font-medium text-text-primary transition-colors duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] hover:text-link hover:underline"
                 >
                   {c.clientName}
                 </Link>
                 {c.openClaims > 0 ? (
-                  <span className="rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-amber-700 ring-1 ring-inset ring-amber-200">
+                  <span className="rounded-full bg-support-warning-bg px-2 py-0.5 type-label-01 font-medium tabular-nums text-text-primary ring-1 ring-inset ring-support-warning">
                     {c.openClaims} pending
                   </span>
                 ) : (
-                  <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                  <span className="rounded-full bg-support-success-bg px-2 py-0.5 type-label-01 font-medium text-support-success ring-1 ring-inset ring-support-success">
                     paid
                   </span>
                 )}

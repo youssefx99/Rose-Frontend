@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Download, ExternalLink, FileText } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 
 export interface DocumentFile {
@@ -67,11 +68,11 @@ export function DocumentViewer({
   const isPdf = (fileMimeType ?? "application/pdf") === "application/pdf";
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-zinc-200 bg-zinc-50 px-4 py-3">
+    <div className="flex h-full flex-col overflow-hidden rounded-md border border-border-subtle bg-card">
+      <div className="flex items-center justify-between border-b border-border-subtle bg-layer px-4 py-3">
         <div className="flex min-w-0 items-center gap-2">
-          <FileText className="size-4 shrink-0 text-zinc-400" />
-          <span className="max-w-[220px] truncate text-sm font-medium text-zinc-900">
+          <FileText className="size-4 shrink-0 text-text-secondary" />
+          <span className="max-w-[220px] truncate type-body-compact-01 font-medium text-text-primary">
             {fileName}
           </span>
         </div>
@@ -80,7 +81,7 @@ export function DocumentViewer({
             href={file.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-xs text-zinc-500 transition-colors hover:text-zinc-900"
+            className="flex items-center gap-1.5 type-label-01 text-text-secondary transition-colors duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] hover:text-text-primary"
           >
             <ExternalLink className="size-3" />
             Open in new tab
@@ -90,15 +91,15 @@ export function DocumentViewer({
 
       {file.loading ? (
         <div className="flex flex-1 items-center justify-center">
-          <p className="text-sm text-zinc-500">Loading document…</p>
+          <p className="type-body-compact-01 text-text-secondary">Loading document…</p>
         </div>
       ) : file.error || !file.url ? (
         <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-          <FileText className="mb-3 size-10 text-zinc-300" />
-          <p className="text-sm font-medium text-zinc-900">
+          <FileText className="mb-3 size-10 text-text-helper" />
+          <p className="type-body-compact-01 font-medium text-text-primary">
             Couldn&apos;t load the document
           </p>
-          <p className="mt-1 text-xs text-zinc-500">
+          <p className="mt-1 type-label-01 text-text-secondary">
             The file may be unavailable or you may not have access.
           </p>
         </div>
@@ -110,19 +111,17 @@ export function DocumentViewer({
         />
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center">
-          <FileText className="mb-3 size-10 text-zinc-300" />
-          <p className="mb-1 text-sm font-medium text-zinc-900">{fileName}</p>
-          <p className="mb-4 text-xs text-zinc-500">
+          <FileText className="mb-3 size-10 text-text-helper" />
+          <p className="mb-1 type-body-compact-01 font-medium text-text-primary">{fileName}</p>
+          <p className="mb-4 type-label-01 text-text-secondary">
             This file type cannot be previewed in the browser.
           </p>
-          <a
-            href={file.url}
-            download={fileName}
-            className="inline-flex items-center gap-2 rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-700"
-          >
-            <Download className="size-4" />
-            Download file
-          </a>
+          <Button asChild variant="secondary">
+            <a href={file.url} download={fileName}>
+              <Download className="size-4" />
+              Download file
+            </a>
+          </Button>
         </div>
       )}
     </div>

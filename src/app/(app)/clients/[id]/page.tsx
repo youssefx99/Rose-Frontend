@@ -58,8 +58,9 @@ export default function ClientDetailPage() {
     load();
   }, [load]);
 
-  if (loading) return <p className="text-sm text-zinc-500">Loading…</p>;
-  if (!detail) return <p className="text-sm text-zinc-500">Client not found.</p>;
+  if (loading) return <p className="type-body-01 text-text-secondary">Loading…</p>;
+  if (!detail)
+    return <p className="type-body-01 text-text-secondary">Client not found.</p>;
 
   const { client, totals, accounts, payers, claims } = detail;
 
@@ -67,7 +68,7 @@ export default function ClientDetailPage() {
     <div className="space-y-6">
       <Link
         href="/clients"
-        className="inline-flex items-center gap-1 text-sm text-zinc-500 transition-colors hover:text-zinc-900"
+        className="inline-flex items-center gap-1 type-body-01 text-text-secondary transition-colors hover:text-text-primary"
       >
         <ArrowLeft className="size-4" /> Back to clients
       </Link>
@@ -76,16 +77,16 @@ export default function ClientDetailPage() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 space-y-1.5">
           <div className="flex items-center gap-3">
-            <h1 className="truncate text-2xl font-semibold tracking-tight text-zinc-950">
+            <h1 className="truncate type-heading-04 text-text-primary">
               {client.displayName}
             </h1>
             {!client.isActive && (
-              <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-200">
+              <span className="inline-flex items-center rounded-full bg-support-warning-bg px-2 py-0.5 type-label-01 font-medium text-text-primary">
                 Inactive
               </span>
             )}
           </div>
-          <p className="text-sm text-zinc-500">
+          <p className="type-body-01 text-text-secondary">
             {totals.claimCount} claim{totals.claimCount === 1 ? "" : "s"} ·{" "}
             {accounts.length} account #{accounts.length === 1 ? "" : "s"} ·{" "}
             {payers.length} payer{payers.length === 1 ? "" : "s"}
@@ -101,7 +102,7 @@ export default function ClientDetailPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="text-red-600 hover:bg-red-50 hover:text-red-700"
+              className="text-support-error hover:bg-support-error-bg hover:text-support-error"
               onClick={() => setDeleteOpen(true)}
             >
               Delete
@@ -136,16 +137,16 @@ export default function ClientDetailPage() {
         <div className="space-y-6">
           <Section title="Payers" subtitle={`${payers.length} on file`}>
             {payers.length === 0 ? (
-              <p className="py-2 text-sm text-zinc-400">No payers yet.</p>
+              <p className="py-2 type-body-01 text-text-helper">No payers yet.</p>
             ) : (
               <ul className="space-y-2.5">
                 {payers.map((p) => (
                   <li
                     key={p.id}
-                    className="flex items-center justify-between gap-2 text-sm"
+                    className="flex items-center justify-between gap-2 type-body-compact-01"
                   >
-                    <span className="truncate text-zinc-700">{p.name}</span>
-                    <span className="shrink-0 font-mono text-xs tabular-nums text-zinc-500">
+                    <span className="truncate text-text-primary">{p.name}</span>
+                    <span className="shrink-0 font-mono type-label-01 tabular-nums text-text-secondary">
                       {p.claimCount} claim{p.claimCount === 1 ? "" : "s"}
                     </span>
                   </li>
@@ -159,17 +160,17 @@ export default function ClientDetailPage() {
             subtitle="One person, several payer authorizations"
           >
             {accounts.length === 0 ? (
-              <p className="py-2 text-sm text-zinc-400">
+              <p className="py-2 type-body-01 text-text-helper">
                 No account numbers on file.
               </p>
             ) : (
               <ul className="space-y-2.5">
                 {accounts.map((a) => (
                   <li key={a.accountNumber} className="space-y-0.5">
-                    <p className="font-mono text-sm text-zinc-800">
+                    <p className="font-mono type-body-compact-01 text-text-primary">
                       {a.accountNumber}
                     </p>
-                    <p className="text-xs text-zinc-500">
+                    <p className="type-label-01 text-text-secondary">
                       {a.payers.join(", ")} · {a.claimCount} claim
                       {a.claimCount === 1 ? "" : "s"}
                     </p>
@@ -189,7 +190,7 @@ export default function ClientDetailPage() {
           >
             <Table>
               <TableHeader>
-                <TableRow className="bg-zinc-50">
+                <TableRow>
                   <TableHead>Claim</TableHead>
                   <TableHead>Payer</TableHead>
                   <TableHead>Service dates</TableHead>
@@ -204,7 +205,7 @@ export default function ClientDetailPage() {
                   <TableRow>
                     <TableCell
                       colSpan={7}
-                      className="py-8 text-center text-sm text-zinc-500"
+                      className="py-8 text-center type-body-01 text-text-secondary"
                     >
                       No claims yet.
                     </TableCell>
@@ -220,15 +221,15 @@ export default function ClientDetailPage() {
                         <Link
                           href={`/claims/${c.id}`}
                           onClick={(e) => e.stopPropagation()}
-                          className="font-mono text-xs text-rose-600 hover:underline"
+                          className="font-mono text-xs text-link hover:underline"
                         >
                           {c.claimReference}
                         </Link>
                       </TableCell>
-                      <TableCell className="text-zinc-600">
+                      <TableCell className="text-text-secondary">
                         {c.payer.shortCode}
                       </TableCell>
-                      <TableCell className="text-zinc-600">
+                      <TableCell className="text-text-secondary">
                         {serviceDates(c)}
                       </TableCell>
                       <TableCell className="text-right font-mono tabular-nums">
@@ -237,7 +238,7 @@ export default function ClientDetailPage() {
                       <TableCell className="text-right font-mono tabular-nums">
                         {formatMoney(c.payerPaidAmount)}
                       </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-zinc-500">
+                      <TableCell className="text-right font-mono tabular-nums text-text-secondary">
                         {c.payPct != null
                           ? `${(Number(c.payPct) * 100).toFixed(0)}%`
                           : "—"}

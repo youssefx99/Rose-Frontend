@@ -141,17 +141,17 @@ export function UserPermissionsDialog({
       }
     >
       {loading ? (
-        <p className="text-sm text-zinc-500">Loading…</p>
+        <p className="type-body-01 text-text-secondary">Loading…</p>
       ) : isSuperAdmin ? (
-        <p className="rounded-md bg-zinc-50 p-4 text-sm text-zinc-600">
+        <p className="rounded-md bg-layer p-4 type-body-01 text-text-secondary">
           This user is a Super Admin with full, unrestricted access. Per-user
           overrides do not apply.
         </p>
       ) : (
         <div className="space-y-6">
-          <p className="text-xs leading-relaxed text-zinc-500">
+          <p className="type-label-01 leading-relaxed text-text-secondary">
             Each permission defaults to the{" "}
-            <span className="font-medium text-zinc-700">
+            <span className="font-medium text-text-primary">
               {roleLabel(role)}
             </span>{" "}
             role. Set <span className="font-medium">Allow</span> or{" "}
@@ -161,10 +161,10 @@ export function UserPermissionsDialog({
 
           {groups.map((group) => (
             <div key={group.module} className="space-y-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              <h3 className="type-heading-compact-01 text-text-secondary">
                 {group.label}
               </h3>
-              <div className="divide-y divide-zinc-100 overflow-hidden rounded-lg border border-zinc-200">
+              <div className="divide-y divide-border-subtle overflow-hidden rounded-md border border-border-subtle">
                 {group.permissions.map((p) => {
                   const current = state[p.key] ?? "inherit";
                   const inheritGrants = baseline.has(p.key);
@@ -172,25 +172,27 @@ export function UserPermissionsDialog({
                   return (
                     <div
                       key={p.key}
-                      className="flex items-center justify-between gap-4 bg-white px-4 py-2.5"
+                      className="flex items-center justify-between gap-4 bg-card px-4 py-2.5"
                     >
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-zinc-900">
+                        <p className="type-body-compact-01 font-medium text-text-primary">
                           {p.label}
                           <span
                             className={cn(
-                              "ml-2 text-xs font-normal",
-                              effective ? "text-green-600" : "text-zinc-400",
+                              "ml-2 type-label-01",
+                              effective
+                                ? "text-support-success"
+                                : "text-text-helper",
                             )}
                           >
                             {effective ? "Granted" : "Not granted"}
                           </span>
                         </p>
-                        <p className="truncate text-xs text-zinc-500">
+                        <p className="truncate type-label-01 text-text-secondary">
                           {p.description}
                         </p>
                       </div>
-                      <div className="flex shrink-0 rounded-md border border-zinc-200 p-0.5">
+                      <div className="flex shrink-0 rounded-md border border-border-subtle p-0.5">
                         {OPTIONS.map((opt) => {
                           const selected = current === opt.value;
                           const inheritHint =
@@ -210,14 +212,14 @@ export function UserPermissionsDialog({
                                 }))
                               }
                               className={cn(
-                                "rounded px-2.5 py-1 text-xs font-medium transition-colors",
+                                "rounded-sm px-2.5 py-1 type-label-01 transition-colors duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none",
                                 selected
                                   ? opt.value === "allow"
-                                    ? "bg-green-600 text-white"
+                                    ? "bg-support-success text-text-on-color"
                                     : opt.value === "deny"
-                                      ? "bg-red-600 text-white"
-                                      : "bg-zinc-200 text-zinc-800"
-                                  : "text-zinc-500 hover:bg-zinc-100",
+                                      ? "bg-support-error text-white"
+                                      : "bg-layer-selected text-text-primary"
+                                  : "text-text-secondary hover:bg-layer",
                               )}
                             >
                               {opt.label}

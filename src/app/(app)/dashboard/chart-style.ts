@@ -1,13 +1,14 @@
 /** Shared chart styling so no recharts default colors/tooltips leak through. */
 
 export const TOOLTIP_STYLE = {
-  backgroundColor: "white",
-  border: "1px solid #e4e4e7",
-  borderRadius: "6px",
+  backgroundColor: "#ffffff", // bg-card
+  border: "1px solid #e0e0e0", // border-subtle
+  borderRadius: "4px", // rounded-md
+  color: "#161616", // text-primary
   fontSize: "12px",
 } as const;
 
-export const AXIS_TICK = { fontSize: 12, fill: "#71717a" } as const;
+export const AXIS_TICK = { fontSize: 12, fill: "#6f6f6f" } as const; // text-secondary (gray-60)
 
 // Status colors must match the design system exactly.
 export const STATUS_HEX: Record<string, string> = {
@@ -20,14 +21,15 @@ export const STATUS_HEX: Record<string, string> = {
   WRITTEN_OFF: "#a1a1aa",
 };
 
-export const SLATE = "#0f172a";
-export const RED = "#ef4444";
-export const ZINC_400 = "#a1a1aa";
+export const SLATE = "#393939"; // gray-80
+export const RED = "#da1e28"; // red-50 (support-error)
+export const ZINC_400 = "#a1a1aa"; // neutral fallback gray
+// Brand accent for key highlights = rose #f43f5e (scarce — used via tokens elsewhere).
 
-// Billed vs collected money series.
-export const BILLED = "#334155"; // slate-700
-export const COLLECTED = "#10b981"; // emerald-500
-export const OUTSTANDING = "#cbd5e1"; // slate-300 (billed not yet collected)
+// Billed vs collected money series (Carbon-aligned).
+export const BILLED = "#393939"; // gray-80
+export const COLLECTED = "#24a148"; // green-50 (success)
+export const OUTSTANDING = "#c6c6c6"; // gray-30 (billed not yet collected)
 
 /** Compact dollar axis label, e.g. $12k. */
 export function formatK(value: number): string {

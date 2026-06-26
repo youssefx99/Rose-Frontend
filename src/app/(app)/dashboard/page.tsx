@@ -7,6 +7,7 @@ import { Inbox } from "lucide-react";
 
 import { getDashboard, type Dashboard } from "@/lib/dashboard";
 import { formatMoney } from "@/lib/format";
+import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "./stat-card";
 import { MonthlyTrendCard } from "./monthly-trend-card";
 import { ClaimsStatusCard } from "./claims-status-card";
@@ -14,7 +15,11 @@ import { CollectionPayerCard } from "./collection-payer-card";
 import { TopClientsCard } from "./top-clients-card";
 
 function Block({ className }: { className: string }) {
-  return <div className={`animate-pulse rounded-xl bg-zinc-100 ${className}`} />;
+  return (
+    <div
+      className={`animate-pulse rounded-md bg-skeleton-background ${className}`}
+    />
+  );
 }
 
 function DashboardSkeleton() {
@@ -56,28 +61,24 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-950">
-            Dashboard
-          </h1>
-          {data && (
-            <p className="text-sm text-zinc-500">
-              {data.totals.claimCount} claims · {data.totals.clientCount} clients
-              · {data.totals.payerCount} payers
-            </p>
-          )}
-        </div>
+      <PageHeader
+        title="Dashboard"
+        description={
+          data
+            ? `${data.totals.claimCount} claims · ${data.totals.clientCount} clients · ${data.totals.payerCount} payers`
+            : undefined
+        }
+      >
         {data && data.pendingReviewCount > 0 && (
           <Link
             href="/review"
-            className="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-800 transition-colors hover:bg-amber-100"
+            className="inline-flex items-center gap-2 rounded-md border border-support-warning bg-support-warning-bg px-3 py-1.5 type-body-compact-01 font-medium text-text-primary transition-colors duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-background"
           >
-            <Inbox className="size-4" />
+            <Inbox className="size-4 text-support-warning" />
             {data.pendingReviewCount} pending review
           </Link>
         )}
-      </div>
+      </PageHeader>
 
       {loading || !data ? (
         <DashboardSkeleton />

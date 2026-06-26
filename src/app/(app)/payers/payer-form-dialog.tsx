@@ -103,31 +103,43 @@ export function PayerFormDialog({
         </>
       }
     >
-      <form id={FORM_ID} onSubmit={onSubmit} className="space-y-4" noValidate>
+      <form id={FORM_ID} onSubmit={onSubmit} className="space-y-6" noValidate>
         <div className="space-y-2">
           <Label htmlFor="name">Name</Label>
-          <Input id="name" {...register("name")} />
+          <Input id="name" aria-invalid={!!errors.name} {...register("name")} />
           {errors.name && (
-            <p className="text-sm text-destructive">{errors.name.message}</p>
+            <p className="type-label-01 text-support-error">
+              {errors.name.message}
+            </p>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="shortCode">Short Code</Label>
-            <Input id="shortCode" {...register("shortCode")} />
-            {errors.shortCode && (
-              <p className="text-sm text-destructive">
-                {errors.shortCode.message}
-              </p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="state">State</Label>
-            <Input id="state" maxLength={2} placeholder="NJ" {...register("state")} />
-            {errors.state && (
-              <p className="text-sm text-destructive">{errors.state.message}</p>
-            )}
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="shortCode">Short Code</Label>
+          <Input
+            id="shortCode"
+            aria-invalid={!!errors.shortCode}
+            {...register("shortCode")}
+          />
+          {errors.shortCode && (
+            <p className="type-label-01 text-support-error">
+              {errors.shortCode.message}
+            </p>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="state">State</Label>
+          <Input
+            id="state"
+            maxLength={2}
+            placeholder="NJ"
+            aria-invalid={!!errors.state}
+            {...register("state")}
+          />
+          {errors.state && (
+            <p className="type-label-01 text-support-error">
+              {errors.state.message}
+            </p>
+          )}
         </div>
       </form>
     </SlideOver>

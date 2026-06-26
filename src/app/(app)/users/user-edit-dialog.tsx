@@ -103,7 +103,7 @@ export function UserEditDialog({
               ))}
             </SelectContent>
           </Select>
-          <p className="rounded-md bg-zinc-50 p-3 text-xs leading-relaxed text-zinc-600">
+          <p className="rounded-md bg-layer p-3 type-label-01 leading-relaxed text-text-secondary">
             {roleDescription(role)}
           </p>
         </div>
@@ -122,7 +122,7 @@ export function UserEditDialog({
               <SelectItem value="disabled">Disabled</SelectItem>
             </SelectContent>
           </Select>
-          <p className="text-xs text-zinc-500">
+          <p className="type-label-01 text-text-helper">
             Disabled users are signed out within 15 minutes and cannot sign in.
           </p>
         </div>

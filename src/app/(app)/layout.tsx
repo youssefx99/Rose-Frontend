@@ -156,7 +156,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       {/* ── Carbon UI Shell header (dark, 48px) ── */}
-      <header className="sticky top-0 z-40 flex h-12 shrink-0 items-center gap-2 bg-[#161616] pr-3 pl-1 text-white">
+      <header className="sticky top-0 z-40 flex h-12 shrink-0 items-center gap-2 bg-[var(--cds-gray-100)] pr-3 pl-1 text-white">
         <button
           type="button"
           onClick={toggleCollapsed}

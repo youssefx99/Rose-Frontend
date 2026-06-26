@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Select,
   SelectContent,
@@ -133,12 +135,14 @@ export default function ClientsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-950">Clients</h1>
+      <PageHeader
+        title="Clients"
+        description="People served by your organization."
+      >
         {can("clients.create") && (
           <Button onClick={handleNew}>New Client</Button>
         )}
-      </div>
+      </PageHeader>
 
       <FilterBar
         search={search}
@@ -196,10 +200,10 @@ export default function ClientsPage() {
         </FilterField>
       </FilterBar>
 
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-md border border-border-subtle bg-card">
         <Table>
           <TableHeader>
-            <TableRow className="bg-zinc-50">
+            <TableRow>
               <TableHead>Name</TableHead>
               <TableHead className="text-right">Account&nbsp;#s</TableHead>
               <TableHead className="text-right">Claims</TableHead>
@@ -209,13 +213,13 @@ export default function ClientsPage() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground">
+                <TableCell colSpan={4} className="py-8 text-center text-text-secondary">
                   Loading…
                 </TableCell>
               </TableRow>
             ) : clients.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground">
+                <TableCell colSpan={4} className="py-8 text-center text-text-secondary">
                   No clients found.
                 </TableCell>
               </TableRow>
@@ -224,47 +228,49 @@ export default function ClientsPage() {
                 <TableRow
                   key={client.id}
                   onClick={() => router.push(`/clients/${client.id}`)}
-                  className="cursor-pointer transition-colors hover:bg-zinc-50"
+                  className="cursor-pointer"
                 >
                   <TableCell className="font-medium">
                     <Link
                       href={`/clients/${client.id}`}
                       onClick={(e) => e.stopPropagation()}
-                      className="text-zinc-900 hover:text-rose-600 hover:underline"
+                      className="text-text-primary transition-colors hover:text-link hover:underline"
                     >
                       {client.displayName}
                     </Link>
                   </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums text-zinc-600">
+                  <TableCell className="text-right font-mono tabular-nums text-text-secondary">
                     {client.accountCount ?? 0}
                   </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums text-zinc-600">
+                  <TableCell className="text-right font-mono tabular-nums text-text-secondary">
                     {client.claimCount ?? 0}
                   </TableCell>
                   <TableCell className="space-x-1 text-right">
                     {can("clients.edit") && (
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon"
+                        aria-label={`Edit ${client.displayName}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           handleEdit(client);
                         }}
                       >
-                        Edit
+                        <Pencil className="size-4" />
                       </Button>
                     )}
                     {can("clients.delete") && (
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                        size="icon"
+                        aria-label={`Delete ${client.displayName}`}
+                        className="text-support-error hover:bg-support-error-bg hover:text-support-error"
                         onClick={(e) => {
                           e.stopPropagation();
                           setDeleting(client);
                         }}
                       >
-                        Delete
+                        <Trash2 className="size-4" />
                       </Button>
                     )}
                   </TableCell>

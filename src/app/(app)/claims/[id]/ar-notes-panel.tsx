@@ -57,7 +57,7 @@ export function ArNotesPanel({ claimId }: { claimId: string }) {
         <span className="flex items-center gap-2">
           <MessageSquare className="size-4" /> AR Notes
         </span>
-        <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs tabular-nums text-zinc-600">
+        <span className="rounded-full bg-layer px-2 py-0.5 type-label-01 tabular-nums text-text-secondary">
           {notes.length}
         </span>
       </Button>
@@ -97,17 +97,17 @@ export function ArNotesPanel({ claimId }: { claimId: string }) {
           )}
           <div className="space-y-3">
             {notes.length === 0 ? (
-              <p className="text-sm text-zinc-500">No notes yet.</p>
+              <p className="type-body-01 text-text-secondary">No notes yet.</p>
             ) : (
               notes.map((note) => (
                 <div
                   key={note.id}
-                  className="rounded-md border border-zinc-200 p-3 text-sm"
+                  className="rounded-md border border-border-subtle bg-layer p-3"
                 >
-                  <p className="whitespace-pre-wrap text-zinc-800">
+                  <p className="whitespace-pre-wrap type-body-compact-01 text-text-primary">
                     {note.noteText}
                   </p>
-                  <p className="mt-1 text-xs text-zinc-500">
+                  <p className="mt-1 type-label-01 text-text-secondary">
                     {note.user.firstName} {note.user.lastName} ·{" "}
                     {formatDate(note.noteDate)}
                   </p>

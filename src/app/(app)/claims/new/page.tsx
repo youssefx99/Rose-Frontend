@@ -24,7 +24,7 @@ export default function NewClaimPage() {
     <div className="space-y-6">
       <Link
         href="/claims"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        className="inline-flex items-center gap-1 type-body-compact-01 text-text-secondary transition-colors duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] hover:text-text-primary"
       >
         <ArrowLeft className="size-4" /> Back to claims
       </Link>

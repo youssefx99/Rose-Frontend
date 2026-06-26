@@ -59,11 +59,13 @@ export default function LoginPage() {
   });
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-layer p-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center text-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/roselogo.png" alt="RoseSystem" width={140} height={48} className="object-contain" />
+          <div className="flex items-center justify-center gap-2 type-heading-03 text-text-primary">
+            <span className="size-2.5 rounded-full bg-interactive" />
+            RoseSystem
+          </div>
           <CardDescription>Sign in to your account</CardDescription>
         </CardHeader>
         <CardContent>
@@ -78,7 +80,7 @@ export default function LoginPage() {
                 {...register("email")}
               />
               {errors.email && (
-                <p className="text-sm text-destructive">
+                <p className="type-label-01 text-support-error">
                   {errors.email.message}
                 </p>
               )}
@@ -92,7 +94,7 @@ export default function LoginPage() {
                 {...register("password")}
               />
               {errors.password && (
-                <p className="text-sm text-destructive">
+                <p className="type-label-01 text-support-error">
                   {errors.password.message}
                 </p>
               )}

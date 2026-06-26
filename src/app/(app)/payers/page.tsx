@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Building2, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Table,
   TableBody,
@@ -56,24 +58,27 @@ export default function PayersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-950">Payers</h1>
+      <PageHeader
+        title="Payers"
+        description="Insurance companies and payer entities."
+      >
         {can("payers.create") && (
           <Button onClick={handleNew}>New Payer</Button>
         )}
-      </div>
+      </PageHeader>
 
       <Input
         placeholder="Search payers…"
+        aria-label="Search payers"
         value={search}
         onChange={(event) => setSearch(event.target.value)}
         className="max-w-sm"
       />
 
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-md border border-border-subtle bg-card">
         <Table>
           <TableHeader>
-            <TableRow className="bg-zinc-50">
+            <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Short Code</TableHead>
               <TableHead>State</TableHead>
@@ -82,43 +87,84 @@ export default function PayersPage() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground">
-                  Loading…
-                </TableCell>
-              </TableRow>
+              [...Array(5)].map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell>
+                    <div className="h-4 w-40 animate-pulse rounded bg-skeleton-background" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-4 w-20 animate-pulse rounded bg-skeleton-background" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-4 w-10 animate-pulse rounded bg-skeleton-background" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="ml-auto h-4 w-16 animate-pulse rounded bg-skeleton-background" />
+                  </TableCell>
+                </TableRow>
+              ))
             ) : payers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground">
-                  No payers found.
+                <TableCell colSpan={4} className="py-16 whitespace-normal">
+                  <div className="flex flex-col items-center justify-center gap-3 text-center">
+                    <Building2
+                      className="size-8 text-text-secondary"
+                      aria-hidden
+                    />
+                    <div className="space-y-1">
+                      <p className="type-heading-02 text-text-primary">
+                        No payers found
+                      </p>
+                      <p className="type-body-01 text-text-secondary">
+                        {search
+                          ? "Try a different search term."
+                          : "Add your first payer to get started."}
+                      </p>
+                    </div>
+                    {can("payers.create") && !search && (
+                      <Button onClick={handleNew} className="mt-2">
+                        New Payer
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
               payers.map((payer) => (
                 <TableRow key={payer.id}>
-                  <TableCell className="font-medium">{payer.name}</TableCell>
-                  <TableCell>{payer.shortCode}</TableCell>
-                  <TableCell>{payer.state ?? "—"}</TableCell>
-                  <TableCell className="space-x-1 text-right">
-                    {can("payers.edit") && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(payer)}
-                      >
-                        Edit
-                      </Button>
-                    )}
-                    {can("payers.delete") && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                        onClick={() => setDeleting(payer)}
-                      >
-                        Delete
-                      </Button>
-                    )}
+                  <TableCell className="font-medium text-text-primary">
+                    {payer.name}
+                  </TableCell>
+                  <TableCell className="font-mono text-text-secondary">
+                    {payer.shortCode}
+                  </TableCell>
+                  <TableCell className="text-text-secondary">
+                    {payer.state ?? "—"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      {can("payers.edit") && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Edit ${payer.name}`}
+                          onClick={() => handleEdit(payer)}
+                        >
+                          <Pencil className="size-4" />
+                        </Button>
+                      )}
+                      {can("payers.delete") && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Delete ${payer.name}`}
+                          className="text-support-error hover:bg-support-error-bg hover:text-support-error"
+                          onClick={() => setDeleting(payer)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

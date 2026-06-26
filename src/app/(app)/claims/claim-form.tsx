@@ -205,7 +205,7 @@ export function ClaimForm({
             </Select>
           )}
           {errors.clientId && (
-            <p className="text-sm text-destructive">{errors.clientId.message}</p>
+            <p className="type-label-01 text-support-error">{errors.clientId.message}</p>
           )}
         </div>
 
@@ -231,7 +231,7 @@ export function ClaimForm({
             </Select>
           )}
           {errors.payerId && (
-            <p className="text-sm text-destructive">{errors.payerId.message}</p>
+            <p className="type-label-01 text-support-error">{errors.payerId.message}</p>
           )}
         </div>
 
@@ -246,7 +246,7 @@ export function ClaimForm({
           <Label htmlFor="dateBilled">Date Billed</Label>
           <Input id="dateBilled" type="date" {...register("dateBilled")} />
           {errors.dateBilled && (
-            <p className="text-sm text-destructive">
+            <p className="type-label-01 text-support-error">
               {errors.dateBilled.message}
             </p>
           )}
@@ -259,7 +259,7 @@ export function ClaimForm({
             {...register("dateOfService")}
           />
           {errors.dateOfService && (
-            <p className="text-sm text-destructive">
+            <p className="type-label-01 text-support-error">
               {errors.dateOfService.message}
             </p>
           )}
@@ -276,7 +276,7 @@ export function ClaimForm({
             {...register("chargeAmount")}
           />
           {errors.chargeAmount && (
-            <p className="text-sm text-destructive">
+            <p className="type-label-01 text-support-error">
               {errors.chargeAmount.message}
             </p>
           )}
@@ -327,10 +327,10 @@ export function ClaimForm({
             {...register("negotiationDate")}
           />
         </div>
-        <label className="flex items-center gap-2 pt-8 text-sm font-medium">
+        <label className="flex items-center gap-2 pt-8 type-body-compact-01 text-text-primary">
           <input
             type="checkbox"
-            className="size-4 rounded border-input"
+            className="size-4 rounded-sm border-border-strong accent-[var(--interactive)]"
             {...register("payToPatient")}
           />
           Pay to client

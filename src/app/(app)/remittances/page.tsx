@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Receipt } from "lucide-react";
 import { toast } from "sonner";
 
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Table,
   TableBody,
@@ -35,17 +37,15 @@ export default function RemittancesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-950">Remittances</h1>
-        <p className="text-sm text-zinc-500">
-          Committed payments from approved EOBs.
-        </p>
-      </div>
+      <PageHeader
+        title="Remittances"
+        description="Committed payments from approved EOBs."
+      />
 
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-md border border-border-subtle bg-card">
         <Table>
           <TableHeader>
-            <TableRow className="bg-zinc-50">
+            <TableRow>
               <TableHead>Payer</TableHead>
               <TableHead>Check #</TableHead>
               <TableHead>Check Date</TableHead>
@@ -55,15 +55,27 @@ export default function RemittancesPage() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={5} className="py-8 text-center text-zinc-500">
-                  Loading…
-                </TableCell>
-              </TableRow>
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i} className="hover:bg-transparent">
+                  {Array.from({ length: 5 }).map((__, j) => (
+                    <TableCell key={j}>
+                      <div className="h-4 w-full animate-pulse rounded-sm bg-skeleton-background" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
             ) : remittances.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="py-8 text-center text-zinc-500">
-                  No remittances yet. Approve a document in the review queue.
+              <TableRow className="hover:bg-transparent">
+                <TableCell colSpan={5} className="py-16">
+                  <div className="flex flex-col items-center gap-2 text-center">
+                    <Receipt className="size-8 text-text-secondary" />
+                    <p className="type-heading-02 text-text-primary">
+                      No remittances yet
+                    </p>
+                    <p className="type-body-01 text-text-secondary">
+                      Approve a document in the review queue to record a payment.
+                    </p>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
@@ -73,19 +85,19 @@ export default function RemittancesPage() {
                   className="cursor-pointer"
                   onClick={() => router.push(`/remittances/${r.id}`)}
                 >
-                  <TableCell className="font-medium text-zinc-900">
+                  <TableCell className="type-heading-compact-01 text-text-primary">
                     {r.payer?.name ?? "—"}
                   </TableCell>
-                  <TableCell className="font-mono text-xs text-zinc-700">
+                  <TableCell className="font-mono text-xs text-text-secondary">
                     {r.checkNumber ?? "—"}
                   </TableCell>
-                  <TableCell className="text-zinc-600">
+                  <TableCell className="text-text-secondary">
                     {formatDate(r.checkDate)}
                   </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums text-zinc-700">
+                  <TableCell className="text-right font-mono tabular-nums text-text-secondary">
                     {r._count?.claimLines ?? 0}
                   </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums text-zinc-900">
+                  <TableCell className="text-right font-mono tabular-nums text-text-primary">
                     {formatMoney(r.checkAmount)}
                   </TableCell>
                 </TableRow>

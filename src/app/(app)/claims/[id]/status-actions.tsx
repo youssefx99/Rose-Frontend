@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
+import { Info } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -40,9 +41,12 @@ export function StatusActions({ claim, onChanged }: StatusActionsProps) {
 
   if (targets.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        No further status changes — this claim is in a terminal state.
-      </p>
+      <div className="flex items-start gap-2 rounded-md border-l-4 border-support-info bg-support-info-bg px-4 py-3">
+        <Info className="mt-0.5 size-4 shrink-0 text-support-info" />
+        <p className="type-body-compact-01 text-text-primary">
+          No further status changes — this claim is in a terminal state.
+        </p>
+      </div>
     );
   }
 

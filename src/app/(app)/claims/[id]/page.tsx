@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { CascadeDeleteDialog } from "@/components/ui/cascade-delete-dialog";
+import { PageHeader } from "@/components/ui/page-header";
 import { Section, DataList, DataRow, Stat } from "@/components/ui/detail";
 import {
   Table,
@@ -66,8 +67,12 @@ export default function ClaimDetailPage() {
     load();
   }, [load]);
 
-  if (loading) return <p className="text-sm text-zinc-500">Loading…</p>;
-  if (!claim) return <p className="text-sm text-zinc-500">Claim not found.</p>;
+  if (loading)
+    return <p className="type-body-01 text-text-secondary">Loading…</p>;
+  if (!claim)
+    return (
+      <p className="type-body-01 text-text-secondary">Claim not found.</p>
+    );
 
   const lines = claim.remittanceLines ?? [];
   const lineTotals = lines.reduce(
@@ -83,43 +88,39 @@ export default function ClaimDetailPage() {
     <div className="space-y-6">
       <Link
         href="/claims"
-        className="inline-flex items-center gap-1 text-sm text-zinc-500 transition-colors hover:text-zinc-900"
+        className="inline-flex items-center gap-1 type-body-compact-01 text-text-secondary transition-colors duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] hover:text-text-primary"
       >
         <ArrowLeft className="size-4" /> Back to claims
       </Link>
 
       {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0 space-y-1.5">
-          <div className="flex items-center gap-3">
-            <h1 className="truncate font-mono text-2xl font-semibold tracking-tight text-zinc-950">
-              {claim.claimReference}
-            </h1>
-            <StatusBadge status={claim.status} />
-          </div>
-          <p className="text-sm text-zinc-500">
-            {claim.client?.displayName} · {claim.payer?.name}
-            {claim.payer?.state ? ` · ${claim.payer.state}` : ""}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {can("claims.edit") && (
-            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-              <Pencil className="size-3.5" /> Edit
-            </Button>
-          )}
-          {can("claims.delete") && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-red-600 hover:bg-red-50 hover:text-red-700"
-              onClick={() => setDeleteOpen(true)}
-            >
-              <Trash2 className="size-3.5" /> Delete
-            </Button>
-          )}
-        </div>
-      </div>
+      <PageHeader
+        title={claim.claimReference}
+        description={[
+          claim.client?.displayName,
+          claim.payer?.name,
+          claim.payer?.state,
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+      >
+        <StatusBadge status={claim.status} />
+        {can("claims.edit") && (
+          <Button size="sm" onClick={() => setEditOpen(true)}>
+            <Pencil className="size-3.5" /> Edit
+          </Button>
+        )}
+        {can("claims.delete") && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-support-error hover:bg-support-error-bg hover:text-support-error"
+            onClick={() => setDeleteOpen(true)}
+          >
+            <Trash2 className="size-3.5" /> Delete
+          </Button>
+        )}
+      </PageHeader>
 
       {/* KPI strip */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -139,12 +140,9 @@ export default function ClaimDetailPage() {
 
       {/* Status transitions */}
       {can("claims.edit") && (
-        <div className="rounded-xl border border-zinc-200 bg-zinc-50/60 px-5 py-4">
-          <p className="mb-2.5 text-xs font-medium uppercase tracking-wider text-zinc-500">
-            Move status
-          </p>
+        <Section title="Move status">
           <StatusActions claim={claim} onChanged={setClaim} />
-        </div>
+        </Section>
       )}
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -199,13 +197,13 @@ export default function ClaimDetailPage() {
             bodyClassName="px-0 py-0"
           >
             {lines.length === 0 ? (
-              <p className="px-5 py-6 text-center text-sm text-zinc-400">
+              <p className="px-5 py-6 text-center type-body-01 text-text-secondary">
                 No payment lines — this claim was entered manually.
               </p>
             ) : (
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-zinc-50">
+                  <TableRow>
                     <TableHead>Service date</TableHead>
                     <TableHead className="text-right">Billed</TableHead>
                     <TableHead className="text-right">Allowed</TableHead>
@@ -216,36 +214,36 @@ export default function ClaimDetailPage() {
                 <TableBody>
                   {lines.map((l) => (
                     <TableRow key={l.id}>
-                      <TableCell className="text-zinc-600">
+                      <TableCell className="text-text-secondary">
                         {formatDate(l.dateOfService)}
                       </TableCell>
                       <TableCell className="text-right font-mono tabular-nums">
                         {formatMoney(l.billedAmount)}
                       </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-zinc-500">
+                      <TableCell className="text-right font-mono tabular-nums text-text-secondary">
                         {formatMoney(l.allowedAmount)}
                       </TableCell>
                       <TableCell className="text-right font-mono tabular-nums">
                         {formatMoney(l.paidAmount)}
                       </TableCell>
-                      <TableCell className="text-zinc-500">
-                        <span className="font-mono text-xs">
+                      <TableCell className="text-text-secondary">
+                        <span className="type-code-01">
                           {l.remittance.checkNumber ?? "—"}
                         </span>
-                        <span className="ml-1 text-xs text-zinc-400">
+                        <span className="ml-1 type-label-01 text-text-helper">
                           {formatDate(l.remittance.checkDate)}
                         </span>
                       </TableCell>
                     </TableRow>
                   ))}
-                  <TableRow className="border-t-2 border-zinc-200 bg-zinc-50/50 font-medium">
-                    <TableCell className="text-zinc-700">
+                  <TableRow className="border-t-2 border-border-subtle bg-layer font-medium">
+                    <TableCell className="text-text-primary">
                       {lines.length} line{lines.length === 1 ? "" : "s"}
                     </TableCell>
                     <TableCell className="text-right font-mono tabular-nums">
                       {formatMoney(lineTotals.billed)}
                     </TableCell>
-                    <TableCell className="text-right font-mono tabular-nums text-zinc-500">
+                    <TableCell className="text-right font-mono tabular-nums text-text-secondary">
                       {formatMoney(lineTotals.allowed)}
                     </TableCell>
                     <TableCell className="text-right font-mono tabular-nums">
@@ -260,14 +258,14 @@ export default function ClaimDetailPage() {
 
           {claim.notes && (
             <Section title="Notes">
-              <p className="whitespace-pre-wrap text-sm text-zinc-700">
+              <p className="whitespace-pre-wrap type-body-01 text-text-primary">
                 {claim.notes}
               </p>
             </Section>
           )}
           {claim.internalNote && (
             <Section title="Internal note" subtitle="Not shown to clients">
-              <p className="whitespace-pre-wrap text-sm text-zinc-700">
+              <p className="whitespace-pre-wrap type-body-01 text-text-primary">
                 {claim.internalNote}
               </p>
             </Section>

@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Inbox } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { FilterBar, FilterField, type ActiveFilterChip } from "@/components/ui/filter-bar";
 import { ClaimFormPanel } from "./claim-form-panel";
@@ -177,12 +179,14 @@ export default function ClaimsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-950">Claims</h1>
+      <PageHeader
+        title="Claims"
+        description="Track billed claims, payer payments, and outstanding balances."
+      >
         {can("claims.create") && (
           <Button onClick={() => setCreateOpen(true)}>New Claim</Button>
         )}
-      </div>
+      </PageHeader>
 
       <FilterBar
         search={search}
@@ -300,31 +304,61 @@ export default function ClaimsPage() {
         </FilterField>
       </FilterBar>
 
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-md border border-border-subtle bg-card">
         <Table>
           <TableHeader>
-            <TableRow className="bg-zinc-50">
+            <TableRow className="hover:bg-transparent">
               <TableHead>Reference</TableHead>
               <TableHead>Client</TableHead>
               <TableHead>Payer</TableHead>
               <TableHead>State</TableHead>
               <TableHead>Date of Service</TableHead>
-              <TableHead className="text-right">Charge</TableHead>
-              <TableHead className="text-right">Paid</TableHead>
+              <TableHead className="text-right tabular-nums">Charge</TableHead>
+              <TableHead className="text-right tabular-nums">Paid</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground">
+              <TableRow className="hover:bg-transparent">
+                <TableCell
+                  colSpan={8}
+                  className="py-12 text-center text-text-secondary"
+                >
                   Loading…
                 </TableCell>
               </TableRow>
             ) : claims.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground">
-                  No claims found.
+              <TableRow className="hover:bg-transparent">
+                <TableCell colSpan={8} className="py-16">
+                  <div className="mx-auto flex max-w-sm flex-col items-center gap-3 text-center">
+                    <Inbox className="size-8 text-text-secondary" aria-hidden />
+                    <div className="space-y-1">
+                      <p className="type-heading-02 text-text-primary">
+                        {chips.length > 0 ? "No matching claims" : "No claims yet"}
+                      </p>
+                      <p className="type-body-01 text-text-secondary">
+                        {chips.length > 0
+                          ? "No claims match the current filters. Try clearing them."
+                          : "Create your first claim to get started."}
+                      </p>
+                    </div>
+                    {chips.length > 0 ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setFilters(EMPTY_FILTERS)}
+                      >
+                        Clear filters
+                      </Button>
+                    ) : (
+                      can("claims.create") && (
+                        <Button size="sm" onClick={() => setCreateOpen(true)}>
+                          New Claim
+                        </Button>
+                      )
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
@@ -334,25 +368,25 @@ export default function ClaimsPage() {
                   className="cursor-pointer"
                   onClick={() => router.push(`/claims/${claim.id}`)}
                 >
-                  <TableCell className="font-mono text-xs text-zinc-900">
+                  <TableCell className="font-mono text-text-primary">
                     {claim.claimReference}
                   </TableCell>
-                  <TableCell className="text-zinc-700">
+                  <TableCell>
                     {claim.client?.displayName ?? "—"}
                   </TableCell>
-                  <TableCell className="text-zinc-700">
+                  <TableCell>
                     {claim.payer?.shortCode ?? "—"}
                   </TableCell>
-                  <TableCell className="text-zinc-600">
+                  <TableCell className="text-text-secondary">
                     {claim.payer?.state ?? "—"}
                   </TableCell>
-                  <TableCell className="text-zinc-600">
+                  <TableCell className="text-text-secondary">
                     {formatDate(claim.dateOfService)}
                   </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums text-zinc-900">
+                  <TableCell className="text-right font-mono tabular-nums text-text-primary">
                     {formatMoney(claim.chargeAmount)}
                   </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums text-zinc-900">
+                  <TableCell className="text-right font-mono tabular-nums text-text-primary">
                     {formatMoney(claim.payerPaidAmount)}
                   </TableCell>
                   <TableCell>

@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { KeyRound, Pencil, Users as UsersIcon } from "lucide-react";
 
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Table,
   TableBody,
@@ -52,7 +54,7 @@ export default function UsersPage() {
 
   if (user && !isSuperAdmin) {
     return (
-      <p className="text-sm text-zinc-500">
+      <p className="type-body-01 text-text-secondary">
         You don&apos;t have access to user management.
       </p>
     );
@@ -60,20 +62,17 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-950">Users</h1>
-          <p className="text-sm text-zinc-500">
-            Manage who can access RoseSystem and what they can do.
-          </p>
-        </div>
-        <Button onClick={() => setFormOpen(true)}>New User</Button>
-      </div>
+      <PageHeader
+        title="Users"
+        description="Manage who can access RoseSystem and what they can do."
+      >
+        <Button onClick={() => setFormOpen(true)}>New user</Button>
+      </PageHeader>
 
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-md border border-border-subtle bg-card">
         <Table>
           <TableHeader>
-            <TableRow className="bg-zinc-50">
+            <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
@@ -85,27 +84,41 @@ export default function UsersPage() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="py-8 text-center text-zinc-500">
+                <TableCell
+                  colSpan={6}
+                  className="py-8 text-center text-text-secondary"
+                >
                   Loading…
                 </TableCell>
               </TableRow>
             ) : users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="py-8 text-center text-zinc-500">
-                  No users yet.
+                <TableCell colSpan={6} className="py-12">
+                  <div className="flex flex-col items-center gap-3 text-center">
+                    <UsersIcon className="size-8 text-text-secondary" />
+                    <div className="space-y-1">
+                      <p className="type-heading-02 text-text-primary">
+                        No users yet
+                      </p>
+                      <p className="type-body-01 text-text-secondary">
+                        Add a teammate to give them access to RoseSystem.
+                      </p>
+                    </div>
+                    <Button onClick={() => setFormOpen(true)}>New user</Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
               users.map((u) => (
                 <TableRow key={u.id}>
-                  <TableCell className="font-medium text-zinc-900">
+                  <TableCell className="font-medium text-text-primary">
                     {u.firstName} {u.lastName}
                   </TableCell>
-                  <TableCell className="text-zinc-600">{u.email}</TableCell>
+                  <TableCell className="text-text-secondary">{u.email}</TableCell>
                   <TableCell>
                     <span
                       className={cn(
-                        "inline-flex w-fit items-center rounded-md px-2 py-0.5 text-xs font-medium",
+                        "type-label-01 inline-flex w-fit items-center rounded-full px-2 py-0.5 whitespace-nowrap",
                         roleColor(u.role),
                       )}
                     >
@@ -114,34 +127,42 @@ export default function UsersPage() {
                   </TableCell>
                   <TableCell>
                     {u.isActive ? (
-                      <span className="text-sm text-green-700">Active</span>
+                      <span className="type-body-compact-01 text-support-success">
+                        Active
+                      </span>
                     ) : (
-                      <span className="text-sm text-zinc-400">Disabled</span>
+                      <span className="type-body-compact-01 text-text-helper">
+                        Disabled
+                      </span>
                     )}
                   </TableCell>
-                  <TableCell className="text-zinc-500">
+                  <TableCell className="text-text-secondary">
                     {u.lastLoginAt ? formatDate(u.lastLoginAt) : "Never"}
                   </TableCell>
-                  <TableCell className="space-x-1 text-right">
+                  <TableCell className="text-right">
                     {u.id === user?.id ? (
-                      <span className="text-xs text-zinc-400">You</span>
+                      <span className="type-label-01 text-text-helper">You</span>
                     ) : (
-                      <>
+                      <div className="flex items-center justify-end gap-1">
                         <Button
                           variant="ghost"
-                          size="sm"
+                          size="icon"
+                          className="size-8"
+                          aria-label={`Edit permissions for ${u.firstName} ${u.lastName}`}
                           onClick={() => setPermissionsUser(u)}
                         >
-                          Permissions
+                          <KeyRound className="size-4" />
                         </Button>
                         <Button
                           variant="ghost"
-                          size="sm"
+                          size="icon"
+                          className="size-8"
+                          aria-label={`Edit ${u.firstName} ${u.lastName}`}
                           onClick={() => setEditing(u)}
                         >
-                          Edit
+                          <Pencil className="size-4" />
                         </Button>
-                      </>
+                      </div>
                     )}
                   </TableCell>
                 </TableRow>

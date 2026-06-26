@@ -7,6 +7,7 @@ import { isAxiosError } from "axios";
 import { UploadCloud, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Card,
   CardContent,
@@ -53,9 +54,9 @@ interface FileResult {
 }
 
 const RESULT_STYLE: Record<UploadOutcome, string> = {
-  uploaded: "bg-green-100 text-green-700",
-  duplicate: "bg-amber-100 text-amber-700",
-  failed: "bg-red-100 text-red-700",
+  uploaded: "bg-support-success-bg text-support-success",
+  duplicate: "bg-support-warning-bg text-text-primary",
+  failed: "bg-support-error-bg text-support-error",
 };
 const RESULT_LABEL: Record<UploadOutcome, string> = {
   uploaded: "Queued",
@@ -255,15 +256,10 @@ export default function DocumentsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-950">
-          Documents
-        </h1>
-        <p className="text-sm text-zinc-500">
-          Upload EOB / remittance PDFs — one or many. They are extracted in the
-          background, then sent to the review queue.
-        </p>
-      </div>
+      <PageHeader
+        title="Documents"
+        description="Upload EOB / remittance PDFs — one or many. They are extracted in the background, then sent to the review queue."
+      />
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Upload */}
@@ -289,10 +285,10 @@ export default function DocumentsPage() {
                   addFiles(e.dataTransfer.files);
                 }}
                 className={cn(
-                  "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-8 text-center transition-colors",
+                  "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed px-4 py-8 text-center transition-colors duration-[var(--dur-fast-02)] ease-[var(--ease-standard)]",
                   dragging
-                    ? "border-rose-400 bg-rose-50/60"
-                    : "border-zinc-300 bg-zinc-50 hover:border-zinc-400 hover:bg-zinc-100",
+                    ? "border-border-interactive bg-highlight"
+                    : "border-border-strong bg-layer hover:bg-layer-hover",
                 )}
               >
                 <input
@@ -304,12 +300,12 @@ export default function DocumentsPage() {
                   className="hidden"
                   onChange={(e) => addFiles(e.target.files)}
                 />
-                <UploadCloud className="size-6 text-zinc-400" />
+                <UploadCloud className="size-6 text-text-secondary" />
                 <div>
-                  <p className="text-sm font-medium text-zinc-700">
+                  <p className="type-body-compact-01 font-medium text-text-primary">
                     Click or drop PDFs here
                   </p>
-                  <p className="text-xs text-zinc-500">
+                  <p className="type-label-01 text-text-secondary">
                     One or many — EOBs / remittances
                   </p>
                 </div>
@@ -319,42 +315,42 @@ export default function DocumentsPage() {
               {files.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-medium text-zinc-600">
+                    <p className="type-label-01 font-medium text-text-secondary">
                       {files.length} file{files.length === 1 ? "" : "s"} selected
                     </p>
                     {!uploading && (
                       <button
                         type="button"
                         onClick={clearAll}
-                        className="text-xs text-zinc-500 transition-colors hover:text-zinc-900"
+                        className="type-label-01 text-text-secondary transition-colors duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-background"
                       >
                         Clear all
                       </button>
                     )}
                   </div>
-                  <ul className="max-h-44 space-y-1 overflow-y-auto rounded-md border border-zinc-200 p-1.5">
+                  <ul className="max-h-44 space-y-1 overflow-y-auto rounded-md border border-border-subtle p-1">
                     {files.map((f) => {
                       const r = resultFor(f);
                       return (
                         <li
                           key={fileKey(f)}
-                          className="flex items-center gap-2 rounded px-2 py-1 text-sm hover:bg-zinc-50"
+                          className="flex items-center gap-2 rounded-sm px-2 py-1 type-body-compact-01 hover:bg-layer-hover"
                         >
-                          <span className="min-w-0 flex-1 truncate text-zinc-700">
+                          <span className="min-w-0 flex-1 truncate text-text-primary">
                             {f.name}
                           </span>
                           {r ? (
                             <span
                               title={r.message}
                               className={cn(
-                                "shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium",
+                                "shrink-0 rounded-sm px-2 py-0.5 type-label-01 font-medium",
                                 RESULT_STYLE[r.status],
                               )}
                             >
                               {RESULT_LABEL[r.status]}
                             </span>
                           ) : (
-                            <span className="shrink-0 font-mono text-xs text-zinc-400">
+                            <span className="shrink-0 font-mono type-label-01 tabular-nums text-text-helper">
                               {fileSizeMb(f.size)}
                             </span>
                           )}
@@ -363,7 +359,7 @@ export default function DocumentsPage() {
                               type="button"
                               aria-label={`Remove ${f.name}`}
                               onClick={() => removeFile(fileKey(f))}
-                              className="shrink-0 rounded p-0.5 text-zinc-400 transition-colors hover:bg-zinc-200 hover:text-zinc-700"
+                              className="shrink-0 rounded-sm p-1 text-text-helper transition-colors duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] hover:bg-layer-selected hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-background"
                             >
                               <X className="size-3.5" />
                             </button>
@@ -394,13 +390,13 @@ export default function DocumentsPage() {
                 />
               )}
               {files.length > 1 && (
-                <p className="text-xs text-zinc-500">
+                <p className="type-label-01 text-text-secondary">
                   All pages of each file will be processed. To pick specific
                   pages, upload that file on its own.
                 </p>
               )}
               {noPagesChosen && (
-                <p className="text-xs text-red-600">
+                <p className="type-label-01 text-support-error">
                   Select at least 1 page to process.
                 </p>
               )}
@@ -409,7 +405,7 @@ export default function DocumentsPage() {
                 <Label>
                   Document Type
                   {files.length > 1 && (
-                    <span className="ml-1 text-xs font-normal text-zinc-400">
+                    <span className="ml-1 type-label-01 font-normal text-text-helper">
                       (applies to all)
                     </span>
                   )}
@@ -431,34 +427,34 @@ export default function DocumentsPage() {
                 </Select>
               </div>
 
-              <label className="flex cursor-pointer items-center gap-2 text-xs text-zinc-600">
+              <label className="flex cursor-pointer items-center gap-2 type-label-01 text-text-secondary">
                 <input
                   type="checkbox"
                   checked={allowDuplicate}
                   onChange={(e) => setAllowDuplicate(e.target.checked)}
-                  className="size-3.5 rounded border-zinc-300 text-rose-500 focus:ring-rose-400"
+                  className="size-4 rounded-sm border-border-strong accent-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-background"
                 />
                 Upload even if a file was already uploaded
               </label>
 
               {uploading && progress && (
                 <div className="space-y-1">
-                  <div className="h-1.5 overflow-hidden rounded-full bg-zinc-100">
+                  <div className="h-1.5 overflow-hidden rounded-full bg-layer">
                     <div
-                      className="h-full rounded-full bg-rose-500 transition-[width] duration-200"
+                      className="h-full rounded-full bg-interactive transition-[width] duration-[var(--dur-moderate-02)] ease-[var(--ease-standard)]"
                       style={{
                         width: `${(progress.current / progress.total) * 100}%`,
                       }}
                     />
                   </div>
-                  <p className="text-xs text-zinc-500">
+                  <p className="type-label-01 text-text-secondary">
                     Uploading {progress.current} of {progress.total}…
                   </p>
                 </div>
               )}
 
               {summary && !uploading && (
-                <p className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-600">
+                <p className="rounded-md border border-border-subtle bg-layer px-3 py-2 type-label-01 text-text-secondary">
                   {summary}
                 </p>
               )}
@@ -483,10 +479,11 @@ export default function DocumentsPage() {
         <div
           className={`space-y-3 ${canUpload ? "lg:col-span-2" : "lg:col-span-3"}`}
         >
-          <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
+          <h2 className="type-heading-03 text-text-primary">Recent uploads</h2>
+          <div className="overflow-hidden rounded-md border border-border-subtle bg-card">
             <Table>
               <TableHeader>
-                <TableRow className="bg-zinc-50">
+                <TableRow>
                   <TableHead>File</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Uploaded</TableHead>
@@ -498,26 +495,31 @@ export default function DocumentsPage() {
               <TableBody>
                 {jobs.length === 0 ? (
                   <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      className="py-10 text-center text-zinc-500"
-                    >
-                      No uploads yet. Choose a PDF to get started.
+                    <TableCell colSpan={6} className="py-16 text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <UploadCloud className="size-8 text-text-secondary" />
+                        <p className="type-heading-02 text-text-primary">
+                          No uploads yet
+                        </p>
+                        <p className="type-body-01 text-text-secondary">
+                          Upload a document to get started.
+                        </p>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : (
                   jobs.map((job) => (
                     <TableRow key={job.id}>
-                      <TableCell className="max-w-[220px] truncate font-mono text-xs text-zinc-700">
+                      <TableCell className="max-w-[220px] truncate type-code-01 text-text-primary">
                         {job.fileName}
                       </TableCell>
-                      <TableCell className="text-zinc-600">
+                      <TableCell className="text-text-secondary">
                         {job.documentType.replace(/_/g, " ")}
                       </TableCell>
-                      <TableCell className="text-zinc-600">
+                      <TableCell className="text-text-secondary">
                         {formatDateTime(job.createdAt)}
                       </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-zinc-700">
+                      <TableCell className="text-right font-mono tabular-nums text-text-primary">
                         {job._count?.reviewItems ?? 0}
                       </TableCell>
                       <TableCell>
@@ -527,7 +529,7 @@ export default function DocumentsPage() {
                         {job.status === "IN_REVIEW" && (
                           <Link
                             href={`/review/${job.id}`}
-                            className="text-sm font-medium text-rose-600 hover:text-rose-700"
+                            className="type-body-compact-01 font-medium text-link hover:text-link-hover"
                           >
                             Review →
                           </Link>
@@ -535,7 +537,7 @@ export default function DocumentsPage() {
                         {job.status === "FAILED" && job.errorMessage && (
                           <span
                             title={job.errorMessage}
-                            className="text-xs text-red-600"
+                            className="type-label-01 text-support-error"
                           >
                             Failed
                           </span>

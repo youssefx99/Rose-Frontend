@@ -112,9 +112,9 @@ export function ReviewItemCard({ item, onChanged }: ReviewItemCardProps) {
   };
 
   return (
-    <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-zinc-200 bg-zinc-50 px-5 py-3">
-        <span className="text-sm font-semibold text-zinc-900">
+    <div className="overflow-hidden rounded-md border border-border-subtle bg-card">
+      <div className="flex items-center justify-between border-b border-border-subtle bg-layer px-5 py-3">
+        <span className="type-heading-02 text-text-primary">
           {TITLES[item.itemType]}
         </span>
         <StatusBadge status={item.status} />
@@ -123,13 +123,13 @@ export function ReviewItemCard({ item, onChanged }: ReviewItemCardProps) {
       <div className="grid gap-6 p-5 lg:grid-cols-2">
         {/* Left — extracted / editable */}
         <div>
-          <p className="mb-3 text-xs font-medium uppercase tracking-wider text-zinc-500">
+          <p className="mb-3 type-label-01 font-medium uppercase tracking-wider text-text-secondary">
             Extracted by AI
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             {fields.map((f) => (
               <div key={f.key} className="space-y-1">
-                <Label htmlFor={`${item.id}-${f.key}`} className="text-xs text-zinc-500">
+                <Label htmlFor={`${item.id}-${f.key}`} className="type-label-01 text-text-secondary">
                   {f.label}
                 </Label>
                 <Input
@@ -157,32 +157,32 @@ export function ReviewItemCard({ item, onChanged }: ReviewItemCardProps) {
 
         {/* Right — matched DB record */}
         <div>
-          <p className="mb-3 text-xs font-medium uppercase tracking-wider text-zinc-500">
+          <p className="mb-3 type-label-01 font-medium uppercase tracking-wider text-text-secondary">
             {item.itemType === "CLAIM_PAYMENT" ? "Matched Claim" : "Will Create"}
           </p>
           {item.itemType === "CLAIM_PAYMENT" ? (
             match ? (
               <Link
                 href={`/claims/${match.id}`}
-                className="block rounded-md border border-zinc-200 p-4 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
+                className="block rounded-md border border-border-subtle p-4 transition-colors duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] hover:border-border-strong hover:bg-layer"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-mono text-sm text-zinc-900">
+                  <span className="font-mono type-body-compact-01 text-text-primary">
                     {match.claimReference}
                   </span>
                   <StatusBadge status={match.status} />
                 </div>
-                <p className="mt-1 text-sm text-zinc-600">
+                <p className="mt-1 type-body-compact-01 text-text-secondary">
                   {match.client?.displayName ?? "—"}
                 </p>
-                <p className="mt-1 text-xs text-zinc-500">
+                <p className="mt-1 type-label-01 text-text-secondary">
                   Charge {formatMoney(match.chargeAmount)}
                 </p>
               </Link>
             ) : (
-              <div className="rounded-md border border-dashed border-zinc-300 p-4 text-sm text-zinc-500">
+              <div className="rounded-md border border-dashed border-border-strong p-4 type-body-compact-01 text-text-secondary">
                 No existing claim yet. On approval, every line sharing claim{" "}
-                <span className="font-mono text-zinc-700">
+                <span className="font-mono text-text-primary">
                   {String(effective.claimNumber ?? "—")}
                 </span>{" "}
                 is rolled into one claim — charge &amp; paid summed, with the
@@ -190,11 +190,11 @@ export function ReviewItemCard({ item, onChanged }: ReviewItemCardProps) {
               </div>
             )
           ) : (
-            <div className="rounded-md border border-zinc-200 p-4 text-sm text-zinc-600">
+            <div className="rounded-md border border-border-subtle p-4 type-body-compact-01 text-text-secondary">
               Approving creates a{" "}
-              <span className="font-medium text-zinc-900">bank deposit</span> and{" "}
-              <span className="font-medium text-zinc-900">remittance</span> for{" "}
-              <span className="font-medium text-zinc-900">
+              <span className="font-medium text-text-primary">bank deposit</span> and{" "}
+              <span className="font-medium text-text-primary">remittance</span> for{" "}
+              <span className="font-medium text-text-primary">
                 {String(effective.payerName ?? "this payer")}
               </span>{" "}
               of{" "}
@@ -206,7 +206,7 @@ export function ReviewItemCard({ item, onChanged }: ReviewItemCardProps) {
           )}
 
           {item.status === "REJECTED" && item.rejectionReason && (
-            <p className="mt-3 text-xs text-red-600">
+            <p className="mt-3 type-label-01 text-support-error">
               Rejected: {item.rejectionReason}
             </p>
           )}
@@ -214,7 +214,7 @@ export function ReviewItemCard({ item, onChanged }: ReviewItemCardProps) {
       </div>
 
       {pending && (canApprove || canReject) && (
-        <div className="flex justify-end gap-2 border-t border-zinc-200 px-5 py-3">
+        <div className="flex justify-end gap-2 border-t border-border-subtle px-5 py-3">
           {canReject && (
             <Button
               variant="destructive"

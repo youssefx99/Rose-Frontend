@@ -111,14 +111,14 @@ export function UserFormDialog({
             <Label htmlFor="firstName">First Name</Label>
             <Input id="firstName" {...register("firstName")} />
             {errors.firstName && (
-              <p className="text-sm text-red-600">{errors.firstName.message}</p>
+              <p className="type-label-01 text-support-error">{errors.firstName.message}</p>
             )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="lastName">Last Name</Label>
             <Input id="lastName" {...register("lastName")} />
             {errors.lastName && (
-              <p className="text-sm text-red-600">{errors.lastName.message}</p>
+              <p className="type-label-01 text-support-error">{errors.lastName.message}</p>
             )}
           </div>
         </div>
@@ -127,7 +127,7 @@ export function UserFormDialog({
           <Label htmlFor="email">Email</Label>
           <Input id="email" type="email" {...register("email")} />
           {errors.email && (
-            <p className="text-sm text-red-600">{errors.email.message}</p>
+            <p className="type-label-01 text-support-error">{errors.email.message}</p>
           )}
         </div>
 
@@ -157,9 +157,9 @@ export function UserFormDialog({
           <Label htmlFor="password">Temporary Password</Label>
           <Input id="password" type="text" autoComplete="off" {...register("password")} />
           {errors.password ? (
-            <p className="text-sm text-red-600">{errors.password.message}</p>
+            <p className="type-label-01 text-support-error">{errors.password.message}</p>
           ) : (
-            <p className="text-xs text-zinc-500">
+            <p className="type-label-01 text-text-helper">
               Min 8 characters with upper, lower, and a number. Share it
               securely — the user can change it later.
             </p>

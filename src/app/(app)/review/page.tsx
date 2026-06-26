@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageHeader } from "@/components/ui/page-header";
 import { listReviewQueue, type QueueJob } from "@/lib/documents";
 import { formatDateTime } from "@/lib/format";
 
@@ -34,18 +35,15 @@ export default function ReviewQueuePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-950">Review Queue</h1>
-        <p className="text-sm text-zinc-500">
-          Documents extracted by AI, awaiting your review before they commit to
-          the ledger.
-        </p>
-      </div>
+      <PageHeader
+        title="Review Queue"
+        description="Documents extracted by AI, awaiting your review before they commit to the ledger."
+      />
 
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-md border border-border-subtle bg-card">
         <Table>
           <TableHeader>
-            <TableRow className="bg-zinc-50">
+            <TableRow>
               <TableHead>Document</TableHead>
               <TableHead>Payer</TableHead>
               <TableHead>Uploaded</TableHead>
@@ -56,13 +54,13 @@ export default function ReviewQueuePage() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="py-8 text-center text-zinc-500">
+                <TableCell colSpan={5} className="py-8 text-center text-text-secondary">
                   Loading…
                 </TableCell>
               </TableRow>
             ) : jobs.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="py-8 text-center text-zinc-500">
+                <TableCell colSpan={5} className="py-8 text-center text-text-secondary">
                   Nothing to review. Upload a document to get started.
                 </TableCell>
               </TableRow>
@@ -73,25 +71,25 @@ export default function ReviewQueuePage() {
                   className="cursor-pointer"
                   onClick={() => router.push(`/review/${job.id}`)}
                 >
-                  <TableCell className="font-mono text-xs text-zinc-700">
+                  <TableCell className="font-mono text-xs text-text-primary">
                     {job.fileName}
                   </TableCell>
-                  <TableCell className="text-zinc-700">
+                  <TableCell className="text-text-primary">
                     {job.payerName ?? "—"}
                   </TableCell>
-                  <TableCell className="text-zinc-600">
+                  <TableCell className="text-text-secondary">
                     {formatDateTime(job.createdAt)}
                   </TableCell>
                   <TableCell className="text-right">
                     {job.counts.pending > 0 ? (
-                      <span className="inline-flex w-fit items-center rounded-md bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-700 tabular-nums">
+                      <span className="inline-flex w-fit items-center rounded-full bg-highlight px-2 py-0.5 type-label-01 font-medium text-interactive tabular-nums">
                         {job.counts.pending}
                       </span>
                     ) : (
-                      <span className="text-zinc-400">0</span>
+                      <span className="text-text-helper tabular-nums">0</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums text-zinc-700">
+                  <TableCell className="text-right font-mono tabular-nums text-text-primary">
                     {job.totalItems}
                   </TableCell>
                 </TableRow>

@@ -88,8 +88,8 @@ export default function ReviewDetailPage() {
     load();
   }, [load]);
 
-  if (loading) return <p className="text-zinc-500">Loading…</p>;
-  if (!job) return <p className="text-zinc-500">Document not found.</p>;
+  if (loading) return <p className="text-text-secondary">Loading…</p>;
+  if (!job) return <p className="text-text-secondary">Document not found.</p>;
 
   const pendingCount =
     (job.header?.status === "PENDING" ? 1 : 0) +
@@ -138,7 +138,7 @@ export default function ReviewDetailPage() {
     <div className="space-y-6">
       <Link
         href="/review"
-        className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900"
+        className="inline-flex items-center gap-1 type-body-compact-01 text-text-secondary transition-colors duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] hover:text-text-primary"
       >
         <ArrowLeft className="size-4" /> Back to review queue
       </Link>
@@ -146,27 +146,27 @@ export default function ReviewDetailPage() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <h1 className="font-mono text-lg font-semibold text-zinc-950">
+            <h1 className="font-mono type-heading-03 font-semibold text-text-primary">
               {job.fileName}
             </h1>
             <StatusBadge status={job.status} />
           </div>
-          <p className="text-sm text-zinc-500">
+          <p className="type-body-01 text-text-secondary">
             {job.documentType.replace(/_/g, " ")} · uploaded{" "}
             {formatDateTime(job.createdAt)} · {pendingCount} pending of{" "}
             {totalItems}
           </p>
           {job.extractionCost && (
-            <span className="inline-flex flex-wrap items-center gap-1.5 rounded-md border border-zinc-200 bg-zinc-50 px-2 py-1 text-xs text-zinc-600">
-              <Coins className="size-3.5 text-amber-500" />
+            <span className="inline-flex flex-wrap items-center gap-1.5 rounded-md border border-border-subtle bg-layer px-2 py-1 type-label-01 text-text-secondary">
+              <Coins className="size-3.5 text-support-caution" />
               AI extraction cost:
-              <span className="font-semibold tabular-nums text-zinc-800">
+              <span className="font-semibold tabular-nums text-text-primary">
                 {job.extractionCost.egp.toFixed(2)} EGP
               </span>
-              <span className="tabular-nums text-zinc-400">
+              <span className="tabular-nums text-text-helper">
                 (${job.extractionCost.usd.toFixed(4)})
               </span>
-              <span className="tabular-nums text-zinc-400">
+              <span className="tabular-nums text-text-helper">
                 · {job.extractionCost.inputTokens.toLocaleString()} in /{" "}
                 {job.extractionCost.outputTokens.toLocaleString()} out tokens
               </span>
@@ -207,7 +207,7 @@ export default function ReviewDetailPage() {
           href={file.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-rose-600 transition-colors hover:text-rose-700 lg:hidden"
+          className="inline-flex items-center gap-1.5 type-body-compact-01 font-medium text-link transition-colors duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] hover:text-link-hover lg:hidden"
         >
           <ExternalLink className="size-4" />
           View original file
@@ -258,8 +258,10 @@ export default function ReviewDetailPage() {
         >
           <div
             className={cn(
-              "w-1 rounded-full transition-colors",
-              dragging ? "bg-rose-400" : "bg-zinc-200 hover:bg-rose-400",
+              "w-1 rounded-full transition-colors duration-[var(--dur-fast-02)] ease-[var(--ease-standard)]",
+              dragging
+                ? "bg-border-interactive"
+                : "bg-border-subtle hover:bg-border-interactive",
             )}
           />
         </div>

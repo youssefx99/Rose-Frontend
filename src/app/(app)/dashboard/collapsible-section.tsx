@@ -47,7 +47,7 @@ export function CollapsibleSection({
       <button
         type="button"
         onClick={toggle}
-        className="mb-3 flex w-full items-center gap-2 text-xs font-medium uppercase tracking-wider text-zinc-500 transition-colors hover:text-zinc-800"
+        className="mb-3 flex w-full items-center gap-2 type-label-01 font-medium uppercase tracking-wider text-text-secondary transition-colors duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-background"
       >
         <ChevronDown
           className={cn(
@@ -57,7 +57,7 @@ export function CollapsibleSection({
         />
         <span>{title}</span>
         {summary && (
-          <span className="ml-auto font-mono text-zinc-400 normal-case tracking-normal">
+          <span className="ml-auto font-mono text-text-helper normal-case tracking-normal">
             {summary}
           </span>
         )}

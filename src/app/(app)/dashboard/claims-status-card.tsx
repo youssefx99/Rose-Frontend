@@ -15,7 +15,7 @@ export function ClaimsStatusCard({ data }: { data: ClaimStatusMetric[] }) {
       {total === 0 ? (
         <Empty label="No claims yet" />
       ) : (
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-6">
           <div className="relative shrink-0">
             <ResponsiveContainer width={148} height={148}>
               <PieChart>
@@ -38,10 +38,10 @@ export function ClaimsStatusCard({ data }: { data: ClaimStatusMetric[] }) {
               </PieChart>
             </ResponsiveContainer>
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-              <span className="font-mono text-xl font-semibold tabular-nums text-zinc-950">
+              <span className="type-heading-03 font-mono font-semibold tabular-nums text-text-primary">
                 {total}
               </span>
-              <span className="text-[10px] uppercase tracking-wider text-zinc-400">
+              <span className="type-label-01 uppercase tracking-wider text-text-helper">
                 claims
               </span>
             </div>
@@ -50,16 +50,16 @@ export function ClaimsStatusCard({ data }: { data: ClaimStatusMetric[] }) {
             {rows.map((d) => (
               <li
                 key={d.status}
-                className="flex items-center justify-between gap-2 text-sm"
+                className="flex items-center justify-between gap-2 type-body-compact-01"
               >
-                <span className="flex items-center gap-2 text-zinc-600">
+                <span className="flex items-center gap-2 text-text-secondary">
                   <span
                     className="size-2.5 rounded-full"
                     style={{ backgroundColor: STATUS_HEX[d.status] ?? "#a1a1aa" }}
                   />
                   {d.status.replace(/_/g, " ").toLowerCase()}
                 </span>
-                <span className="font-mono tabular-nums text-zinc-900">
+                <span className="font-mono tabular-nums text-text-primary">
                   {d.count}
                 </span>
               </li>

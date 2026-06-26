@@ -6,6 +6,15 @@ import { Lock } from "lucide-react";
 
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import {
   getCatalog,
@@ -57,7 +66,7 @@ export default function PermissionsPage() {
 
   if (user && !isSuperAdmin) {
     return (
-      <p className="text-sm text-zinc-500">
+      <p className="type-body-01 text-text-secondary">
         You don&apos;t have access to permission settings.
       </p>
     );
@@ -92,51 +101,42 @@ export default function PermissionsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-950">Permissions</h1>
-          <p className="text-sm text-zinc-500">
-            Control what each role can do. Per-user exceptions are set from the
-            Users page.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          {dirty && (
-            <span className="text-xs text-amber-600">Unsaved changes</span>
-          )}
-          <Button onClick={save} disabled={saving || loading || !dirty}>
-            {saving ? "Saving…" : "Save Changes"}
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Permissions"
+        description="Control what each role can do. Per-user exceptions are set from the Users page."
+      >
+        {dirty && (
+          <span className="type-label-01 text-support-caution">
+            Unsaved changes
+          </span>
+        )}
+        <Button onClick={save} disabled={saving || loading || !dirty}>
+          {saving ? "Saving…" : "Save Changes"}
+        </Button>
+      </PageHeader>
 
       {loading ? (
-        <p className="text-sm text-zinc-500">Loading…</p>
+        <p className="type-body-01 text-text-secondary">Loading…</p>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-zinc-200 bg-zinc-50">
-                <th className="px-4 py-3 text-left font-medium text-zinc-600">
-                  Permission
-                </th>
-                <th className="px-3 py-3 text-center font-medium text-zinc-600">
-                  <span className="inline-flex items-center gap-1">
+        <div className="overflow-hidden rounded-md border border-border-subtle bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Permission</TableHead>
+                <TableHead className="text-center">
+                  <span className="inline-flex items-center justify-center gap-1">
                     <Lock className="size-3" />
                     Super Admin
                   </span>
-                </th>
+                </TableHead>
                 {EDITABLE_ROLES.map((role) => (
-                  <th
-                    key={role}
-                    className="px-3 py-3 text-center font-medium text-zinc-600"
-                  >
+                  <TableHead key={role} className="text-center">
                     {roleLabel(role)}
-                  </th>
+                  </TableHead>
                 ))}
-              </tr>
-            </thead>
-            <tbody>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {groups.map((group) => (
                 <PermissionGroupRows
                   key={group.module}
@@ -145,8 +145,8 @@ export default function PermissionsPage() {
                   onToggle={toggle}
                 />
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
     </div>
@@ -164,43 +164,45 @@ function PermissionGroupRows({
 }) {
   return (
     <>
-      <tr className="border-b border-zinc-100 bg-zinc-50/60">
-        <td
+      <TableRow className="bg-layer hover:bg-layer">
+        <TableCell
           colSpan={2 + EDITABLE_ROLES.length}
-          className="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-zinc-500"
+          className="type-heading-compact-01 py-2 text-text-secondary"
         >
           {group.label}
-        </td>
-      </tr>
+        </TableCell>
+      </TableRow>
       {group.permissions.map((p) => (
-        <tr key={p.key} className="border-b border-zinc-100 last:border-0">
-          <td className="px-4 py-2.5">
-            <p className="font-medium text-zinc-900">{p.label}</p>
-            <p className="text-xs text-zinc-500">{p.description}</p>
-          </td>
-          <td className="px-3 py-2.5 text-center">
+        <TableRow key={p.key}>
+          <TableCell className="whitespace-normal">
+            <p className="type-body-compact-01 font-medium text-text-primary">
+              {p.label}
+            </p>
+            <p className="type-label-01 text-text-secondary">{p.description}</p>
+          </TableCell>
+          <TableCell className="text-center">
             <input
               type="checkbox"
               checked
               disabled
-              className="size-4 cursor-not-allowed accent-slate-900 opacity-60"
+              className="size-4 cursor-not-allowed accent-interactive opacity-60"
               aria-label={`Super Admin ${p.label}`}
             />
-          </td>
+          </TableCell>
           {EDITABLE_ROLES.map((role) => (
-            <td key={role} className="px-3 py-2.5 text-center">
+            <TableCell key={role} className="text-center">
               <input
                 type="checkbox"
                 checked={sets[role]?.has(p.key) ?? false}
                 onChange={() => onToggle(role, p.key)}
                 className={cn(
-                  "size-4 cursor-pointer accent-slate-900",
+                  "size-4 cursor-pointer accent-interactive",
                 )}
                 aria-label={`${roleLabel(role)} ${p.label}`}
               />
-            </td>
+            </TableCell>
           ))}
-        </tr>
+        </TableRow>
       ))}
     </>
   );

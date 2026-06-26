@@ -30,7 +30,7 @@ export function MonthlyTrendCard({ data }: { data: MonthlyTrendPoint[] }) {
               <stop offset="100%" stopColor={COLLECTED} stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid vertical={false} stroke="#f4f4f5" />
+          <CartesianGrid vertical={false} stroke="#e0e0e0" />
           <XAxis
             dataKey="month"
             tick={AXIS_TICK}

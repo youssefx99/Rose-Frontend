@@ -89,7 +89,7 @@ function DetailLineRow({
     "h-8 w-24 text-right font-mono tabular-nums disabled:opacity-100";
 
   return (
-    <tr className="border-t border-zinc-100">
+    <tr className="border-t border-border-subtle">
       <td className={cell}>
         <Input
           value={dos}
@@ -142,7 +142,7 @@ function DetailLineRow({
                 disabled={busy}
                 title="Approve line"
                 onClick={() => run(() => approveItem(item.id, buildChanges()), "Approve failed.")}
-                className="h-7 px-2 text-green-700 hover:bg-green-50"
+                className="h-7 px-2 text-support-success hover:bg-support-success-bg"
               >
                 <Check className="size-4" />
               </Button>
@@ -154,14 +154,14 @@ function DetailLineRow({
                 disabled={busy}
                 title="Reject line"
                 onClick={() => run(() => rejectItem(item.id), "Reject failed.")}
-                className="h-7 px-2 text-red-600 hover:bg-red-50"
+                className="h-7 px-2 text-support-error hover:bg-support-error-bg"
               >
                 <X className="size-4" />
               </Button>
             )}
           </div>
         ) : (
-          <span className="text-xs text-zinc-400">
+          <span className="type-label-01 text-text-helper">
             {item.status === "REJECTED" ? "rejected" : "committed"}
           </span>
         )}
@@ -218,11 +218,11 @@ export function ClaimGroupCard({
 
   const metric = (label: string, value: string, accent = false) => (
     <div>
-      <p className="text-xs text-zinc-500">{label}</p>
+      <p className="type-label-01 text-text-secondary">{label}</p>
       <p
         className={cn(
-          "mt-0.5 font-mono text-sm tabular-nums",
-          accent ? "font-semibold text-zinc-950" : "text-zinc-900",
+          "mt-0.5 font-mono type-body-compact-01 tabular-nums text-text-primary",
+          accent && "font-semibold",
         )}
       >
         {value}
@@ -231,20 +231,20 @@ export function ClaimGroupCard({
   );
 
   return (
-    <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-md border border-border-subtle bg-card">
       {/* Summary header */}
-      <div className="border-b border-zinc-100 bg-zinc-50 px-5 py-3">
+      <div className="border-b border-border-subtle bg-layer px-5 py-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-zinc-900">
+              <span className="type-heading-02 text-text-primary">
                 {group.clientDisplayName}
               </span>
               <StatusBadge status={group.status} />
             </div>
-            <p className="mt-0.5 text-xs text-zinc-500">
+            <p className="mt-0.5 type-label-01 text-text-secondary">
               Claim{" "}
-              <span className="font-mono text-zinc-700">
+              <span className="font-mono text-text-primary">
                 {group.claimNumber ?? "—"}
               </span>
               {group.patientAccountNumber ? (
@@ -255,7 +255,7 @@ export function ClaimGroupCard({
               ) : null}
             </p>
           </div>
-          <div className="text-right text-xs text-zinc-500">
+          <div className="text-right type-label-01 text-text-secondary">
             {group.lineCount} service line{group.lineCount === 1 ? "" : "s"}
             <br />
             {group.counts.pending} pending · {group.counts.approved} done
@@ -274,31 +274,31 @@ export function ClaimGroupCard({
           {metric("Pay %", `${(group.payPct * 100).toFixed(1)}%`)}
         </div>
         <div>
-          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-500">
+          <p className="mb-2 type-label-01 font-medium uppercase tracking-wider text-text-secondary">
             Claim record
           </p>
           {match ? (
             <Link
               href={`/claims/${match.id}`}
-              className="block rounded-md border border-zinc-200 p-3 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
+              className="block rounded-md border border-border-subtle p-3 transition-colors duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] hover:border-border-strong hover:bg-layer"
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="font-mono text-sm text-zinc-900">
+                <span className="font-mono type-body-compact-01 text-text-primary">
                   {match.claimReference}
                 </span>
                 <StatusBadge status={match.status} />
               </div>
-              <p className="mt-1 text-sm text-zinc-600">
+              <p className="mt-1 type-body-compact-01 text-text-secondary">
                 {match.client?.displayName ?? "—"}
               </p>
-              <p className="mt-0.5 text-xs text-zinc-500">
+              <p className="mt-0.5 type-label-01 text-text-secondary">
                 On approval this existing claim is updated with the payment above.
               </p>
             </Link>
           ) : (
-            <div className="rounded-md border border-dashed border-zinc-300 p-3 text-sm text-zinc-500">
+            <div className="rounded-md border border-dashed border-border-strong p-3 type-body-compact-01 text-text-secondary">
               No existing claim yet — approving creates one claim for{" "}
-              <span className="font-mono text-zinc-700">
+              <span className="font-mono text-text-primary">
                 {group.claimNumber ?? "—"}
               </span>{" "}
               with the summed totals above.
@@ -308,14 +308,17 @@ export function ClaimGroupCard({
       </div>
 
       {/* Footer: drill-down toggle + whole-claim actions */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-100 px-5 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border-subtle px-5 py-3">
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900"
+          className="inline-flex items-center gap-1.5 type-body-compact-01 font-medium text-text-secondary transition-colors duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] hover:text-text-primary"
         >
           <ChevronDown
-            className={cn("size-4 transition-transform", expanded && "rotate-180")}
+            className={cn(
+              "size-4 transition-transform duration-[var(--dur-moderate-02)] ease-[var(--ease-standard)]",
+              expanded && "rotate-180",
+            )}
           />
           {expanded ? "Hide" : "Show"} {group.lineCount} service line
           {group.lineCount === 1 ? "" : "s"}
@@ -348,10 +351,10 @@ export function ClaimGroupCard({
 
       {/* Drill-down: every daily service line, editable and individually actionable */}
       {expanded && (
-        <div className="overflow-x-auto border-t border-zinc-200 bg-zinc-50/40 px-5 py-4">
+        <div className="overflow-x-auto border-t border-border-subtle bg-layer px-5 py-4">
           <table className="w-full border-collapse text-sm">
             <thead>
-              <tr className="text-left text-xs uppercase tracking-wider text-zinc-500">
+              <tr className="text-left type-label-01 uppercase tracking-wider text-text-secondary">
                 <th className="px-2 py-1 font-medium">Date of service</th>
                 <th className="px-2 py-1 text-right font-medium">Billed</th>
                 <th className="px-2 py-1 text-right font-medium">Allowed</th>

@@ -94,8 +94,8 @@ export function PdfPageSelector({
 
   if (error) {
     return (
-      <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
-        <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+      <div className="flex items-start gap-2 rounded-md border border-support-warning bg-support-warning-bg px-3 py-2.5 type-label-01 text-text-primary">
+        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-support-warning" />
         <span>Could not preview this file — all pages will be processed.</span>
       </div>
     );
@@ -117,10 +117,10 @@ export function PdfPageSelector({
   return (
     <div className="space-y-3">
       <div>
-        <p className="text-sm font-semibold text-zinc-900">
+        <p className="type-heading-compact-01 text-text-primary">
           Select pages to process
         </p>
-        <p className="text-xs text-zinc-500">
+        <p className="type-label-01 text-text-secondary">
           Only selected pages are sent to the AI.
         </p>
       </div>
@@ -130,7 +130,7 @@ export function PdfPageSelector({
           type="button"
           variant="ghost"
           size="sm"
-          className="h-7 text-slate-700"
+          className="h-7 text-text-primary"
           disabled={loading}
           onClick={() => onChange(allPages)}
         >
@@ -140,7 +140,7 @@ export function PdfPageSelector({
           type="button"
           variant="ghost"
           size="sm"
-          className="h-7 text-zinc-500"
+          className="h-7 text-text-secondary"
           disabled={loading}
           onClick={() => onChange([])}
         >
@@ -150,7 +150,7 @@ export function PdfPageSelector({
       </div>
 
       {loading && thumbnails.length === 0 ? (
-        <div className="flex items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 py-10 text-sm text-zinc-500">
+        <div className="flex items-center justify-center gap-2 rounded-md border border-border-subtle bg-layer py-10 type-body-compact-01 text-text-secondary">
           <Loader2 className="size-4 animate-spin" />
           Rendering page previews…
         </div>
@@ -164,13 +164,13 @@ export function PdfPageSelector({
                 type="button"
                 onClick={() => toggle(pageNumber)}
                 className={cn(
-                  "overflow-hidden rounded-lg text-left transition-all",
+                  "overflow-hidden rounded-md text-left transition-all duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                   selected
-                    ? "ring-2 ring-rose-500 bg-rose-50/30"
-                    : "border border-zinc-200 bg-white hover:border-zinc-300",
+                    ? "bg-highlight ring-2 ring-border-interactive"
+                    : "border border-border-subtle bg-card hover:border-border-strong",
                 )}
               >
-                <div className="flex items-center justify-center bg-zinc-100 p-2">
+                <div className="flex items-center justify-center bg-layer p-2">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={dataUrl}
@@ -178,15 +178,15 @@ export function PdfPageSelector({
                     className="max-h-40 w-auto object-contain shadow-sm"
                   />
                 </div>
-                <div className="flex items-center gap-2 border-t border-zinc-100 px-3 py-2">
+                <div className="flex items-center gap-2 border-t border-border-subtle px-3 py-2">
                   <input
                     type="checkbox"
                     checked={selected}
                     readOnly
                     tabIndex={-1}
-                    className="size-3.5 accent-rose-500"
+                    className="size-3.5 accent-interactive"
                   />
-                  <span className="text-xs font-medium text-zinc-700">
+                  <span className="type-label-01 font-medium text-text-primary">
                     Page {pageNumber}
                   </span>
                 </div>

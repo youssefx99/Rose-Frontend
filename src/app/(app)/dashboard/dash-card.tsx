@@ -19,14 +19,16 @@ export function Panel({
   return (
     <div
       className={cn(
-        "rounded-xl border border-zinc-200 bg-white p-5 shadow-sm",
+        "rounded-md border border-border-subtle bg-card p-6",
         className,
       )}
     >
       <div className="mb-4 flex items-start justify-between gap-2">
         <div>
-          <h2 className="text-sm font-semibold text-zinc-900">{title}</h2>
-          {subtitle && <p className="text-xs text-zinc-500">{subtitle}</p>}
+          <h2 className="type-heading-02 text-text-primary">{title}</h2>
+          {subtitle && (
+            <p className="type-label-01 text-text-secondary">{subtitle}</p>
+          )}
         </div>
         {action}
       </div>
@@ -45,7 +47,7 @@ export function Legend({
       {items.map((i) => (
         <span
           key={i.label}
-          className="flex items-center gap-1.5 text-xs text-zinc-500"
+          className="flex items-center gap-2 type-label-01 text-text-secondary"
         >
           <span
             className="size-2.5 rounded-full"
@@ -59,5 +61,7 @@ export function Legend({
 }
 
 export function Empty({ label = "No data yet" }: { label?: string }) {
-  return <p className="py-8 text-center text-sm text-zinc-400">{label}</p>;
+  return (
+    <p className="py-8 text-center type-body-01 text-text-secondary">{label}</p>
+  );
 }

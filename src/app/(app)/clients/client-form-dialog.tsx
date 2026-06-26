@@ -112,26 +112,24 @@ export function ClientFormDialog({
         </>
       }
     >
-      <form id={FORM_ID} onSubmit={onSubmit} className="space-y-4" noValidate>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="firstName">First Name</Label>
-            <Input id="firstName" {...register("firstName")} />
-            {errors.firstName && (
-              <p className="text-sm text-destructive">
-                {errors.firstName.message}
-              </p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="lastName">Last Name</Label>
-            <Input id="lastName" {...register("lastName")} />
-            {errors.lastName && (
-              <p className="text-sm text-destructive">
-                {errors.lastName.message}
-              </p>
-            )}
-          </div>
+      <form id={FORM_ID} onSubmit={onSubmit} className="space-y-6" noValidate>
+        <div className="space-y-2">
+          <Label htmlFor="firstName">First Name</Label>
+          <Input id="firstName" {...register("firstName")} />
+          {errors.firstName && (
+            <p className="type-label-01 text-support-error">
+              {errors.firstName.message}
+            </p>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="lastName">Last Name</Label>
+          <Input id="lastName" {...register("lastName")} />
+          {errors.lastName && (
+            <p className="type-label-01 text-support-error">
+              {errors.lastName.message}
+            </p>
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="clientAccountNumber">Account Number</Label>
