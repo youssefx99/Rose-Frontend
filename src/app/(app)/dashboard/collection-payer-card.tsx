@@ -1,68 +1,39 @@
 "use client";
 
-import {
-  Bar,
-  BarChart,
-  Cell,
-  LabelList,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-
+import { formatMoney } from "@/lib/format";
 import type { PayerCollection } from "@/lib/dashboard";
-import { DashCard } from "./dash-card";
-import { AXIS_TICK, RED, SLATE, TOOLTIP_STYLE } from "./chart-style";
-
-const LOW_THRESHOLD = 60;
+import { Empty, Panel } from "./dash-card";
 
 export function CollectionPayerCard({ data }: { data: PayerCollection[] }) {
   return (
-    <DashCard title="Collection Rate by Payer">
+    <Panel title="Collection by payer" subtitle="paid ÷ billed">
       {data.length === 0 ? (
-        <p className="text-sm text-zinc-400">No payer activity yet.</p>
+        <Empty label="No payer activity yet" />
       ) : (
-        <div style={{ height: Math.max(data.length * 44, 160) }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              layout="vertical"
-              data={data}
-              margin={{ left: 8, right: 36, top: 4, bottom: 4 }}
-            >
-              <XAxis type="number" domain={[0, 100]} hide />
-              <YAxis
-                type="category"
-                dataKey="payerName"
-                width={110}
-                tick={AXIS_TICK}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                cursor={{ fill: "#fafafa" }}
-                contentStyle={TOOLTIP_STYLE}
-                formatter={(value) => `${Number(value ?? 0).toFixed(1)}%`}
-              />
-              <Bar dataKey="collectionRate" radius={[0, 4, 4, 0]} barSize={18}>
-                {data.map((d) => (
-                  <Cell
-                    key={d.payerName}
-                    fill={d.collectionRate < LOW_THRESHOLD ? RED : SLATE}
-                  />
-                ))}
-                <LabelList
-                  dataKey="collectionRate"
-                  position="right"
-                  fontSize={11}
-                  fill="#71717a"
-                  formatter={(value) => `${Math.round(Number(value ?? 0))}%`}
+        <ul className="space-y-4">
+          {data.map((p) => (
+            <li key={p.payerName} className="space-y-1.5">
+              <div className="flex items-baseline justify-between gap-2 text-sm">
+                <span className="truncate font-medium text-zinc-800">
+                  {p.payerName}
+                </span>
+                <span className="shrink-0 font-mono font-semibold tabular-nums text-zinc-900">
+                  {p.rate.toFixed(1)}%
+                </span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-zinc-100">
+                <div
+                  className="h-full rounded-full bg-emerald-500 transition-[width] duration-500 ease-out"
+                  style={{ width: `${Math.min(100, Math.max(2, p.rate))}%` }}
                 />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+              </div>
+              <p className="font-mono text-xs tabular-nums text-zinc-400">
+                {formatMoney(p.collected)} of {formatMoney(p.billed)}
+              </p>
+            </li>
+          ))}
+        </ul>
       )}
-    </DashCard>
+    </Panel>
   );
 }

@@ -35,7 +35,7 @@ export default function ReviewQueuePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-zinc-950">Review Queue</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-950">Review Queue</h1>
         <p className="text-sm text-zinc-500">
           Documents extracted by AI, awaiting your review before they commit to
           the ledger.

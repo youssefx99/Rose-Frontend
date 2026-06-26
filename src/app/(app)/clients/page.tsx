@@ -1,11 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -14,36 +21,65 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { DeleteConfirm } from "@/components/ui/delete-confirm";
+import { CascadeDeleteDialog } from "@/components/ui/cascade-delete-dialog";
+import { FilterBar, FilterField, type ActiveFilterChip } from "@/components/ui/filter-bar";
 import { useAuth } from "@/lib/auth-context";
 import {
   deactivateClient,
-  deleteClient,
   listClients,
   type Client,
+  type ClientStatusFilter,
 } from "@/lib/clients";
+import { listPayers, type Payer } from "@/lib/payers";
 import { ClientFormDialog } from "./client-form-dialog";
-import { PoliciesDialog } from "./policies-dialog";
 
-function formatDate(value: string | null): string {
-  return value ? new Date(value).toLocaleDateString() : "—";
+const ALL = "__all__";
+
+interface ClientFilters {
+  status: ClientStatusFilter;
+  payerId: string | typeof ALL;
+  hasOutstanding: boolean;
 }
+
+const EMPTY_FILTERS: ClientFilters = {
+  status: "active",
+  payerId: ALL,
+  hasOutstanding: false,
+};
 
 export default function ClientsPage() {
   const { can } = useAuth();
+  const router = useRouter();
   const [clients, setClients] = useState<Client[]>([]);
   const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<ClientFilters>(EMPTY_FILTERS);
+  const [payers, setPayers] = useState<Payer[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Client | null>(null);
   const [formOpen, setFormOpen] = useState(false);
-  const [policiesClient, setPoliciesClient] = useState<Client | null>(null);
-  const [policiesOpen, setPoliciesOpen] = useState(false);
   const [deleting, setDeleting] = useState<Client | null>(null);
 
-  const load = useCallback(async (term: string) => {
+  useEffect(() => {
+    listPayers()
+      .then(({ data }) => setPayers(data))
+      .catch(() => undefined);
+  }, []);
+
+  const set = useCallback(
+    <K extends keyof ClientFilters>(key: K, value: ClientFilters[K]) =>
+      setFilters((prev) => ({ ...prev, [key]: value })),
+    [],
+  );
+
+  const load = useCallback(async (term: string, f: ClientFilters) => {
     setLoading(true);
     try {
-      const { data } = await listClients(term ? { search: term } : undefined);
+      const { data } = await listClients({
+        search: term || undefined,
+        status: f.status,
+        payerId: f.payerId === ALL ? undefined : f.payerId,
+        hasOutstanding: f.hasOutstanding || undefined,
+      });
       setClients(data);
     } catch {
       toast.error("Failed to load clients.");
@@ -53,9 +89,9 @@ export default function ClientsPage() {
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => load(search), 300);
+    const timer = setTimeout(() => load(search, filters), 300);
     return () => clearTimeout(timer);
-  }, [search, load]);
+  }, [search, filters, load]);
 
   const handleNew = () => {
     setEditing(null);
@@ -67,77 +103,153 @@ export default function ClientsPage() {
     setFormOpen(true);
   };
 
-  const handlePolicies = (client: Client) => {
-    setPoliciesClient(client);
-    setPoliciesOpen(true);
-  };
+  const payerName = (id: string) =>
+    payers.find((p) => p.id === id)?.name ?? "Payer";
+
+  // "active" is the default view, so it doesn't count as an applied filter.
+  const chips = useMemo<ActiveFilterChip[]>(() => {
+    const list: ActiveFilterChip[] = [];
+    if (filters.status !== "active")
+      list.push({
+        key: "status",
+        label: `Status: ${filters.status}`,
+        onRemove: () => set("status", "active"),
+      });
+    if (filters.payerId !== ALL)
+      list.push({
+        key: "payer",
+        label: payerName(filters.payerId),
+        onRemove: () => set("payerId", ALL),
+      });
+    if (filters.hasOutstanding)
+      list.push({
+        key: "outstanding",
+        label: "Has outstanding",
+        onRemove: () => set("hasOutstanding", false),
+      });
+    return list;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, payers]);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-zinc-950">Clients</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-950">Clients</h1>
         {can("clients.create") && (
           <Button onClick={handleNew}>New Client</Button>
         )}
       </div>
 
-      <Input
-        placeholder="Search clients…"
-        value={search}
-        onChange={(event) => setSearch(event.target.value)}
-        className="max-w-sm"
-      />
+      <FilterBar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search name or account #…"
+        activeCount={chips.length}
+        chips={chips}
+        onClearAll={() => setFilters(EMPTY_FILTERS)}
+      >
+        <FilterField label="Status">
+          <Select
+            value={filters.status}
+            onValueChange={(v) => set("status", v as ClientStatusFilter)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+              <SelectItem value="all">All</SelectItem>
+            </SelectContent>
+          </Select>
+        </FilterField>
+
+        <FilterField label="Payer">
+          <Select value={filters.payerId} onValueChange={(v) => set("payerId", v)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>Any payer</SelectItem>
+              {payers.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FilterField>
+
+        <FilterField label="Balance">
+          <Select
+            value={filters.hasOutstanding ? "outstanding" : "any"}
+            onValueChange={(v) => set("hasOutstanding", v === "outstanding")}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="any">Any</SelectItem>
+              <SelectItem value="outstanding">Has unpaid claims</SelectItem>
+            </SelectContent>
+          </Select>
+        </FilterField>
+      </FilterBar>
 
       <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
         <Table>
           <TableHeader>
             <TableRow className="bg-zinc-50">
               <TableHead>Name</TableHead>
-              <TableHead>Date of Birth</TableHead>
-              <TableHead>Account #</TableHead>
-              <TableHead>Policies</TableHead>
+              <TableHead className="text-right">Account&nbsp;#s</TableHead>
+              <TableHead className="text-right">Claims</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground">
+                <TableCell colSpan={4} className="text-center text-muted-foreground">
                   Loading…
                 </TableCell>
               </TableRow>
             ) : clients.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground">
+                <TableCell colSpan={4} className="text-center text-muted-foreground">
                   No clients found.
                 </TableCell>
               </TableRow>
             ) : (
               clients.map((client) => (
-                <TableRow key={client.id}>
+                <TableRow
+                  key={client.id}
+                  onClick={() => router.push(`/clients/${client.id}`)}
+                  className="cursor-pointer transition-colors hover:bg-zinc-50"
+                >
                   <TableCell className="font-medium">
-                    {client.displayName}
+                    <Link
+                      href={`/clients/${client.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-zinc-900 hover:text-rose-600 hover:underline"
+                    >
+                      {client.displayName}
+                    </Link>
                   </TableCell>
-                  <TableCell>{formatDate(client.dateOfBirth)}</TableCell>
-                  <TableCell>{client.clientAccountNumber ?? "—"}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">
-                      {client._count?.insurancePolicies ?? 0}
-                    </Badge>
+                  <TableCell className="text-right font-mono tabular-nums text-zinc-600">
+                    {client.accountCount ?? 0}
+                  </TableCell>
+                  <TableCell className="text-right font-mono tabular-nums text-zinc-600">
+                    {client.claimCount ?? 0}
                   </TableCell>
                   <TableCell className="space-x-1 text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handlePolicies(client)}
-                    >
-                      Policies
-                    </Button>
                     {can("clients.edit") && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleEdit(client)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(client);
+                        }}
                       >
                         Edit
                       </Button>
@@ -147,7 +259,10 @@ export default function ClientsPage() {
                         variant="ghost"
                         size="sm"
                         className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                        onClick={() => setDeleting(client)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleting(client);
+                        }}
                       >
                         Delete
                       </Button>
@@ -164,45 +279,20 @@ export default function ClientsPage() {
         open={formOpen}
         onOpenChange={setFormOpen}
         client={editing}
-        onSaved={() => load(search)}
-      />
-      <PoliciesDialog
-        open={policiesOpen}
-        onOpenChange={setPoliciesOpen}
-        client={policiesClient}
+        onSaved={() => load(search, filters)}
       />
 
-      <DeleteConfirm
+      <CascadeDeleteDialog
         open={deleting !== null}
         onOpenChange={(open) => !open && setDeleting(null)}
+        type="client"
+        id={deleting?.id ?? null}
         title="Delete client"
-        entityName={deleting?.displayName ?? ""}
-        canHardDelete={(deleting?._count?.claims ?? 0) === 0}
-        blockedReason={
-          (deleting?._count?.claims ?? 0) > 0
-            ? `This client has ${deleting?._count?.claims} claim(s), so it can't be permanently deleted. Deactivate it to hide it while keeping all history.`
-            : undefined
-        }
         onDeactivate={
           deleting ? () => deactivateClient(deleting.id) : undefined
         }
-        onDelete={() => deleteClient(deleting!.id)}
-        onDone={() => load(search)}
-      >
-        <p>
-          <span className="font-medium text-zinc-900">Deactivate</span> hides the
-          client from active lists but keeps all history, and can be reactivated
-          later.
-        </p>
-        <p>
-          <span className="font-medium text-zinc-900">Delete permanently</span>{" "}
-          removes the client
-          {(deleting?._count?.insurancePolicies ?? 0) > 0
-            ? ` and its ${deleting?._count?.insurancePolicies} insurance policy(ies)`
-            : ""}
-          . This cannot be undone.
-        </p>
-      </DeleteConfirm>
+        onDone={() => load(search, filters)}
+      />
     </div>
   );
 }

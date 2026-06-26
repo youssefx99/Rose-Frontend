@@ -1,9 +1,9 @@
 "use client";
 
 import {
+  Area,
+  AreaChart,
   CartesianGrid,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -12,62 +12,66 @@ import {
 
 import { formatMoney } from "@/lib/format";
 import type { MonthlyTrendPoint } from "@/lib/dashboard";
-import { DashCard } from "./dash-card";
-import { AXIS_TICK, formatK, SLATE, TOOLTIP_STYLE, ZINC_400 } from "./chart-style";
+import { Legend, Panel } from "./dash-card";
+import { AXIS_TICK, BILLED, COLLECTED, formatK, TOOLTIP_STYLE } from "./chart-style";
 
 export function MonthlyTrendCard({ data }: { data: MonthlyTrendPoint[] }) {
   return (
-    <DashCard title="Monthly Revenue Trend — last 6 months">
-      <div className="h-[220px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 8, right: 16, left: 8 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f5" />
-            <XAxis
-              dataKey="month"
-              tick={AXIS_TICK}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis
-              tickFormatter={formatK}
-              tick={AXIS_TICK}
-              axisLine={false}
-              tickLine={false}
-              width={48}
-            />
-            <Tooltip
-              contentStyle={TOOLTIP_STYLE}
-              formatter={(value) => formatMoney(Number(value ?? 0))}
-            />
-            <Line
-              type="monotone"
-              dataKey="billed"
-              stroke={ZINC_400}
-              strokeWidth={2}
-              strokeDasharray="5 5"
-              dot={false}
-            />
-            <Line
-              type="monotone"
-              dataKey="collected"
-              stroke={SLATE}
-              strokeWidth={2}
-              dot={{ r: 3, fill: SLATE }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-
-      <div className="mt-3 flex items-center justify-center gap-6 text-xs text-zinc-500">
-        <span className="flex items-center gap-2">
-          <span className="h-0.5 w-4" style={{ borderTop: `2px dashed ${ZINC_400}` }} />
-          Billed
-        </span>
-        <span className="flex items-center gap-2">
-          <span className="h-0.5 w-4 rounded" style={{ backgroundColor: SLATE }} />
-          Collected
-        </span>
-      </div>
-    </DashCard>
+    <Panel title="Billed vs collected" subtitle="by service month · last 6 months">
+      <ResponsiveContainer width="100%" height={260}>
+        <AreaChart data={data} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
+          <defs>
+            <linearGradient id="grad-billed" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={BILLED} stopOpacity={0.16} />
+              <stop offset="100%" stopColor={BILLED} stopOpacity={0} />
+            </linearGradient>
+            <linearGradient id="grad-collected" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={COLLECTED} stopOpacity={0.22} />
+              <stop offset="100%" stopColor={COLLECTED} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid vertical={false} stroke="#f4f4f5" />
+          <XAxis
+            dataKey="month"
+            tick={AXIS_TICK}
+            tickLine={false}
+            axisLine={false}
+          />
+          <YAxis
+            tick={AXIS_TICK}
+            tickLine={false}
+            axisLine={false}
+            tickFormatter={formatK}
+            width={48}
+          />
+          <Tooltip
+            contentStyle={TOOLTIP_STYLE}
+            formatter={(value) => formatMoney(Number(value ?? 0))}
+          />
+          <Area
+            type="monotone"
+            dataKey="billed"
+            name="Billed"
+            stroke={BILLED}
+            strokeWidth={2}
+            fill="url(#grad-billed)"
+          />
+          <Area
+            type="monotone"
+            dataKey="collected"
+            name="Collected"
+            stroke={COLLECTED}
+            strokeWidth={2}
+            fill="url(#grad-collected)"
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+      <Legend
+        items={[
+          { label: "Billed", color: BILLED },
+          { label: "Collected", color: COLLECTED },
+        ]}
+      />
+    </Panel>
   );
 }

@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { SlideOver } from "@/components/ui/slide-over";
 import {
   createClient,
@@ -23,11 +22,7 @@ const FORM_ID = "client-form";
 const schema = z.object({
   firstName: z.string().min(1, "First name is required."),
   lastName: z.string().min(1, "Last name is required."),
-  dateOfBirth: z.string().optional(),
-  subscriberName: z.string().optional(),
-  subscriberId: z.string().optional(),
   clientAccountNumber: z.string().optional(),
-  notes: z.string().optional(),
 });
 
 type Values = z.infer<typeof schema>;
@@ -35,11 +30,7 @@ type Values = z.infer<typeof schema>;
 const EMPTY: Values = {
   firstName: "",
   lastName: "",
-  dateOfBirth: "",
-  subscriberName: "",
-  subscriberId: "",
   clientAccountNumber: "",
-  notes: "",
 };
 
 interface ClientFormDialogProps {
@@ -72,13 +63,7 @@ export function ClientFormDialog({
         ? {
             firstName: client.firstName,
             lastName: client.lastName,
-            dateOfBirth: client.dateOfBirth
-              ? client.dateOfBirth.slice(0, 10)
-              : "",
-            subscriberName: client.subscriberName ?? "",
-            subscriberId: client.subscriberId ?? "",
             clientAccountNumber: client.clientAccountNumber ?? "",
-            notes: client.notes ?? "",
           }
         : EMPTY,
     );
@@ -89,11 +74,7 @@ export function ClientFormDialog({
     const payload: ClientInput = {
       firstName: values.firstName,
       lastName: values.lastName,
-      dateOfBirth: values.dateOfBirth || undefined,
-      subscriberName: values.subscriberName || undefined,
-      subscriberId: values.subscriberId || undefined,
       clientAccountNumber: values.clientAccountNumber || undefined,
-      notes: values.notes || undefined,
     };
     try {
       if (client) {
@@ -115,7 +96,7 @@ export function ClientFormDialog({
       open={open}
       onOpenChange={onOpenChange}
       title={client ? "Edit Client" : "New Client"}
-      description="Person or entity served by the organization."
+      description="Person served by the organization."
       footer={
         <>
           <Button
@@ -133,49 +114,28 @@ export function ClientFormDialog({
     >
       <form id={FORM_ID} onSubmit={onSubmit} className="space-y-4" noValidate>
         <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="firstName">First Name</Label>
-              <Input id="firstName" {...register("firstName")} />
-              {errors.firstName && (
-                <p className="text-sm text-destructive">
-                  {errors.firstName.message}
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name</Label>
-              <Input id="lastName" {...register("lastName")} />
-              {errors.lastName && (
-                <p className="text-sm text-destructive">
-                  {errors.lastName.message}
-                </p>
-              )}
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="firstName">First Name</Label>
+            <Input id="firstName" {...register("firstName")} />
+            {errors.firstName && (
+              <p className="text-sm text-destructive">
+                {errors.firstName.message}
+              </p>
+            )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="dateOfBirth">Date of Birth</Label>
-            <Input id="dateOfBirth" type="date" {...register("dateOfBirth")} />
+            <Label htmlFor="lastName">Last Name</Label>
+            <Input id="lastName" {...register("lastName")} />
+            {errors.lastName && (
+              <p className="text-sm text-destructive">
+                {errors.lastName.message}
+              </p>
+            )}
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="subscriberName">Subscriber Name</Label>
-              <Input id="subscriberName" {...register("subscriberName")} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="subscriberId">Subscriber ID</Label>
-              <Input id="subscriberId" {...register("subscriberId")} />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="clientAccountNumber">Account Number</Label>
-            <Input
-              id="clientAccountNumber"
-              {...register("clientAccountNumber")}
-            />
-          </div>
+        </div>
         <div className="space-y-2">
-          <Label htmlFor="notes">Notes</Label>
-          <Textarea id="notes" {...register("notes")} />
+          <Label htmlFor="clientAccountNumber">Account Number</Label>
+          <Input id="clientAccountNumber" {...register("clientAccountNumber")} />
         </div>
       </form>
     </SlideOver>

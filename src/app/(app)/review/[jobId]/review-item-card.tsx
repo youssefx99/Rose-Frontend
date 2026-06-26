@@ -181,8 +181,12 @@ export function ReviewItemCard({ item, onChanged }: ReviewItemCardProps) {
               </Link>
             ) : (
               <div className="rounded-md border border-dashed border-zinc-300 p-4 text-sm text-zinc-500">
-                No matching claim found. On approval this line is saved
-                unmatched, flagged for manual resolution.
+                No existing claim yet. On approval, every line sharing claim{" "}
+                <span className="font-mono text-zinc-700">
+                  {String(effective.claimNumber ?? "—")}
+                </span>{" "}
+                is rolled into one claim — charge &amp; paid summed, with the
+                service-date range.
               </div>
             )
           ) : (

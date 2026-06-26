@@ -22,9 +22,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { DeleteConfirm } from "@/components/ui/delete-confirm";
+import { CascadeDeleteDialog } from "@/components/ui/cascade-delete-dialog";
 import {
-  deleteRemittance,
   getRemittance,
   type RemittanceDetail,
 } from "@/lib/remittances";
@@ -74,7 +73,7 @@ export default function RemittanceDetailPage() {
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-xl font-semibold text-zinc-950">
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-950">
             {remittance.payer?.name ?? "Remittance"}
           </h1>
           <p className="text-sm text-zinc-500">
@@ -101,16 +100,12 @@ export default function RemittanceDetailPage() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <SummaryRow
-              label="Gross Claim"
-              value={formatMoney(remittance.grossClaimAmount)}
+              label="Check #"
+              value={remittance.checkNumber ?? "—"}
             />
             <SummaryRow
-              label="Late Interest"
-              value={formatMoney(remittance.lateInterest)}
-            />
-            <SummaryRow
-              label="ARs Applied"
-              value={formatMoney(remittance.arsApplied)}
+              label="Check Date"
+              value={formatDate(remittance.checkDate)}
             />
             <div className="border-t border-zinc-200 pt-2">
               <SummaryRow
@@ -186,35 +181,14 @@ export default function RemittanceDetailPage() {
         </div>
       </div>
 
-      <DeleteConfirm
+      <CascadeDeleteDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
+        type="remittance"
+        id={remittance.id}
         title="Delete remittance"
-        entityName={`${remittance.payer?.name ?? "Remittance"} · Check ${
-          remittance.checkNumber ?? "—"
-        }`}
-        canHardDelete
-        onDelete={() => deleteRemittance(remittance.id)}
-        onDone={() => {
-          toast.success("Remittance deleted.");
-          router.push("/remittances");
-        }}
-      >
-        <p>
-          <span className="font-medium text-zinc-900">Delete permanently</span>{" "}
-          removes this remittance, its {remittance.claimLines.length} claim
-          line(s), and its bank deposit.
-        </p>
-        {remittance.claimLines.some((line) => line.claim) && (
-          <p>
-            {remittance.claimLines.filter((line) => line.claim).length} matched
-            claim(s) will be reverted to{" "}
-            <span className="font-medium">PENDING</span> (their payment is
-            cleared).
-          </p>
-        )}
-        <p>This cannot be undone.</p>
-      </DeleteConfirm>
+        onDone={() => router.push("/remittances")}
+      />
     </div>
   );
 }

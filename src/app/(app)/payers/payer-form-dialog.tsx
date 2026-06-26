@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -9,27 +9,16 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { SlideOver } from "@/components/ui/slide-over";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  createPayer,
-  updatePayer,
-  PAYER_TYPES,
-  type Payer,
-} from "@/lib/payers";
+import { createPayer, updatePayer, type Payer } from "@/lib/payers";
 
 const schema = z.object({
   name: z.string().min(1, "Name is required."),
   shortCode: z.string().min(1, "Short code is required."),
-  payerType: z.enum(["COMMERCIAL", "GOVERNMENT", "MEDICAID", "MEDICARE"]),
-  notes: z.string().optional(),
+  state: z
+    .string()
+    .optional()
+    .refine((v) => !v || v.length === 2, "Use the 2-letter state code."),
 });
 
 type Values = z.infer<typeof schema>;
@@ -52,17 +41,11 @@ export function PayerFormDialog({
   const {
     register,
     handleSubmit,
-    control,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      name: "",
-      shortCode: "",
-      payerType: "COMMERCIAL",
-      notes: "",
-    },
+    defaultValues: { name: "", shortCode: "", state: "" },
   });
 
   useEffect(() => {
@@ -72,16 +55,19 @@ export function PayerFormDialog({
         ? {
             name: payer.name,
             shortCode: payer.shortCode,
-            payerType: payer.payerType,
-            notes: payer.notes ?? "",
+            state: payer.state ?? "",
           }
-        : { name: "", shortCode: "", payerType: "COMMERCIAL", notes: "" },
+        : { name: "", shortCode: "", state: "" },
     );
   }, [open, payer, reset]);
 
   const onSubmit = handleSubmit(async (values) => {
     try {
-      const payload = { ...values, notes: values.notes || undefined };
+      const payload = {
+        name: values.name,
+        shortCode: values.shortCode,
+        state: values.state ? values.state.toUpperCase() : undefined,
+      };
       if (payer) {
         await updatePayer(payer.id, payload);
         toast.success("Payer updated.");
@@ -120,11 +106,12 @@ export function PayerFormDialog({
       <form id={FORM_ID} onSubmit={onSubmit} className="space-y-4" noValidate>
         <div className="space-y-2">
           <Label htmlFor="name">Name</Label>
-            <Input id="name" {...register("name")} />
-            {errors.name && (
-              <p className="text-sm text-destructive">{errors.name.message}</p>
-            )}
-          </div>
+          <Input id="name" {...register("name")} />
+          {errors.name && (
+            <p className="text-sm text-destructive">{errors.name.message}</p>
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="shortCode">Short Code</Label>
             <Input id="shortCode" {...register("shortCode")} />
@@ -135,29 +122,12 @@ export function PayerFormDialog({
             )}
           </div>
           <div className="space-y-2">
-            <Label>Type</Label>
-            <Controller
-              control={control}
-              name="payerType"
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PAYER_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
+            <Label htmlFor="state">State</Label>
+            <Input id="state" maxLength={2} placeholder="NJ" {...register("state")} />
+            {errors.state && (
+              <p className="text-sm text-destructive">{errors.state.message}</p>
+            )}
           </div>
-        <div className="space-y-2">
-          <Label htmlFor="notes">Notes</Label>
-          <Textarea id="notes" {...register("notes")} />
         </div>
       </form>
     </SlideOver>

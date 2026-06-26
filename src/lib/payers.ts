@@ -1,29 +1,17 @@
 import { api } from "./api";
 
-export type PayerType = "COMMERCIAL" | "GOVERNMENT" | "MEDICAID" | "MEDICARE";
-
-export const PAYER_TYPES: PayerType[] = [
-  "COMMERCIAL",
-  "GOVERNMENT",
-  "MEDICAID",
-  "MEDICARE",
-];
-
 export interface Payer {
   id: string;
   organizationId: string;
   name: string;
   shortCode: string;
-  payerType: PayerType;
-  notes: string | null;
+  state: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
   _count?: {
     claims: number;
-    insurancePolicies: number;
     remittances: number;
-    bankDeposits: number;
   };
 }
 
@@ -35,8 +23,7 @@ export interface PaginatedResult<T> {
 export interface PayerInput {
   name: string;
   shortCode: string;
-  payerType?: PayerType;
-  notes?: string;
+  state?: string;
 }
 
 export async function listPayers(params?: {

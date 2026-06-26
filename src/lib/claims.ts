@@ -42,7 +42,7 @@ interface PayerRef {
   id: string;
   name: string;
   shortCode: string;
-  payerType?: string;
+  state?: string | null;
 }
 
 interface UserRef {
@@ -52,11 +52,21 @@ interface UserRef {
   email: string;
 }
 
-interface PolicyRef {
+/** An EOB daily service line that aggregates into a weekly claim. */
+export interface ClaimPaymentLine {
   id: string;
-  policyType: string;
-  memberId: string | null;
-  payer: PayerRef;
+  dateOfService: string;
+  externalClaimNumber: string;
+  patientAccountNumber: string | null;
+  billedAmount: string;
+  allowedAmount: string;
+  paidAmount: string;
+  remittance: {
+    checkNumber: string | null;
+    checkDate: string;
+    checkAmount: string;
+    sourceFileName: string;
+  };
 }
 
 // Prisma Decimal fields serialize as strings over JSON.
@@ -65,13 +75,12 @@ export interface Claim {
   organizationId: string;
   clientId: string;
   payerId: string;
-  insurancePolicyId: string | null;
-  bankDepositId: string | null;
   claimReference: string;
   externalClaimNumber: string | null;
+  patientAccountNumber: string | null;
   dateBilled: string;
-  serviceDateStart: string;
-  serviceDateEnd: string;
+  dateOfService: string;
+  dateOfServiceEnd: string | null;
   status: ClaimStatus;
   chargeAmount: string;
   payerPaidAmount: string;
@@ -80,8 +89,8 @@ export interface Claim {
   allowedAmount: string;
   balanceNeeded: string;
   negotiationDate: string | null;
-  isClientLiability: boolean;
-  patientLiabilityAmount: string;
+  inBankAmount: string;
+  bankDate: string | null;
   payToPatient: boolean;
   notes: string | null;
   internalNote: string | null;
@@ -89,9 +98,9 @@ export interface Claim {
   updatedAt: string;
   client?: ClientRef;
   payer?: PayerRef;
-  insurancePolicy?: PolicyRef | null;
   createdBy?: UserRef | null;
   updatedBy?: UserRef | null;
+  remittanceLines?: ClaimPaymentLine[];
   _count?: { remittanceLines: number; arNotes: number };
 }
 
@@ -108,17 +117,17 @@ export interface ArNote {
 export interface ClaimInput {
   clientId: string;
   payerId: string;
-  insurancePolicyId?: string;
   claimReference?: string;
   externalClaimNumber?: string;
   dateBilled: string;
-  serviceDateStart: string;
-  serviceDateEnd: string;
+  dateOfService: string;
   chargeAmount: number;
   payerPaidAmount?: number;
   payPct?: number;
   negoPct?: number;
   negotiationDate?: string;
+  inBankAmount?: number;
+  bankDate?: string;
   payToPatient?: boolean;
   notes?: string;
   internalNote?: string;
@@ -134,8 +143,13 @@ export interface ClaimQuery {
   status?: ClaimStatus;
   clientId?: string;
   payerId?: string;
+  /** Service-date range (YYYY-MM-DD). */
   dateFrom?: string;
   dateTo?: string;
+  minCharge?: number;
+  maxCharge?: number;
+  payToPatient?: boolean;
+  outstandingOnly?: boolean;
 }
 
 export async function listClaims(

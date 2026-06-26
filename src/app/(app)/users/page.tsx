@@ -62,7 +62,7 @@ export default function UsersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-950">Users</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-950">Users</h1>
           <p className="text-sm text-zinc-500">
             Manage who can access RoseSystem and what they can do.
           </p>

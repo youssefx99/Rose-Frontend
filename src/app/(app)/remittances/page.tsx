@@ -36,7 +36,7 @@ export default function RemittancesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-zinc-950">Remittances</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-950">Remittances</h1>
         <p className="text-sm text-zinc-500">
           Committed payments from approved EOBs.
         </p>

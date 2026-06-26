@@ -1,19 +1,26 @@
 import { api } from "./api";
 
+export interface DashboardTotals {
+  billed: number;
+  collected: number;
+  collectionRate: number;
+  openAr: number;
+  claimCount: number;
+  clientCount: number;
+  payerCount: number;
+}
+
 export interface ClaimStatusMetric {
   status: string;
   count: number;
-  totalCharge: number;
-}
-
-export interface ArAgingBucket {
-  bucket: string;
-  amount: number;
+  charge: number;
 }
 
 export interface PayerCollection {
   payerName: string;
-  collectionRate: number;
+  billed: number;
+  collected: number;
+  rate: number;
 }
 
 export interface MonthlyTrendPoint {
@@ -22,26 +29,22 @@ export interface MonthlyTrendPoint {
   collected: number;
 }
 
-export interface ClientBalance {
+export interface TopClient {
+  clientId: string;
   clientName: string;
-  outstanding: number;
+  billed: number;
+  collected: number;
+  claimCount: number;
+  openClaims: number;
 }
 
 export interface Dashboard {
-  arSummary: {
-    totalOutstanding: number;
-    collectedThisMonth: number;
-    billedThisMonth: number;
-    collectionRate: number;
-  };
-  claimsByStatus: ClaimStatusMetric[];
-  arAging: ArAgingBucket[];
+  totals: DashboardTotals;
   pendingReviewCount: number;
+  claimsByStatus: ClaimStatusMetric[];
   collectionByPayer: PayerCollection[];
-  denialRate: number;
-  unmatchedDeposits: { count: number; totalAmount: number };
   monthlyTrend: MonthlyTrendPoint[];
-  topClientsByBalance: ClientBalance[];
+  topClients: TopClient[];
 }
 
 export async function getDashboard(): Promise<Dashboard> {

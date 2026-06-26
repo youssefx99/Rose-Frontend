@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, Coins, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
 
@@ -12,12 +12,14 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import {
   approveAllJob,
   getReviewJob,
+  rejectAllJob,
   type ReviewJobDetail,
 } from "@/lib/documents";
 import { formatDateTime } from "@/lib/format";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 import { ReviewItemCard } from "./review-item-card";
+import { ClaimGroupCard } from "./claim-group-card";
 import { DocumentViewer, useDocumentFile } from "./document-viewer";
 
 // Persisted document/items split (left panel width %), with sane bounds.
@@ -34,7 +36,7 @@ export default function ReviewDetailPage() {
   const file = useDocumentFile(jobId);
   const [job, setJob] = useState<ReviewJobDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [bulk, setBulk] = useState(false);
+  const [bulk, setBulk] = useState<"approve" | "reject" | null>(null);
 
   // Resizable split between the document (left) and review items (right).
   const splitRef = useRef<HTMLDivElement>(null);
@@ -89,12 +91,15 @@ export default function ReviewDetailPage() {
   if (loading) return <p className="text-zinc-500">Loading…</p>;
   if (!job) return <p className="text-zinc-500">Document not found.</p>;
 
-  const pendingCount = job.reviewItems.filter(
-    (i) => i.status === "PENDING",
-  ).length;
+  const pendingCount =
+    (job.header?.status === "PENDING" ? 1 : 0) +
+    job.claimGroups.reduce((sum, g) => sum + g.counts.pending, 0);
+  const totalItems =
+    (job.header ? 1 : 0) +
+    job.claimGroups.reduce((sum, g) => sum + g.lineCount, 0);
 
   const approveAll = async () => {
-    setBulk(true);
+    setBulk("approve");
     try {
       const result = await approveAllJob(job.id);
       toast.success(
@@ -108,7 +113,24 @@ export default function ReviewDetailPage() {
           : "Approve all failed.";
       toast.error(message);
     } finally {
-      setBulk(false);
+      setBulk(null);
+    }
+  };
+
+  const rejectAll = async () => {
+    setBulk("reject");
+    try {
+      const result = await rejectAllJob(job.id);
+      toast.success(`Rejected ${result.rejected} item(s).`);
+      await load();
+    } catch (error) {
+      const message =
+        isAxiosError(error) && typeof error.response?.data?.message === "string"
+          ? error.response.data.message
+          : "Reject all failed.";
+      toast.error(message);
+    } finally {
+      setBulk(null);
     }
   };
 
@@ -132,13 +154,50 @@ export default function ReviewDetailPage() {
           <p className="text-sm text-zinc-500">
             {job.documentType.replace(/_/g, " ")} · uploaded{" "}
             {formatDateTime(job.createdAt)} · {pendingCount} pending of{" "}
-            {job.reviewItems.length}
+            {totalItems}
           </p>
+          {job.extractionCost && (
+            <span className="inline-flex flex-wrap items-center gap-1.5 rounded-md border border-zinc-200 bg-zinc-50 px-2 py-1 text-xs text-zinc-600">
+              <Coins className="size-3.5 text-amber-500" />
+              AI extraction cost:
+              <span className="font-semibold tabular-nums text-zinc-800">
+                {job.extractionCost.egp.toFixed(2)} EGP
+              </span>
+              <span className="tabular-nums text-zinc-400">
+                (${job.extractionCost.usd.toFixed(4)})
+              </span>
+              <span className="tabular-nums text-zinc-400">
+                · {job.extractionCost.inputTokens.toLocaleString()} in /{" "}
+                {job.extractionCost.outputTokens.toLocaleString()} out tokens
+              </span>
+            </span>
+          )}
         </div>
-        {pendingCount > 0 && can("review.approve") && (
-          <Button variant="rose" disabled={bulk} onClick={approveAll}>
-            {bulk ? "Approving…" : `Approve All (${pendingCount})`}
-          </Button>
+        {pendingCount > 0 && (can("review.approve") || can("review.reject")) && (
+          <div className="flex items-center gap-2">
+            {can("review.reject") && (
+              <Button
+                variant="destructive"
+                disabled={bulk !== null}
+                onClick={rejectAll}
+              >
+                {bulk === "reject"
+                  ? "Rejecting…"
+                  : `Reject All (${pendingCount})`}
+              </Button>
+            )}
+            {can("review.approve") && (
+              <Button
+                variant="rose"
+                disabled={bulk !== null}
+                onClick={approveAll}
+              >
+                {bulk === "approve"
+                  ? "Approving…"
+                  : `Approve All (${pendingCount})`}
+              </Button>
+            )}
+          </div>
         )}
       </div>
 
@@ -205,10 +264,11 @@ export default function ReviewDetailPage() {
           />
         </div>
 
-        {/* Right: existing review items. */}
+        {/* Right: the remittance header, then one card per weekly claim. */}
         <div className="min-w-0 flex-1 space-y-4">
-          {job.reviewItems.map((item) => (
-            <ReviewItemCard key={item.id} item={item} onChanged={load} />
+          {job.header && <ReviewItemCard item={job.header} onChanged={load} />}
+          {job.claimGroups.map((group) => (
+            <ClaimGroupCard key={group.key} group={group} onChanged={load} />
           ))}
         </div>
       </div>

@@ -151,9 +151,18 @@ export default function AppLayout({
         <div
           className={cn(
             "flex items-center py-5",
-            collapsed ? "justify-center px-0" : "justify-end px-5",
+            collapsed ? "justify-center px-0" : "justify-between px-5",
           )}
         >
+          {!collapsed && (
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-2 text-base font-semibold tracking-tight text-white"
+            >
+              <span className="inline-block size-2 rounded-full bg-rose-500" />
+              RoseSystem
+            </Link>
+          )}
           <button
             type="button"
             onClick={toggleCollapsed}

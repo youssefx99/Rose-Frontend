@@ -5,7 +5,6 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -14,14 +13,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { DeleteConfirm } from "@/components/ui/delete-confirm";
+import { CascadeDeleteDialog } from "@/components/ui/cascade-delete-dialog";
 import { useAuth } from "@/lib/auth-context";
-import {
-  deactivatePayer,
-  deletePayer,
-  listPayers,
-  type Payer,
-} from "@/lib/payers";
+import { deactivatePayer, listPayers, type Payer } from "@/lib/payers";
 import { PayerFormDialog } from "./payer-form-dialog";
 
 export default function PayersPage() {
@@ -60,18 +54,10 @@ export default function PayersPage() {
     setDialogOpen(true);
   };
 
-  const blockers: string[] = [];
-  const counts = deleting?._count;
-  if (counts?.claims) blockers.push(`${counts.claims} claim(s)`);
-  if (counts?.insurancePolicies)
-    blockers.push(`${counts.insurancePolicies} policy(ies)`);
-  if (counts?.remittances) blockers.push(`${counts.remittances} remittance(s)`);
-  if (counts?.bankDeposits) blockers.push(`${counts.bankDeposits} deposit(s)`);
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-zinc-950">Payers</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-950">Payers</h1>
         {can("payers.create") && (
           <Button onClick={handleNew}>New Payer</Button>
         )}
@@ -90,7 +76,7 @@ export default function PayersPage() {
             <TableRow className="bg-zinc-50">
               <TableHead>Name</TableHead>
               <TableHead>Short Code</TableHead>
-              <TableHead>Type</TableHead>
+              <TableHead>State</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -112,9 +98,7 @@ export default function PayersPage() {
                 <TableRow key={payer.id}>
                   <TableCell className="font-medium">{payer.name}</TableCell>
                   <TableCell>{payer.shortCode}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">{payer.payerType}</Badge>
-                  </TableCell>
+                  <TableCell>{payer.state ?? "—"}</TableCell>
                   <TableCell className="space-x-1 text-right">
                     {can("payers.edit") && (
                       <Button
@@ -150,34 +134,15 @@ export default function PayersPage() {
         onSaved={() => load(search)}
       />
 
-      <DeleteConfirm
+      <CascadeDeleteDialog
         open={deleting !== null}
         onOpenChange={(open) => !open && setDeleting(null)}
+        type="payer"
+        id={deleting?.id ?? null}
         title="Delete payer"
-        entityName={deleting?.name ?? ""}
-        canHardDelete={blockers.length === 0}
-        blockedReason={
-          blockers.length > 0
-            ? `This payer is referenced by ${blockers.join(
-                ", ",
-              )}, so it can't be permanently deleted. Deactivate it instead.`
-            : undefined
-        }
         onDeactivate={deleting ? () => deactivatePayer(deleting.id) : undefined}
-        onDelete={() => deletePayer(deleting!.id)}
         onDone={() => load(search)}
-      >
-        <p>
-          <span className="font-medium text-zinc-900">Deactivate</span> hides the
-          payer from active lists but keeps all history, and can be reactivated
-          later.
-        </p>
-        <p>
-          <span className="font-medium text-zinc-900">Delete permanently</span>{" "}
-          removes the payer entirely. This is only possible when no records
-          reference it, and cannot be undone.
-        </p>
-      </DeleteConfirm>
+      />
     </div>
   );
 }

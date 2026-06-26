@@ -79,7 +79,32 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+    text-rendering: optimizeLegibility;
+  }
   body {
     @apply bg-background text-foreground;
+  }
+  /* Short titles read better balanced; body/caption text avoids orphan words. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  /* Money, counts, and tables stay column-aligned as values change. */
+  th,
+  td {
+    font-variant-numeric: tabular-nums;
+  }
+  /* Brand-tinted text selection. */
+  ::selection {
+    background-color: color-mix(in oklab, #f43f5e 18%, transparent);
   }
 }

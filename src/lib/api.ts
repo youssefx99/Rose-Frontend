@@ -51,6 +51,16 @@ export async function refreshSession(): Promise<AuthResponse | null> {
     return data;
   } catch {
     setAccessToken(null);
+    // Clear the invalid cookie so the proxy stops redirecting back to /dashboard.
+    try {
+      await axios.post(
+        "/api/backend/auth/clear-cookie",
+        {},
+        { withCredentials: true },
+      );
+    } catch {
+      // non-fatal — worst case the loop resolves on next hard refresh
+    }
     return null;
   }
 }

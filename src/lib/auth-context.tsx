@@ -50,14 +50,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Silent bootstrap: restore the session from the refresh cookie, then perms.
   useEffect(() => {
     let active = true;
-    refreshSession().then(async (result) => {
-      if (!active) return;
-      if (result) {
-        setUser(result.user);
-        await loadPermissions();
-      }
-      if (active) setIsLoading(false);
-    });
+    refreshSession()
+      .then(async (result) => {
+        if (!active) return;
+        if (result) {
+          setUser(result.user);
+          await loadPermissions();
+        }
+        if (active) setIsLoading(false);
+      })
+      .catch(() => {
+        if (active) setIsLoading(false);
+      });
     return () => {
       active = false;
     };

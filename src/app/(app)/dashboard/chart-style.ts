@@ -24,6 +24,11 @@ export const SLATE = "#0f172a";
 export const RED = "#ef4444";
 export const ZINC_400 = "#a1a1aa";
 
+// Billed vs collected money series.
+export const BILLED = "#334155"; // slate-700
+export const COLLECTED = "#10b981"; // emerald-500
+export const OUTSTANDING = "#cbd5e1"; // slate-300 (billed not yet collected)
+
 /** Compact dollar axis label, e.g. $12k. */
 export function formatK(value: number): string {
   return `$${Math.round(value / 1000)}k`;

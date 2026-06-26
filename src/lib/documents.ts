@@ -109,9 +109,44 @@ export interface ReviewItem {
   matchPreview?: ClaimMatch | null;
 }
 
+/** A claim number's daily lines rolled up to the weekly-claim grain (Billing.xlsx
+ *  row), with the raw line items kept for full drill-down. */
+export interface ClaimGroup {
+  key: string;
+  claimNumber: string | null;
+  patientNameOnEob: string;
+  /** Normalized "Last, First" as it will be saved. */
+  clientDisplayName: string;
+  patientAccountNumber: string | null;
+  dateOfServiceStart: string;
+  dateOfServiceEnd: string;
+  billedAmount: number;
+  allowedAmount: number;
+  paidAmount: number;
+  payPct: number;
+  lineCount: number;
+  status: "PENDING" | "APPROVED" | "REJECTED" | "PARTIAL";
+  counts: { pending: number; approved: number; rejected: number };
+  matchPreview: ClaimMatch | null;
+  items: ReviewItem[];
+}
+
+/** Token usage + computed cost (USD and EGP) of a job's AI extraction. */
+export interface ExtractionCost {
+  model: string | null;
+  inputTokens: number;
+  outputTokens: number;
+  cachedTokens: number;
+  usd: number;
+  egp: number;
+}
+
 export interface ReviewJobDetail extends IngestionJob {
   rawExtractedData: unknown;
-  reviewItems: ReviewItem[];
+  /** Null for jobs extracted before token tracking was added. */
+  extractionCost: ExtractionCost | null;
+  header: ReviewItem | null;
+  claimGroups: ClaimGroup[];
 }
 
 export interface UploadResult {
@@ -131,12 +166,15 @@ export async function uploadDocument(
   file: File,
   documentType: DocumentType,
   pages: number[] = [],
+  allowDuplicate = false,
 ): Promise<UploadResult> {
   const form = new FormData();
   form.append("file", file);
   form.append("documentType", documentType);
   // Omit when empty so the backend treats it as "process the whole document".
   if (pages.length > 0) form.append("pages", pages.join(","));
+  // Set only after the user confirms a duplicate-file warning.
+  if (allowDuplicate) form.append("allowDuplicate", "true");
   const { data } = await api.post<UploadResult>("/documents/upload", form);
   return data;
 }
@@ -188,6 +226,17 @@ export async function approveAllJob(jobId: string): Promise<ApproveAllResult> {
   return data;
 }
 
+export interface RejectAllResult {
+  rejected: number;
+}
+
+export async function rejectAllJob(jobId: string): Promise<RejectAllResult> {
+  const { data } = await api.post<RejectAllResult>(
+    `/review-queue/jobs/${jobId}/reject-all`,
+  );
+  return data;
+}
+
 // ── Field metadata for the review UI ─────────────────────────────────────────
 
 export interface FieldSpec {
@@ -201,30 +250,16 @@ export const HEADER_FIELDS: FieldSpec[] = [
   { key: "checkNumber", label: "Check #", kind: "text" },
   { key: "checkDate", label: "Check Date", kind: "date" },
   { key: "checkAmount", label: "Check Amount", kind: "money" },
-  { key: "paymentReferenceNumber", label: "Payment Ref", kind: "text" },
-  { key: "grossClaimAmount", label: "Gross Claim", kind: "money" },
-  { key: "lateInterest", label: "Late Interest", kind: "money" },
-  { key: "arsApplied", label: "ARs Applied", kind: "money" },
 ];
 
 export const LINE_FIELDS: FieldSpec[] = [
   { key: "patientNameOnEob", label: "Client", kind: "text" },
   { key: "claimNumber", label: "Claim #", kind: "text" },
   { key: "patientAccountNumber", label: "Account #", kind: "text" },
-  { key: "memberId", label: "Member ID", kind: "text" },
   { key: "dateOfService", label: "Date of Service", kind: "date" },
-  { key: "procedureCode", label: "Procedure", kind: "text" },
-  { key: "modifier", label: "Modifier", kind: "text" },
-  { key: "units", label: "Units", kind: "number" },
   { key: "billedAmount", label: "Billed", kind: "money" },
   { key: "allowedAmount", label: "Allowed", kind: "money" },
-  { key: "deductibleAmount", label: "Deductible", kind: "money" },
-  { key: "coinsuranceAmount", label: "Coinsurance", kind: "money" },
-  { key: "copayAmount", label: "Copay", kind: "money" },
-  { key: "customerLiability", label: "Client Liability", kind: "money" },
   { key: "paidAmount", label: "Paid", kind: "money" },
-  { key: "reasonCode", label: "Reason Code", kind: "text" },
-  { key: "remarkCodes", label: "Remark Codes", kind: "list" },
 ];
 
 export function fieldsFor(itemType: ReviewItemType): FieldSpec[] {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -25,9 +25,8 @@ import {
   type ClaimInput,
   type ClaimUpdateInput,
 } from "@/lib/claims";
-import { listClients, getClient, type Client } from "@/lib/clients";
+import { listClients, type Client } from "@/lib/clients";
 import { listPayers, type Payer } from "@/lib/payers";
-import type { InsurancePolicy } from "@/lib/clients";
 
 const numeric = z
   .string()
@@ -37,11 +36,9 @@ const numeric = z
 const schema = z.object({
   clientId: z.string().min(1, "Select a client."),
   payerId: z.string().min(1, "Select a payer."),
-  insurancePolicyId: z.string().optional(),
   externalClaimNumber: z.string().optional(),
   dateBilled: z.string().min(1, "Required."),
-  serviceDateStart: z.string().min(1, "Required."),
-  serviceDateEnd: z.string().min(1, "Required."),
+  dateOfService: z.string().min(1, "Required."),
   chargeAmount: z
     .string()
     .min(1, "Required.")
@@ -50,14 +47,14 @@ const schema = z.object({
   payPct: numeric,
   negoPct: numeric,
   negotiationDate: z.string().optional(),
+  inBankAmount: numeric,
+  bankDate: z.string().optional(),
   payToPatient: z.boolean().optional(),
   notes: z.string().optional(),
   internalNote: z.string().optional(),
 });
 
 type Values = z.infer<typeof schema>;
-
-const NO_POLICY = "__none__";
 
 function toIsoDate(value: string | null | undefined): string {
   return value ? value.slice(0, 10) : "";
@@ -85,7 +82,6 @@ export function ClaimForm({
 }: ClaimFormProps) {
   const [clients, setClients] = useState<Client[]>([]);
   const [payers, setPayers] = useState<Payer[]>([]);
-  const [policies, setPolicies] = useState<InsurancePolicy[]>([]);
 
   const {
     register,
@@ -98,23 +94,21 @@ export function ClaimForm({
     defaultValues: {
       clientId: claim?.clientId ?? "",
       payerId: claim?.payerId ?? "",
-      insurancePolicyId: claim?.insurancePolicyId ?? NO_POLICY,
       externalClaimNumber: claim?.externalClaimNumber ?? "",
       dateBilled: toIsoDate(claim?.dateBilled),
-      serviceDateStart: toIsoDate(claim?.serviceDateStart),
-      serviceDateEnd: toIsoDate(claim?.serviceDateEnd),
+      dateOfService: toIsoDate(claim?.dateOfService),
       chargeAmount: claim?.chargeAmount ?? "",
       payerPaidAmount: claim?.payerPaidAmount ?? "",
       payPct: claim?.payPct ?? "",
       negoPct: claim?.negoPct ?? "",
       negotiationDate: toIsoDate(claim?.negotiationDate),
+      inBankAmount: claim?.inBankAmount ?? "",
+      bankDate: toIsoDate(claim?.bankDate),
       payToPatient: claim?.payToPatient ?? false,
       notes: claim?.notes ?? "",
       internalNote: claim?.internalNote ?? "",
     },
   });
-
-  const clientId = watch("clientId");
 
   // Surface submitting state to a host (slide-over) footer button.
   useEffect(() => {
@@ -132,47 +126,25 @@ export function ClaimForm({
       .catch(() => toast.error("Failed to load clients/payers."));
   }, [mode]);
 
-  // Load the selected client's policies for the policy dropdown.
-  const loadPolicies = useCallback(async (id: string) => {
-    if (!id) {
-      setPolicies([]);
-      return;
-    }
-    try {
-      const client = await getClient(id);
-      setPolicies(client.insurancePolicies ?? []);
-    } catch {
-      setPolicies([]);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadPolicies(clientId);
-  }, [clientId, loadPolicies]);
-
   const onSubmit = handleSubmit(async (values) => {
     const num = (v?: string) =>
       v === undefined || v === "" ? undefined : Number(v);
-    const policyId =
-      values.insurancePolicyId && values.insurancePolicyId !== NO_POLICY
-        ? values.insurancePolicyId
-        : undefined;
 
     try {
       if (mode === "create") {
         const payload: ClaimInput = {
           clientId: values.clientId,
           payerId: values.payerId,
-          insurancePolicyId: policyId,
           externalClaimNumber: values.externalClaimNumber || undefined,
           dateBilled: values.dateBilled,
-          serviceDateStart: values.serviceDateStart,
-          serviceDateEnd: values.serviceDateEnd,
+          dateOfService: values.dateOfService,
           chargeAmount: Number(values.chargeAmount),
           payerPaidAmount: num(values.payerPaidAmount),
           payPct: num(values.payPct),
           negoPct: num(values.negoPct),
           negotiationDate: values.negotiationDate || undefined,
+          inBankAmount: num(values.inBankAmount),
+          bankDate: values.bankDate || undefined,
           payToPatient: values.payToPatient,
           notes: values.notes || undefined,
           internalNote: values.internalNote || undefined,
@@ -180,16 +152,16 @@ export function ClaimForm({
         onSaved(await createClaim(payload));
       } else {
         const payload: ClaimUpdateInput = {
-          insurancePolicyId: policyId,
           externalClaimNumber: values.externalClaimNumber || undefined,
           dateBilled: values.dateBilled,
-          serviceDateStart: values.serviceDateStart,
-          serviceDateEnd: values.serviceDateEnd,
+          dateOfService: values.dateOfService,
           chargeAmount: Number(values.chargeAmount),
           payerPaidAmount: num(values.payerPaidAmount),
           payPct: num(values.payPct),
           negoPct: num(values.negoPct),
           negotiationDate: values.negotiationDate || undefined,
+          inBankAmount: num(values.inBankAmount),
+          bankDate: values.bankDate || undefined,
           payToPatient: values.payToPatient,
           notes: values.notes || undefined,
           internalNote: values.internalNote || undefined,
@@ -264,32 +236,12 @@ export function ClaimForm({
         </div>
 
         <div className="space-y-2">
-          <Label>Insurance Policy</Label>
-          <Select
-            value={watch("insurancePolicyId") || NO_POLICY}
-            onValueChange={(v) => setValue("insurancePolicyId", v)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="None" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={NO_POLICY}>None</SelectItem>
-              {policies.map((policy) => (
-                <SelectItem key={policy.id} value={policy.id}>
-                  {policy.payer.name} · {policy.policyType}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
           <Label htmlFor="externalClaimNumber">External Claim #</Label>
           <Input id="externalClaimNumber" {...register("externalClaimNumber")} />
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="dateBilled">Date Billed</Label>
           <Input id="dateBilled" type="date" {...register("dateBilled")} />
@@ -300,28 +252,15 @@ export function ClaimForm({
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="serviceDateStart">Service Start</Label>
+          <Label htmlFor="dateOfService">Date of Service</Label>
           <Input
-            id="serviceDateStart"
+            id="dateOfService"
             type="date"
-            {...register("serviceDateStart")}
+            {...register("dateOfService")}
           />
-          {errors.serviceDateStart && (
+          {errors.dateOfService && (
             <p className="text-sm text-destructive">
-              {errors.serviceDateStart.message}
-            </p>
-          )}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="serviceDateEnd">Service End</Label>
-          <Input
-            id="serviceDateEnd"
-            type="date"
-            {...register("serviceDateEnd")}
-          />
-          {errors.serviceDateEnd && (
-            <p className="text-sm text-destructive">
-              {errors.serviceDateEnd.message}
+              {errors.dateOfService.message}
             </p>
           )}
         </div>
@@ -366,7 +305,20 @@ export function ClaimForm({
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="space-y-2">
+          <Label htmlFor="inBankAmount">In Bank</Label>
+          <Input
+            id="inBankAmount"
+            type="number"
+            step="0.01"
+            {...register("inBankAmount")}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="bankDate">Date of Bank</Label>
+          <Input id="bankDate" type="date" {...register("bankDate")} />
+        </div>
         <div className="space-y-2">
           <Label htmlFor="negotiationDate">Negotiation Date</Label>
           <Input
