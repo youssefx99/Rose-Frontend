@@ -10,10 +10,11 @@ import {
   KeyRound,
   LayoutDashboard,
   LogOut,
-  PanelLeftClose,
-  PanelLeftOpen,
+  Menu,
+  Moon,
   Receipt,
   ShieldCheck,
+  Sun,
   Upload,
   Users,
 } from "lucide-react";
@@ -30,7 +31,7 @@ const PRIMARY_NAV = [
 ];
 
 const INGESTION_NAV = [
-  { href: "/documents", label: "Upload", icon: Upload, perm: "documents.view" },
+  { href: "/documents", label: "Documents", icon: Upload, perm: "documents.view" },
   { href: "/review", label: "Review Queue", icon: Inbox, showBadge: true, perm: "review.view" },
   { href: "/remittances", label: "Remittances", icon: Receipt, perm: "remittances.view" },
 ];
@@ -42,6 +43,7 @@ const ADMIN_NAV = [
 ];
 
 const COLLAPSE_KEY = "rose-sidebar-collapsed";
+const THEME_KEY = "rose-theme";
 
 type NavItem = {
   href: string;
@@ -51,16 +53,13 @@ type NavItem = {
   perm?: string;
 };
 
-export default function AppLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading, logout, can } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [pendingCount, setPendingCount] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
+  const [dark, setDark] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -68,9 +67,13 @@ export default function AppLayout({
     }
   }, [isLoading, user, router]);
 
-  // Restore + persist the collapse preference (avoids SSR hydration mismatch).
+  // Restore preferences (avoids SSR hydration mismatch).
   useEffect(() => {
     setCollapsed(localStorage.getItem(COLLAPSE_KEY) === "1");
+    const theme = localStorage.getItem(THEME_KEY);
+    const isDark = theme === "dark";
+    setDark(isDark);
+    document.documentElement.classList.toggle("dark", isDark);
   }, []);
 
   const toggleCollapsed = () => {
@@ -81,7 +84,16 @@ export default function AppLayout({
     });
   };
 
-  // Live pending-review count for the rose sidebar badge; refreshes on nav.
+  const toggleTheme = () => {
+    setDark((prev) => {
+      const next = !prev;
+      localStorage.setItem(THEME_KEY, next ? "dark" : "light");
+      document.documentElement.classList.toggle("dark", next);
+      return next;
+    });
+  };
+
+  // Live pending-review count for the sidebar badge; refreshes on nav.
   const refreshPending = useCallback(async () => {
     if (!user) return;
     try {
@@ -98,7 +110,7 @@ export default function AppLayout({
 
   if (isLoading || !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 text-zinc-500">
+      <div className="flex min-h-screen items-center justify-center bg-background type-body-01 text-text-secondary">
         Loading…
       </div>
     );
@@ -108,122 +120,116 @@ export default function AppLayout({
     items
       .filter(({ perm }) => !perm || can(perm))
       .map(({ href, label, icon: Icon, showBadge }) => {
-      const active = pathname === href || pathname.startsWith(`${href}/`);
-      const hasBadge = showBadge && pendingCount > 0;
-      return (
-        <Link
-          key={href}
-          href={href}
-          title={collapsed ? label : undefined}
-          className={cn(
-            "relative flex items-center gap-3 border-l-2 py-2 text-sm font-medium transition-colors",
-            collapsed ? "justify-center px-0" : "px-4",
-            active
-              ? "border-rose-500 bg-slate-800 text-white"
-              : "border-transparent text-slate-400 hover:bg-slate-800/50 hover:text-slate-200",
-          )}
-        >
-          <Icon className="size-4 shrink-0" />
-          {!collapsed && <span className="flex-1">{label}</span>}
-          {hasBadge &&
-            (collapsed ? (
-              <span className="absolute right-3 top-1.5 size-2 rounded-full bg-rose-500" />
-            ) : (
-              <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-xs font-semibold text-white tabular-nums">
-                {pendingCount}
-              </span>
-            ))}
-        </Link>
-      );
-    });
+        const active = pathname === href || pathname.startsWith(`${href}/`);
+        const hasBadge = showBadge && pendingCount > 0;
+        return (
+          <Link
+            key={href}
+            href={href}
+            title={collapsed ? label : undefined}
+            aria-current={active ? "page" : undefined}
+            className={cn(
+              "relative flex items-center gap-3 border-l-[3px] py-2.5 type-body-compact-01 transition-colors duration-[var(--dur-fast-02)]",
+              collapsed ? "justify-center px-0" : "px-4",
+              active
+                ? "border-interactive bg-layer-selected font-semibold text-text-primary"
+                : "border-transparent text-text-secondary hover:bg-layer-hover hover:text-text-primary",
+            )}
+          >
+            <Icon className="size-4 shrink-0" />
+            {!collapsed && <span className="flex-1">{label}</span>}
+            {hasBadge &&
+              (collapsed ? (
+                <span className="absolute top-2 right-2.5 size-2 rounded-full bg-interactive" />
+              ) : (
+                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-interactive px-1.5 type-label-01 font-semibold tabular-nums text-text-on-color">
+                  {pendingCount}
+                </span>
+              ))}
+          </Link>
+        );
+      });
 
   const initial = user.email.charAt(0).toUpperCase();
   const name = user.email.split("@")[0];
 
   return (
-    <div className="flex min-h-screen bg-zinc-50">
-      <aside
-        className={cn(
-          "hidden shrink-0 flex-col bg-slate-900 transition-[width] duration-200 md:flex",
-          collapsed ? "w-16" : "w-60",
-        )}
-      >
-        <div
-          className={cn(
-            "flex items-center py-5",
-            collapsed ? "justify-center px-0" : "justify-between px-5",
-          )}
+    <div className="flex min-h-screen flex-col bg-background">
+      {/* ── Carbon UI Shell header (dark, 48px) ── */}
+      <header className="sticky top-0 z-40 flex h-12 shrink-0 items-center gap-2 bg-[#161616] pr-3 pl-1 text-white">
+        <button
+          type="button"
+          onClick={toggleCollapsed}
+          aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
+          className="hidden size-12 items-center justify-center text-white/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white focus-visible:outline-none md:inline-flex"
         >
-          {!collapsed && (
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-2 text-base font-semibold tracking-tight text-white"
-            >
-              <span className="inline-block size-2 rounded-full bg-rose-500" />
-              RoseSystem
-            </Link>
-          )}
+          <Menu className="size-5" />
+        </button>
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-2 px-2 type-heading-compact-02 tracking-tight text-white focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white focus-visible:outline-none"
+        >
+          <span className="inline-block size-2 rounded-full bg-interactive" />
+          RoseSystem
+        </Link>
+
+        <span className="ml-auto" />
+
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}
+          title={dark ? "Light theme" : "Dark theme"}
+          className="inline-flex size-9 items-center justify-center rounded-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white focus-visible:outline-none"
+        >
+          {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+        </button>
+
+        <div className="flex items-center gap-2 pl-1">
+          <div
+            title={`${name} · ${user.role}`}
+            className="flex size-8 shrink-0 items-center justify-center rounded-full bg-interactive type-label-01 font-semibold text-text-on-color"
+          >
+            {initial}
+          </div>
+          <div className="hidden min-w-0 leading-tight sm:block">
+            <p className="truncate type-label-01 font-medium text-white">{name}</p>
+            <p className="truncate type-label-01 text-white/60">{user.role}</p>
+          </div>
           <button
             type="button"
-            onClick={toggleCollapsed}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+            onClick={logout}
+            title="Sign out"
+            aria-label="Sign out"
+            className="inline-flex size-9 items-center justify-center rounded-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white focus-visible:outline-none"
           >
-            {collapsed ? (
-              <PanelLeftOpen className="size-4" />
-            ) : (
-              <PanelLeftClose className="size-4" />
-            )}
+            <LogOut className="size-4" />
           </button>
         </div>
+      </header>
 
-        <nav className="flex-1 space-y-1 py-2">
-          {renderNav(PRIMARY_NAV)}
-          <div className="mx-4 my-3 border-t border-slate-700" />
-          {renderNav(INGESTION_NAV)}
-          {user.role === "SUPER_ADMIN" && (
-            <>
-              <div className="mx-4 my-3 border-t border-slate-700" />
-              {renderNav(ADMIN_NAV)}
-            </>
+      <div className="flex flex-1">
+        {/* ── Left side nav (light, collapsible) ── */}
+        <aside
+          className={cn(
+            "sticky top-12 hidden h-[calc(100vh-3rem)] shrink-0 flex-col border-r border-border-subtle bg-background transition-[width] duration-[var(--dur-moderate-01)] md:flex",
+            collapsed ? "w-14" : "w-60",
           )}
-        </nav>
-
-        <div className="border-t border-slate-700 p-3">
-          <div
-            className={cn(
-              "flex items-center gap-3 py-2",
-              collapsed ? "flex-col px-0" : "px-1",
+        >
+          <nav className="flex-1 overflow-y-auto py-2">
+            {renderNav(PRIMARY_NAV)}
+            <div className="mx-4 my-2 border-t border-border-subtle" />
+            {renderNav(INGESTION_NAV)}
+            {user.role === "SUPER_ADMIN" && (
+              <>
+                <div className="mx-4 my-2 border-t border-border-subtle" />
+                {renderNav(ADMIN_NAV)}
+              </>
             )}
-          >
-            <div
-              title={collapsed ? `${name} · ${user.role}` : undefined}
-              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-700 text-sm font-semibold text-white"
-            >
-              {initial}
-            </div>
-            {!collapsed && (
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-white">{name}</p>
-                <p className="truncate text-xs uppercase tracking-wider text-slate-400">
-                  {user.role}
-                </p>
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={logout}
-              title="Sign out"
-              className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
-            >
-              <LogOut className="size-4" />
-            </button>
-          </div>
-        </div>
-      </aside>
+          </nav>
+        </aside>
 
-      <div className="flex flex-1 flex-col">
-        <main className="flex-1 p-6">{children}</main>
+        <main className="min-w-0 flex-1 p-6">{children}</main>
       </div>
     </div>
   );

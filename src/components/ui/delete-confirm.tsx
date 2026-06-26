@@ -101,11 +101,11 @@ export function DeleteConfirm({
         </>
       }
     >
-      <div className="space-y-4 text-sm text-zinc-700">
+      <div className="space-y-4 type-body-01 text-text-secondary">
         {children}
         {!canHardDelete && blockedReason && (
-          <div className="flex gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-800">
-            <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+          <div className="flex gap-2 rounded-md border border-support-warning/50 bg-support-warning-bg p-3 text-text-primary">
+            <TriangleAlert className="mt-0.5 size-4 shrink-0 text-support-caution" />
             <span>{blockedReason}</span>
           </div>
         )}

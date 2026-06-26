@@ -3,57 +3,301 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ============================================================================
+   RoseSystem — Carbon Design System tokens
+   Source of truth: frontend/design/ (esp. 01, 02, 03, 05, 06, 11).
+   - Mostly-grayscale Carbon neutrals + fixed status vocabulary (red/green/
+     yellow/blue) + ONE scarce brand accent: rose (--interactive).
+   - Components consume SEMANTIC tokens (never raw hex). Legacy shadcn token
+     names are kept and remapped to Carbon so existing markup stays valid.
+   ========================================================================== */
+
 :root {
-  /* RoseSystem design system — navy primary, zinc surfaces, white cards.
-     See plan/10-design-system.md. Rose is applied manually (scarce accent). */
-  --radius: 0.5rem;
-  --background: #fafafa; /* zinc-50 */
-  --foreground: #09090b; /* zinc-950 */
+  /* ---- Carbon palette (raw swatches actually referenced) ---- */
+  --cds-white: #ffffff;
+  --cds-gray-10: #f4f4f4;
+  --cds-gray-20: #e0e0e0;
+  --cds-gray-30: #c6c6c6;
+  --cds-gray-40: #a8a8a8;
+  --cds-gray-50: #8d8d8d;
+  --cds-gray-60: #6f6f6f;
+  --cds-gray-70: #525252;
+  --cds-gray-80: #393939;
+  --cds-gray-90: #262626;
+  --cds-gray-100: #161616;
+
+  --cds-blue-60: #0f62fe; /* Carbon productive accent (kept for info/links-alt) */
+  --cds-blue-70: #0043ce;
+  --cds-red-60: #da1e28;
+  --cds-green-50: #24a148;
+  --cds-yellow-30: #f1c21b;
+  --cds-orange-40: #ff832b;
+  --cds-purple-60: #8a3ffc;
+
+  /* ---- Rose brand scale (RoseSystem identity — the scarce accent) ---- */
+  --rose-50: #fff1f2;
+  --rose-100: #ffe4e6;
+  --rose-200: #fecdd3;
+  --rose-300: #fda4af;
+  --rose-400: #fb7185;
+  --rose-500: #f43f5e; /* brand */
+  --rose-600: #e11d48;
+  --rose-700: #be123c;
+  --rose-800: #9f1239;
+
+  /* ============ SEMANTIC TOKENS — Light (Carbon "White" theme) ============ */
+  /* Surfaces (Layer model) */
+  --background: #ffffff;
+  --layer: #f4f4f4;            /* layer-01 */
+  --layer-02: #ffffff;
+  --layer-hover: #e8e8e8;
+  --layer-selected: #e0e0e0;
+  --field: #f4f4f4;            /* field-01 */
+  --field-02: #ffffff;
+  --field-hover: #e8e8e8;
+
+  /* Text */
+  --text-primary: #161616;
+  --text-secondary: #525252;
+  --text-helper: #6f6f6f;
+  --text-placeholder: rgba(22, 22, 22, 0.4);
+  --text-on-color: #ffffff;
+  --text-error: #da1e28;
+  --text-disabled: rgba(22, 22, 22, 0.25);
+  --text-inverse: #ffffff;
+
+  /* Borders */
+  --border-subtle: #e0e0e0;   /* border-subtle-00 (on white) */
+  --border-subtle-01: #c6c6c6;
+  --border-strong: #8d8d8d;
+  --border-disabled: #c6c6c6;
+  --border-inverse: #161616;
+
+  /* Brand / interactive (rose) */
+  --interactive: #f43f5e;
+  --interactive-hover: #e11d48;
+  --interactive-active: #be123c;
+  --secondary-hover: #474747;   /* Carbon secondary button hover */
+  --secondary-active: #6f6f6f;
+  --danger-hover: #b81921;      /* Carbon danger button hover/active */
+  --danger-active: #750e13;
+  --link-primary: #e11d48;
+  --link-hover: #be123c;
+  --link-visited: #8a3ffc;
+  --border-interactive: #f43f5e;
+  --focus: #f43f5e;
+  --focus-inset: #ffffff;
+  --highlight: #ffe4e6;       /* rose-100 selected highlight */
+
+  /* Icon */
+  --icon-primary: #161616;
+  --icon-secondary: #525252;
+  --icon-on-color: #ffffff;
+  --icon-interactive: #e11d48;
+  --icon-disabled: rgba(22, 22, 22, 0.25);
+
+  /* Status (FIXED — Carbon; never rose). *-bg = light surface for badges/notes */
+  --support-error: #da1e28;
+  --support-error-bg: #fff1f1;
+  --support-success: #24a148;
+  --support-success-bg: #defbe6;
+  --support-warning: #f1c21b;
+  --support-warning-bg: #fcf4d6;
+  --support-info: #0043ce;
+  --support-info-bg: #edf5ff;
+  --support-caution: #ff832b;
+
+  /* Misc */
+  --overlay: rgba(22, 22, 22, 0.5);
+  --skeleton-background: #e8e8e8;
+  --skeleton-element: #c6c6c6;
+  --toggle-off: #8d8d8d;
+
+  /* ---- Radius (Carbon is near-square; small brand softening) ---- */
+  --radius: 0.25rem;          /* 4px base */
+  --radius-sm: 0.125rem;      /* 2px */
+  --radius-md: 0.25rem;       /* 4px */
+  --radius-lg: 0.375rem;      /* 6px */
+
+  /* ---- Motion (Carbon) ---- */
+  --dur-fast-01: 70ms;
+  --dur-fast-02: 110ms;
+  --dur-moderate-01: 150ms;
+  --dur-moderate-02: 240ms;
+  --dur-slow-01: 400ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0.38, 0.9);
+  --ease-entrance: cubic-bezier(0, 0, 0.38, 0.9);
+  --ease-exit: cubic-bezier(0.2, 0, 1, 0.9);
+
+  /* ============ LEGACY shadcn aliases → remapped to Carbon ============ */
+  --foreground: var(--text-primary);
   --card: #ffffff;
-  --card-foreground: #09090b;
+  --card-foreground: var(--text-primary);
   --popover: #ffffff;
-  --popover-foreground: #09090b;
-  --primary: #0f172a; /* slate-900 */
+  --popover-foreground: var(--text-primary);
+  --primary: var(--interactive);          /* rose brand primary */
   --primary-foreground: #ffffff;
-  --secondary: #f4f4f5; /* zinc-100 */
-  --secondary-foreground: #18181b; /* zinc-900 */
-  --muted: #f4f4f5; /* zinc-100 */
-  --muted-foreground: #71717a; /* zinc-500 */
-  --accent: #f4f4f5; /* zinc-100 */
-  --accent-foreground: #18181b;
-  --destructive: #dc2626; /* red-600 */
-  --border: #e4e4e7; /* zinc-200 */
-  --input: #e4e4e7;
-  --ring: #0f172a; /* slate-900 */
+  --secondary: #393939;                   /* Carbon secondary button (gray-80) */
+  --secondary-foreground: #ffffff;
+  --muted: var(--layer);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--layer);
+  --accent-foreground: var(--text-primary);
+  --destructive: var(--support-error);
+  --border: var(--border-subtle);
+  --input: var(--border-strong);
+  --ring: var(--focus);
 }
 
+/* ============ SEMANTIC TOKENS — Dark (Carbon "Gray 100" theme) ============ */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --background: #161616;
+  --layer: #262626;           /* layer-01 (gray-90) */
+  --layer-02: #393939;        /* layer-02 (gray-80) */
+  --layer-hover: #333333;
+  --layer-selected: #525252;
+  --field: #262626;
+  --field-02: #393939;
+  --field-hover: #333333;
+
+  --text-primary: #f4f4f4;
+  --text-secondary: #c6c6c6;
+  --text-helper: #a8a8a8;
+  --text-placeholder: rgba(244, 244, 244, 0.4);
+  --text-on-color: #ffffff;
+  --text-error: #ff8389;
+  --text-disabled: rgba(244, 244, 244, 0.25);
+  --text-inverse: #161616;
+
+  --border-subtle: #393939;
+  --border-subtle-01: #525252;
+  --border-strong: #6f6f6f;
+  --border-disabled: rgba(141, 141, 141, 0.5);
+  --border-inverse: #f4f4f4;
+
+  --interactive: #fb7185;     /* rose-400 — lighter for dark contrast */
+  --interactive-hover: #fda4af;
+  --interactive-active: #f43f5e;
+  --secondary-hover: #5e5e5e;
+  --secondary-active: #393939;
+  --danger-hover: #b81921;
+  --danger-active: #750e13;
+  --link-primary: #fb7185;
+  --link-hover: #fda4af;
+  --link-visited: #be95ff;
+  --border-interactive: #fb7185;
+  --focus: #ffffff;           /* Carbon dark focus = white */
+  --focus-inset: #161616;
+  --highlight: #491d8b;
+
+  --icon-primary: #f4f4f4;
+  --icon-secondary: #c6c6c6;
+  --icon-on-color: #ffffff;
+  --icon-interactive: #fb7185;
+  --icon-disabled: rgba(244, 244, 244, 0.25);
+
+  --support-error: #fa4d56;
+  --support-error-bg: #2d0709;
+  --support-success: #42be65;
+  --support-success-bg: #071908;
+  --support-warning: #f1c21b;
+  --support-warning-bg: #1c1500;
+  --support-info: #4589ff;
+  --support-info-bg: #001141;
+  --support-caution: #ff832b;
+
+  --overlay: rgba(0, 0, 0, 0.65);
+  --skeleton-background: #292929;
+  --skeleton-element: #393939;
+  --toggle-off: #6f6f6f;
+
+  --foreground: var(--text-primary);
+  --card: #262626;
+  --card-foreground: var(--text-primary);
+  --popover: #262626;
+  --popover-foreground: var(--text-primary);
+  --primary: var(--interactive);
+  --primary-foreground: #161616;
+  --secondary: #6f6f6f;
+  --secondary-foreground: #ffffff;
+  --muted: var(--layer);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--layer-02);
+  --accent-foreground: var(--text-primary);
+  --destructive: var(--support-error);
+  --border: var(--border-subtle);
+  --input: var(--border-strong);
+  --ring: var(--focus);
 }
 
+/* ============ Tailwind theme wiring (v4 — generates utilities) ============ */
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-sm: 0.125rem;
+  --radius-md: 0.25rem;
+  --radius-lg: 0.375rem;
+  --radius-xl: 0.5rem;
+
+  /* Carbon semantic colors → utilities (bg-layer, text-text-secondary, …) */
   --color-background: var(--background);
+  --color-layer: var(--layer);
+  --color-layer-02: var(--layer-02);
+  --color-layer-hover: var(--layer-hover);
+  --color-layer-selected: var(--layer-selected);
+  --color-field: var(--field);
+  --color-field-02: var(--field-02);
+  --color-field-hover: var(--field-hover);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-helper: var(--text-helper);
+  --color-text-placeholder: var(--text-placeholder);
+  --color-text-on-color: var(--text-on-color);
+  --color-text-error: var(--text-error);
+  --color-text-disabled: var(--text-disabled);
+  --color-text-inverse: var(--text-inverse);
+
+  --color-border-subtle: var(--border-subtle);
+  --color-border-subtle-01: var(--border-subtle-01);
+  --color-border-strong: var(--border-strong);
+  --color-border-interactive: var(--border-interactive);
+  --color-border-disabled: var(--border-disabled);
+
+  --color-interactive: var(--interactive);
+  --color-interactive-hover: var(--interactive-hover);
+  --color-interactive-active: var(--interactive-active);
+  --color-link: var(--link-primary);
+  --color-link-hover: var(--link-hover);
+  --color-focus: var(--focus);
+  --color-highlight: var(--highlight);
+
+  --color-icon-primary: var(--icon-primary);
+  --color-icon-secondary: var(--icon-secondary);
+  --color-icon-on-color: var(--icon-on-color);
+  --color-icon-interactive: var(--icon-interactive);
+
+  --color-support-error: var(--support-error);
+  --color-support-error-bg: var(--support-error-bg);
+  --color-support-success: var(--support-success);
+  --color-support-success-bg: var(--support-success-bg);
+  --color-support-warning: var(--support-warning);
+  --color-support-warning-bg: var(--support-warning-bg);
+  --color-support-info: var(--support-info);
+  --color-support-info-bg: var(--support-info-bg);
+  --color-support-caution: var(--support-caution);
+
+  --color-skeleton-background: var(--skeleton-background);
+  --color-skeleton-element: var(--skeleton-element);
+
+  /* Rose brand scale → utilities (bg-brand, text-brand, …) */
+  --color-brand: var(--interactive);
+  --color-brand-50: var(--rose-50);
+  --color-brand-100: var(--rose-100);
+  --color-brand-400: var(--rose-400);
+  --color-brand-500: var(--rose-500);
+  --color-brand-600: var(--rose-600);
+  --color-brand-700: var(--rose-700);
+
+  /* Legacy shadcn aliases (kept, remapped) */
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -71,8 +315,10 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  /* Carbon easings are exposed as :root vars; use via ease-[var(--ease-entrance)]. */
 }
 
 @layer base {
@@ -87,24 +333,88 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "cv05" on; /* IBM-Plex-like single-storey a fallback */
   }
-  /* Short titles read better balanced; body/caption text avoids orphan words. */
-  h1,
-  h2,
-  h3,
-  h4 {
+  /* Carbon focus: visible 2px ring on keyboard focus. */
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 1px;
+  }
+  /* Short titles read better balanced; body/caption avoid orphan words. */
+  h1, h2, h3, h4 {
     text-wrap: balance;
   }
   p {
     text-wrap: pretty;
   }
   /* Money, counts, and tables stay column-aligned as values change. */
-  th,
-  td {
+  th, td {
     font-variant-numeric: tabular-nums;
   }
   /* Brand-tinted text selection. */
   ::selection {
-    background-color: color-mix(in oklab, #f43f5e 18%, transparent);
+    background-color: color-mix(in oklab, var(--interactive) 22%, transparent);
+  }
+  /* Respect reduced-motion: drop large motion, keep opacity/color feedback. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ============ Carbon type tokens as classes (see design/02) ============ */
+@layer components {
+  .type-label-01 {
+    font-size: 0.75rem; line-height: 1rem; letter-spacing: 0.32px; font-weight: 400;
+  }
+  .type-label-02 {
+    font-size: 0.875rem; line-height: 1.125rem; letter-spacing: 0.16px; font-weight: 400;
+  }
+  .type-helper-01 {
+    font-size: 0.75rem; line-height: 1rem; letter-spacing: 0.32px; font-weight: 400;
+  }
+  .type-caption-01 {
+    font-size: 0.75rem; line-height: 1rem; letter-spacing: 0.32px; font-weight: 400;
+  }
+  .type-body-compact-01 {
+    font-size: 0.875rem; line-height: 1.125rem; letter-spacing: 0.16px; font-weight: 400;
+  }
+  .type-body-compact-02 {
+    font-size: 1rem; line-height: 1.375rem; font-weight: 400;
+  }
+  .type-body-01 {
+    font-size: 0.875rem; line-height: 1.25rem; letter-spacing: 0.16px; font-weight: 400;
+  }
+  .type-body-02 {
+    font-size: 1rem; line-height: 1.5rem; font-weight: 400;
+  }
+  .type-heading-compact-01 {
+    font-size: 0.875rem; line-height: 1.125rem; letter-spacing: 0.16px; font-weight: 600;
+  }
+  .type-heading-compact-02 {
+    font-size: 1rem; line-height: 1.375rem; font-weight: 600;
+  }
+  .type-heading-01 {
+    font-size: 0.875rem; line-height: 1.25rem; letter-spacing: 0.16px; font-weight: 600;
+  }
+  .type-heading-02 {
+    font-size: 1rem; line-height: 1.5rem; font-weight: 600;
+  }
+  .type-heading-03 {
+    font-size: 1.25rem; line-height: 1.75rem; font-weight: 400;
+  }
+  .type-heading-04 {
+    font-size: 1.75rem; line-height: 2.25rem; font-weight: 400;
+  }
+  .type-heading-05 {
+    font-size: 2rem; line-height: 2.5rem; font-weight: 400;
+  }
+  .type-code-01 {
+    font-family: var(--font-mono); font-size: 0.75rem; line-height: 1rem;
+    letter-spacing: 0.32px; font-weight: 400;
   }
 }

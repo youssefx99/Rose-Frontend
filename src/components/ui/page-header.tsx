@@ -10,7 +10,10 @@ interface PageHeaderProps {
   className?: string;
 }
 
-/** Consistent page title block: balanced heading, muted description, actions. */
+/**
+ * Carbon page title block: heading-04 title, secondary description, one primary
+ * action area on the right. See design/09 §1.
+ */
 export function PageHeader({
   title,
   description,
@@ -25,11 +28,11 @@ export function PageHeader({
       )}
     >
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-950">
-          {title}
-        </h1>
+        <h1 className="type-heading-04 text-text-primary">{title}</h1>
         {description && (
-          <p className="max-w-2xl text-sm text-zinc-500">{description}</p>
+          <p className="max-w-2xl type-body-01 text-text-secondary">
+            {description}
+          </p>
         )}
       </div>
       {children && (

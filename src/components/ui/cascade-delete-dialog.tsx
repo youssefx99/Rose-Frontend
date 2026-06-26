@@ -36,9 +36,9 @@ const ACTION_VERB: Record<ImpactAction, string> = {
   unlink: "unlinked",
 };
 const ACTION_COLOR: Record<ImpactAction, string> = {
-  delete: "text-red-700",
-  revert: "text-amber-700",
-  unlink: "text-zinc-600",
+  delete: "text-support-error",
+  revert: "text-support-caution",
+  unlink: "text-text-secondary",
 };
 
 function errorMessage(error: unknown, fallback: string): string {
@@ -143,28 +143,28 @@ export function CascadeDeleteDialog({
         </>
       }
     >
-      <div className="space-y-4 text-sm text-zinc-700">
+      <div className="space-y-4 type-body-01 text-text-secondary">
         {loading || !impact ? (
-          <p className="text-zinc-500">Checking what’s linked…</p>
+          <p className="text-text-helper">Checking what’s linked…</p>
         ) : (
           <>
             <p>
               Permanently delete{" "}
-              <span className="font-medium text-zinc-900">
+              <span className="font-medium text-text-primary">
                 {impact.entityLabel}
               </span>
               ?
             </p>
 
             {deleteGroups.length === 0 && otherGroups.length === 0 ? (
-              <p className="text-zinc-500">
+              <p className="text-text-helper">
                 Nothing else is linked — it will be removed cleanly.
               </p>
             ) : (
               <div className="space-y-3">
                 {deleteGroups.length > 0 && (
-                  <div className="rounded-md border border-red-200 bg-red-50/60 p-3">
-                    <p className="mb-2 flex items-center gap-1.5 font-medium text-red-800">
+                  <div className="rounded-md border border-support-error/40 bg-support-error-bg p-3">
+                    <p className="mb-2 flex items-center gap-1.5 font-medium text-support-error">
                       <Trash2 className="size-4" /> Also permanently deleted
                     </p>
                     <ul className="space-y-1.5">
@@ -173,17 +173,17 @@ export function CascadeDeleteDialog({
                           key={g.type}
                           className="flex items-baseline justify-between gap-3"
                         >
-                          <span className="text-zinc-700">
+                          <span className="text-text-secondary">
                             {g.label}
                             {g.examples?.length ? (
-                              <span className="text-zinc-400">
+                              <span className="text-text-helper">
                                 {" — "}
                                 {g.examples.join(", ")}
                                 {g.count > g.examples.length ? "…" : ""}
                               </span>
                             ) : null}
                           </span>
-                          <span className="font-mono font-medium tabular-nums text-red-700">
+                          <span className="font-mono font-medium tabular-nums text-support-error">
                             {g.count}
                           </span>
                         </li>
@@ -193,17 +193,19 @@ export function CascadeDeleteDialog({
                 )}
 
                 {otherGroups.length > 0 && (
-                  <div className="rounded-md border border-zinc-200 p-3">
-                    <p className="mb-2 font-medium text-zinc-700">Also affected</p>
+                  <div className="rounded-md border border-border-subtle p-3">
+                    <p className="mb-2 font-medium text-text-secondary">
+                      Also affected
+                    </p>
                     <ul className="space-y-1.5">
                       {otherGroups.map((g) => (
                         <li
                           key={g.type}
                           className="flex items-baseline justify-between gap-3"
                         >
-                          <span className="text-zinc-600">
+                          <span className="text-text-secondary">
                             {g.label}{" "}
-                            <span className="text-zinc-400">
+                            <span className="text-text-helper">
                               ({ACTION_VERB[g.action]})
                             </span>
                           </span>
@@ -221,14 +223,14 @@ export function CascadeDeleteDialog({
             )}
 
             {onDeactivate && (
-              <p className="text-zinc-500">
+              <p className="text-text-helper">
                 Want to keep the history? <strong>{deactivateLabel}</strong>{" "}
                 hides it instead and can be undone later.
               </p>
             )}
 
-            <div className="flex gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-800">
-              <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+            <div className="flex gap-2 rounded-md border border-support-warning/50 bg-support-warning-bg p-3 text-text-primary">
+              <TriangleAlert className="mt-0.5 size-4 shrink-0 text-support-caution" />
               <span>
                 This permanently removes {total} record{total === 1 ? "" : "s"}{" "}
                 and cannot be undone.

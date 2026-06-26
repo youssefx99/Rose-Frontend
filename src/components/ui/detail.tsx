@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-/** A clean titled section card for detail pages. */
+/** A clean titled section card for detail pages (Carbon tile). See design/09 §4. */
 export function Section({
   title,
   subtitle,
@@ -21,15 +21,17 @@ export function Section({
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm",
+        "overflow-hidden rounded-md border border-border-subtle bg-card",
         className,
       )}
     >
-      <header className="flex items-center justify-between gap-3 border-b border-zinc-100 px-5 py-3.5">
+      <header className="flex items-center justify-between gap-3 border-b border-border-subtle px-5 py-3.5">
         <div className="min-w-0">
-          <h2 className="text-sm font-semibold text-zinc-900">{title}</h2>
+          <h2 className="type-heading-02 text-text-primary">{title}</h2>
           {subtitle && (
-            <p className="truncate text-xs text-zinc-500">{subtitle}</p>
+            <p className="truncate type-label-01 text-text-secondary">
+              {subtitle}
+            </p>
           )}
         </div>
         {action}
@@ -40,7 +42,7 @@ export function Section({
 }
 
 export function DataList({ children }: { children: React.ReactNode }) {
-  return <dl className="divide-y divide-zinc-100">{children}</dl>;
+  return <dl className="divide-y divide-border-subtle">{children}</dl>;
 }
 
 export function DataRow({
@@ -55,13 +57,13 @@ export function DataRow({
   muted?: boolean;
 }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 py-2.5 text-sm">
-      <dt className="shrink-0 text-zinc-500">{label}</dt>
+    <div className="flex items-baseline justify-between gap-4 py-2.5 type-body-compact-01">
+      <dt className="shrink-0 text-text-secondary">{label}</dt>
       <dd
         className={cn(
-          "min-w-0 text-right text-zinc-900",
+          "min-w-0 text-right text-text-primary",
           mono && "font-mono tabular-nums",
-          muted && "text-zinc-400",
+          muted && "text-text-helper",
         )}
       >
         {value}
@@ -70,7 +72,7 @@ export function DataRow({
   );
 }
 
-/** A KPI tile — large mono number with an uppercase label. */
+/** A KPI tile — large number with an uppercase label (Carbon metric tile). */
 export function Stat({
   label,
   value,
@@ -84,24 +86,17 @@ export function Stat({
 }) {
   const color =
     accent === "green"
-      ? "text-emerald-600"
+      ? "text-support-success"
       : accent === "rose"
-        ? "text-rose-600"
-        : "text-zinc-950";
+        ? "text-interactive"
+        : "text-text-primary";
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
-      <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+    <div className="rounded-md border border-border-subtle bg-card p-4">
+      <p className="type-label-01 uppercase tracking-wider text-text-secondary">
         {label}
       </p>
-      <p
-        className={cn(
-          "mt-1.5 font-mono text-2xl font-semibold tabular-nums",
-          color,
-        )}
-      >
-        {value}
-      </p>
-      {hint && <p className="mt-0.5 text-xs text-zinc-400">{hint}</p>}
+      <p className={cn("mt-1.5 type-heading-04 tabular-nums", color)}>{value}</p>
+      {hint && <p className="mt-0.5 type-label-01 text-text-helper">{hint}</p>}
     </div>
   );
 }

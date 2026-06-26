@@ -53,12 +53,12 @@ export function FilterBar({
           variant="outline"
           onClick={() => setOpen((value) => !value)}
           aria-expanded={open}
-          className={cn("gap-2", open && "bg-zinc-50")}
+          className={cn("gap-2", open && "bg-layer")}
         >
           <SlidersHorizontal className="size-4" />
           Filters
           {activeCount > 0 && (
-            <span className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1 text-xs font-medium tabular-nums text-white">
+            <span className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-interactive px-1 type-label-01 tabular-nums text-text-on-color">
               {activeCount}
             </span>
           )}
@@ -66,11 +66,11 @@ export function FilterBar({
       </div>
 
       {open && (
-        <div className="rounded-xl border border-zinc-200 bg-zinc-50/60 p-4">
+        <div className="rounded-md border border-border-subtle bg-layer p-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {children}
           </div>
-          <div className="mt-4 flex items-center justify-end gap-2 border-t border-zinc-200 pt-3">
+          <div className="mt-4 flex items-center justify-end gap-2 border-t border-border-subtle pt-3">
             <Button
               type="button"
               variant="ghost"
@@ -92,14 +92,14 @@ export function FilterBar({
           {chips.map((chip) => (
             <span
               key={chip.key}
-              className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white py-1 pl-2.5 pr-1 text-xs text-zinc-700 shadow-sm"
+              className="inline-flex items-center gap-1 rounded-full border border-border-subtle bg-card py-1 pr-1 pl-2.5 type-label-01 text-text-secondary"
             >
               {chip.label}
               <button
                 type="button"
                 onClick={chip.onRemove}
                 aria-label={`Remove ${chip.label}`}
-                className="inline-flex size-4 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
+                className="inline-flex size-4 items-center justify-center rounded-full text-icon-secondary transition-colors hover:bg-layer-hover hover:text-icon-primary"
               >
                 <X className="size-3" />
               </button>
@@ -108,7 +108,7 @@ export function FilterBar({
           <button
             type="button"
             onClick={onClearAll}
-            className="text-xs font-medium text-rose-600 transition-colors hover:text-rose-700 hover:underline"
+            className="type-label-01 font-medium text-link transition-colors hover:text-link-hover hover:underline"
           >
             Clear all
           </button>
@@ -128,7 +128,7 @@ export function FilterField({
 }) {
   return (
     <div className="space-y-1.5">
-      <span className="block text-xs font-medium text-zinc-600">{label}</span>
+      <span className="block type-label-01 text-text-secondary">{label}</span>
       {children}
     </div>
   );

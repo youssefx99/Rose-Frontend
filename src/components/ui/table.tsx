@@ -2,6 +2,11 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Carbon data table. Header on a gray layer with heading-compact-01 labels;
+ * rows separated by subtle horizontal borders; hover/selected use layer tokens;
+ * cells are body-compact-01. Status is the only color in a row. See design/08 §9.
+ */
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
     <div
@@ -21,7 +26,7 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
       data-slot="table-header"
-      className={cn("[&_tr]:border-b", className)}
+      className={cn("bg-layer [&_tr]:border-b [&_tr]:border-border-subtle", className)}
       {...props}
     />
   );
@@ -42,7 +47,7 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
     <tr
       data-slot="table-row"
       className={cn(
-        "hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors",
+        "border-b border-border-subtle transition-colors hover:bg-layer-hover data-[state=selected]:bg-layer-selected",
         className,
       )}
       {...props}
@@ -55,7 +60,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "text-muted-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0",
+        "type-heading-compact-01 h-12 px-4 text-left align-middle text-text-secondary whitespace-nowrap [&:has([role=checkbox])]:pr-0",
         className,
       )}
       {...props}
@@ -68,7 +73,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
     <td
       data-slot="table-cell"
       className={cn(
-        "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0",
+        "type-body-compact-01 px-4 py-3 align-middle text-text-primary whitespace-nowrap [&:has([role=checkbox])]:pr-0",
         className,
       )}
       {...props}

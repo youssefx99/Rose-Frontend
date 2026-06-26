@@ -4,15 +4,22 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Carbon tag: small low-saturation token. Status variants use the fixed support
+ * vocabulary (light surface + dark same-hue text). See design/08 §4.
+ */
 const badgeVariants = cva(
-  "inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 gap-1 [&>svg]:size-3 [&>svg]:pointer-events-none transition-[color,box-shadow] overflow-hidden",
+  "inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-full px-2 py-0.5 type-label-01 transition-colors [&>svg]:size-3 [&>svg]:pointer-events-none",
   {
     variants: {
       variant: {
-        default: "border-transparent bg-primary text-primary-foreground",
-        secondary: "border-transparent bg-secondary text-secondary-foreground",
-        destructive: "border-transparent bg-destructive text-white",
-        outline: "text-foreground",
+        default: "bg-interactive text-text-on-color",
+        secondary: "bg-layer-selected text-text-primary",
+        destructive: "bg-support-error-bg text-support-error",
+        success: "bg-support-success-bg text-support-success",
+        warning: "bg-support-warning-bg text-text-primary",
+        info: "bg-support-info-bg text-support-info",
+        outline: "border border-border-subtle-01 text-text-secondary",
       },
     },
     defaultVariants: {

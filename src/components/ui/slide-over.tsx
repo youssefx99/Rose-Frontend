@@ -26,9 +26,8 @@ interface SlideOverProps {
 }
 
 /**
- * Right-side slide-over panel. Built on the Radix Dialog primitive (overlay,
- * Escape-to-close, click-outside, focus trap) restyled as a flush drawer — never
- * a centered modal. Used app-wide for every form and detail view.
+ * Right-side slide-over panel (Carbon side-panel pattern). Built on Radix Dialog
+ * (overlay, Esc, click-outside, focus trap), 400ms entrance/exit. See design/08 §8.
  */
 export function SlideOver({
   open,
@@ -44,35 +43,34 @@ export function SlideOver({
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay
           className={cn(
-            "fixed inset-0 z-50 bg-black/40",
+            "fixed inset-0 z-50 bg-[var(--overlay)]",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
             "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
           )}
         />
         <DialogPrimitive.Content
-          // Avoid the Radix a11y warning when no description is provided.
           {...(description ? {} : { "aria-describedby": undefined })}
           className={cn(
-            "fixed inset-y-0 right-0 z-50 flex h-screen w-screen flex-col bg-white shadow-xl outline-none",
-            "duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out",
+            "fixed inset-y-0 right-0 z-50 flex h-screen w-screen flex-col bg-card shadow-2xl outline-none",
+            "duration-[var(--dur-slow-01)] data-[state=open]:animate-in data-[state=closed]:animate-out",
             "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right",
             WIDTH[size],
           )}
         >
-          <div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4">
+          <div className="flex items-center justify-between border-b border-border-subtle px-6 py-4">
             <div className="min-w-0">
-              <DialogPrimitive.Title className="text-base font-semibold text-zinc-900">
+              <DialogPrimitive.Title className="type-heading-02 text-text-primary">
                 {title}
               </DialogPrimitive.Title>
               {description && (
-                <DialogPrimitive.Description className="mt-0.5 truncate text-sm text-zinc-500">
+                <DialogPrimitive.Description className="mt-0.5 truncate type-body-01 text-text-secondary">
                   {description}
                 </DialogPrimitive.Description>
               )}
             </div>
             <DialogPrimitive.Close
               aria-label="Close"
-              className="rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
+              className="rounded-sm p-1.5 text-icon-secondary transition-colors hover:bg-layer-hover hover:text-icon-primary focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none"
             >
               <X className="size-4" />
             </DialogPrimitive.Close>
@@ -81,7 +79,7 @@ export function SlideOver({
           <div className="flex-1 overflow-y-auto p-6">{children}</div>
 
           {footer && (
-            <div className="flex justify-end gap-2 border-t border-zinc-200 bg-zinc-50 p-4">
+            <div className="flex justify-end gap-2 border-t border-border-subtle bg-layer p-4">
               {footer}
             </div>
           )}
