@@ -14,6 +14,8 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
       data-slot="input"
       className={cn(
         "flex h-10 w-full min-w-0 rounded-md border border-border-strong bg-field px-3 text-sm text-text-primary outline-none transition-colors duration-[var(--dur-fast-01)]",
+        "[&[type=date]]:appearance-auto [&[type=datetime-local]]:appearance-auto [&[type=time]]:appearance-auto",
+        "[&[type=date]]:pr-2 [&[type=datetime-local]]:pr-2 [&[type=time]]:pr-2",
         "placeholder:text-text-placeholder selection:bg-interactive selection:text-text-on-color",
         "hover:bg-field-hover",
         "focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-0",

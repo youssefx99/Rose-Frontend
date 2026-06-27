@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Coins, ExternalLink } from "lucide-react";
+import { ArrowLeft, Coins, ExternalLink, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
 
@@ -13,14 +13,46 @@ import {
   approveAllJob,
   getReviewJob,
   rejectAllJob,
+  reopenJob,
   type ReviewJobDetail,
+  type ValidationFlag,
 } from "@/lib/documents";
 import { formatDateTime } from "@/lib/format";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 import { ReviewItemCard } from "./review-item-card";
 import { ClaimGroupCard } from "./claim-group-card";
-import { DocumentViewer, useDocumentFile } from "./document-viewer";
+import { DocumentViewer, useDocumentFile } from "@/components/document-viewer";
+
+function ValidationBadge({ score, flags }: { score: number; flags: ValidationFlag[] }) {
+  const errors = flags.filter((f) => f.severity === "error");
+  const warnings = flags.filter((f) => f.severity === "warning");
+  const color =
+    score >= 90 ? "text-support-success border-support-success bg-support-success-bg"
+    : score >= 70 ? "text-support-warning border-support-warning bg-support-warning-bg"
+    : "text-support-error border-support-error bg-support-error-bg";
+  const tooltip = flags.length === 0
+    ? "No issues found"
+    : flags.map((f) => `[${f.severity.toUpperCase()}] ${f.field}: ${f.message}`).join("\n");
+  return (
+    <span
+      title={tooltip}
+      className={cn(
+        "inline-flex cursor-help items-center gap-1.5 rounded-md border px-2 py-1 type-label-01",
+        color,
+      )}
+    >
+      <ShieldCheck className="size-3.5" />
+      Validation: <span className="font-semibold tabular-nums">{score}/100</span>
+      {errors.length > 0 && (
+        <span className="font-medium">&nbsp;· {errors.length} error{errors.length > 1 ? "s" : ""}</span>
+      )}
+      {warnings.length > 0 && (
+        <span className="font-medium">&nbsp;· {warnings.length} warning{warnings.length > 1 ? "s" : ""}</span>
+      )}
+    </span>
+  );
+}
 
 // Persisted document/items split (left panel width %), with sane bounds.
 const SPLIT_KEY = "rose-review-split";
@@ -36,7 +68,7 @@ export default function ReviewDetailPage() {
   const file = useDocumentFile(jobId);
   const [job, setJob] = useState<ReviewJobDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [bulk, setBulk] = useState<"approve" | "reject" | null>(null);
+  const [bulk, setBulk] = useState<"approve" | "reject" | "reopen" | null>(null);
 
   // Resizable split between the document (left) and review items (right).
   const splitRef = useRef<HTMLDivElement>(null);
@@ -134,6 +166,23 @@ export default function ReviewDetailPage() {
     }
   };
 
+  const reopen = async () => {
+    setBulk("reopen");
+    try {
+      const result = await reopenJob(job.id);
+      toast.success(`Reopened — ${result.reopened} item(s) back to pending.`);
+      await load();
+    } catch (error) {
+      const message =
+        isAxiosError(error) && typeof error.response?.data?.message === "string"
+          ? error.response.data.message
+          : "Reopen failed.";
+      toast.error(message);
+    } finally {
+      setBulk(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Link
@@ -152,53 +201,63 @@ export default function ReviewDetailPage() {
             <StatusBadge status={job.status} />
           </div>
           <p className="type-body-01 text-text-secondary">
-            {job.documentType.replace(/_/g, " ")} · uploaded{" "}
-            {formatDateTime(job.createdAt)} · {pendingCount} pending of{" "}
+            Uploaded {formatDateTime(job.createdAt)} · {pendingCount} pending of{" "}
             {totalItems}
           </p>
-          {job.extractionCost && (
-            <span className="inline-flex flex-wrap items-center gap-1.5 rounded-md border border-border-subtle bg-layer px-2 py-1 type-label-01 text-text-secondary">
-              <Coins className="size-3.5 text-support-caution" />
-              AI extraction cost:
-              <span className="font-semibold tabular-nums text-text-primary">
-                {job.extractionCost.egp.toFixed(2)} EGP
+          <div className="flex flex-wrap items-center gap-2">
+            {job.extractionCost && (
+              <span className="inline-flex flex-wrap items-center gap-1.5 rounded-md border border-border-subtle bg-layer px-2 py-1 type-label-01 text-text-secondary">
+                <Coins className="size-3.5 text-support-caution" />
+                AI extraction cost:
+                <span className="font-semibold tabular-nums text-text-primary">
+                  {job.extractionCost.egp.toFixed(2)} EGP
+                </span>
+                <span className="tabular-nums text-text-helper">
+                  (${job.extractionCost.usd.toFixed(4)})
+                </span>
+                <span className="tabular-nums text-text-helper">
+                  · {job.extractionCost.inputTokens.toLocaleString()} in /{" "}
+                  {job.extractionCost.outputTokens.toLocaleString()} out tokens
+                </span>
               </span>
-              <span className="tabular-nums text-text-helper">
-                (${job.extractionCost.usd.toFixed(4)})
-              </span>
-              <span className="tabular-nums text-text-helper">
-                · {job.extractionCost.inputTokens.toLocaleString()} in /{" "}
-                {job.extractionCost.outputTokens.toLocaleString()} out tokens
-              </span>
-            </span>
-          )}
-        </div>
-        {pendingCount > 0 && (can("review.approve") || can("review.reject")) && (
-          <div className="flex items-center gap-2">
-            {can("review.reject") && (
-              <Button
-                variant="destructive"
-                disabled={bulk !== null}
-                onClick={rejectAll}
-              >
-                {bulk === "reject"
-                  ? "Rejecting…"
-                  : `Reject All (${pendingCount})`}
-              </Button>
             )}
-            {can("review.approve") && (
-              <Button
-                variant="rose"
-                disabled={bulk !== null}
-                onClick={approveAll}
-              >
-                {bulk === "approve"
-                  ? "Approving…"
-                  : `Approve All (${pendingCount})`}
-              </Button>
+            {job.validationScore != null && (
+              <ValidationBadge
+                score={job.validationScore}
+                flags={job.validationFlags ?? []}
+              />
             )}
           </div>
-        )}
+        </div>
+        <div className="flex items-center gap-2">
+          {job.status === "REJECTED" && can("review.approve") && (
+            <Button
+              variant="outline"
+              disabled={bulk !== null}
+              onClick={reopen}
+            >
+              {bulk === "reopen" ? "Reopening…" : "↩ Undo Reject All"}
+            </Button>
+          )}
+          {pendingCount > 0 && can("review.reject") && (
+            <Button
+              variant="destructive"
+              disabled={bulk !== null}
+              onClick={rejectAll}
+            >
+              {bulk === "reject" ? "Rejecting…" : `Reject All (${pendingCount})`}
+            </Button>
+          )}
+          {pendingCount > 0 && can("review.approve") && (
+            <Button
+              variant="rose"
+              disabled={bulk !== null}
+              onClick={approveAll}
+            >
+              {bulk === "approve" ? "Approving…" : `Approve All (${pendingCount})`}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Mobile: the document panel is hidden, so offer a quick open link. */}

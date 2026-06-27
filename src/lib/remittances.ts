@@ -1,6 +1,5 @@
 import { api } from "./api";
 import type { PaginatedResult } from "./payers";
-import type { DocumentType } from "./documents";
 
 interface PayerRef {
   id: string;
@@ -42,7 +41,7 @@ export interface RemittanceClaimLine {
 }
 
 export interface RemittanceDetail extends Remittance {
-  ingestionJob?: { id: string; fileName: string; documentType: DocumentType };
+  ingestionJob?: { id: string; fileName: string };
   claimLines: RemittanceClaimLine[];
 }
 

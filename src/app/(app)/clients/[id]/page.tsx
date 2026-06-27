@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -27,11 +27,37 @@ import {
 import { formatDate, formatMoney } from "@/lib/format";
 import { useAuth } from "@/lib/auth-context";
 import { ClientFormDialog } from "../client-form-dialog";
+import { CLAIM_STATUSES, type ClaimStatus } from "@/lib/claims";
 
 function serviceDates(c: ClientClaimRow): string {
   return c.dateOfServiceEnd && c.dateOfServiceEnd !== c.dateOfService
     ? `${formatDate(c.dateOfService)} – ${formatDate(c.dateOfServiceEnd)}`
     : formatDate(c.dateOfService);
+}
+
+/** Compute useful payment analytics from the claims list. */
+function useClaimAnalytics(claims: ClientClaimRow[]) {
+  return useMemo(() => {
+    // Status breakdown
+    const byStatus = Object.fromEntries(
+      CLAIM_STATUSES.map((s) => [s, 0]),
+    ) as Record<ClaimStatus, number>;
+    for (const c of claims) byStatus[c.status as ClaimStatus] = (byStatus[c.status as ClaimStatus] ?? 0) + 1;
+    const statusBreakdown = CLAIM_STATUSES
+      .map((s) => ({ status: s, count: byStatus[s] }))
+      .filter((s) => s.count > 0);
+
+    // Last payment received (most recent bankDate across claims that have one)
+    const bankDates = claims
+      .filter((c) => c.status === "PAID")
+      .map((c) => c.dateBilled) // dateBilled is closest proxy on ClientClaimRow
+      .filter(Boolean)
+      .sort()
+      .reverse();
+    const lastPayment = bankDates[0] ?? null;
+
+    return { statusBreakdown, lastPayment };
+  }, [claims]);
 }
 
 export default function ClientDetailPage() {
@@ -57,6 +83,8 @@ export default function ClientDetailPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const analytics = useClaimAnalytics(detail?.claims ?? []);
 
   if (loading) return <p className="type-body-01 text-text-secondary">Loading…</p>;
   if (!detail)
@@ -114,11 +142,7 @@ export default function ClientDetailPage() {
       {/* KPI strip */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Stat label="Total billed" value={formatMoney(totals.charge)} />
-        <Stat
-          label="Collected"
-          value={formatMoney(totals.paid)}
-          accent="green"
-        />
+        <Stat label="Collected" value={formatMoney(totals.paid)} accent="green" />
         <Stat
           label="Collection rate"
           value={`${totals.collectionRate.toFixed(1)}%`}
@@ -133,8 +157,46 @@ export default function ClientDetailPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Aside: payers + account numbers */}
+        {/* Aside */}
         <div className="space-y-6">
+          {/* Claims status breakdown */}
+          {analytics.statusBreakdown.length > 0 && (
+            <Section title="Claims by status">
+              <ul className="space-y-2">
+                {analytics.statusBreakdown.map(({ status, count }) => (
+                  <li
+                    key={status}
+                    className="flex items-center justify-between gap-2 type-body-compact-01"
+                  >
+                    <StatusBadge status={status as ClaimStatus} />
+                    <span className="font-mono type-label-01 tabular-nums text-text-secondary">
+                      {count} claim{count !== 1 ? "s" : ""}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </Section>
+          )}
+
+          {/* Payment metrics */}
+          <Section title="Payment metrics">
+            <ul className="divide-y divide-border-subtle">
+              <li className="flex items-center justify-between gap-2 py-2.5 type-body-compact-01">
+                <span className="text-text-secondary">Last billed</span>
+                <span className="font-mono type-label-01 text-text-primary">
+                  {analytics.lastPayment ? formatDate(analytics.lastPayment) : "—"}
+                </span>
+              </li>
+              <li className="flex items-center justify-between gap-2 py-2.5 type-body-compact-01">
+                <span className="text-text-secondary">Paid claims</span>
+                <span className="font-mono type-label-01 tabular-nums text-text-primary">
+                  {claims.filter((c) => c.status === "PAID").length} /{" "}
+                  {totals.claimCount}
+                </span>
+              </li>
+            </ul>
+          </Section>
+
           <Section title="Payers" subtitle={`${payers.length} on file`}>
             {payers.length === 0 ? (
               <p className="py-2 type-body-01 text-text-helper">No payers yet.</p>
@@ -244,13 +306,37 @@ export default function ClientDetailPage() {
                           : "—"}
                       </TableCell>
                       <TableCell>
-                        <StatusBadge status={c.status} />
+                        <StatusBadge status={c.status as ClaimStatus} />
                       </TableCell>
                     </TableRow>
                   ))
                 )}
               </TableBody>
             </Table>
+
+            {/* Claims financial footer */}
+            {claims.length > 0 && (
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-1 border-t border-border-subtle bg-layer px-4 py-2.5">
+                <span className="type-label-01 text-text-secondary">
+                  Billed:{" "}
+                  <span className="font-mono font-medium tabular-nums text-text-primary">
+                    {formatMoney(totals.charge)}
+                  </span>
+                </span>
+                <span className="type-label-01 text-text-secondary">
+                  Collected:{" "}
+                  <span className="font-mono font-medium tabular-nums text-support-success">
+                    {formatMoney(totals.paid)}
+                  </span>
+                </span>
+                <span className="type-label-01 text-text-secondary">
+                  Outstanding:{" "}
+                  <span className="font-mono font-medium tabular-nums text-interactive">
+                    {formatMoney(totals.outstanding)}
+                  </span>
+                </span>
+              </div>
+            )}
           </Section>
         </div>
       </div>

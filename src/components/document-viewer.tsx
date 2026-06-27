@@ -59,7 +59,7 @@ interface DocumentViewerProps {
 }
 
 // PDFs render inline in an iframe; anything else gets a download card. The card
-// fills its parent's height (set on the review page) so there's no bottom gap.
+// fills its parent's height (set by the caller) so there's no bottom gap.
 export function DocumentViewer({
   fileName,
   fileMimeType,

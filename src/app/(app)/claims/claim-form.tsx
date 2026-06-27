@@ -49,7 +49,6 @@ const schema = z.object({
   negotiationDate: z.string().optional(),
   inBankAmount: numeric,
   bankDate: z.string().optional(),
-  payToPatient: z.boolean().optional(),
   notes: z.string().optional(),
   internalNote: z.string().optional(),
 });
@@ -104,7 +103,6 @@ export function ClaimForm({
       negotiationDate: toIsoDate(claim?.negotiationDate),
       inBankAmount: claim?.inBankAmount ?? "",
       bankDate: toIsoDate(claim?.bankDate),
-      payToPatient: claim?.payToPatient ?? false,
       notes: claim?.notes ?? "",
       internalNote: claim?.internalNote ?? "",
     },
@@ -145,7 +143,6 @@ export function ClaimForm({
           negotiationDate: values.negotiationDate || undefined,
           inBankAmount: num(values.inBankAmount),
           bankDate: values.bankDate || undefined,
-          payToPatient: values.payToPatient,
           notes: values.notes || undefined,
           internalNote: values.internalNote || undefined,
         };
@@ -162,7 +159,6 @@ export function ClaimForm({
           negotiationDate: values.negotiationDate || undefined,
           inBankAmount: num(values.inBankAmount),
           bankDate: values.bankDate || undefined,
-          payToPatient: values.payToPatient,
           notes: values.notes || undefined,
           internalNote: values.internalNote || undefined,
         };
@@ -327,14 +323,6 @@ export function ClaimForm({
             {...register("negotiationDate")}
           />
         </div>
-        <label className="flex items-center gap-2 pt-8 type-body-compact-01 text-text-primary">
-          <input
-            type="checkbox"
-            className="size-4 rounded-sm border-border-strong accent-[var(--interactive)]"
-            {...register("payToPatient")}
-          />
-          Pay to client
-        </label>
       </div>
 
       <div className="space-y-2">

@@ -34,6 +34,11 @@ export async function listPayers(params?: {
   return data;
 }
 
+export async function getPayer(id: string): Promise<Payer> {
+  const { data } = await api.get<Payer>(`/payers/${id}`);
+  return data;
+}
+
 export async function createPayer(input: PayerInput): Promise<Payer> {
   const { data } = await api.post<Payer>("/payers", input);
   return data;

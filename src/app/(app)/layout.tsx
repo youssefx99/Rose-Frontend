@@ -13,6 +13,7 @@ import {
   Menu,
   Moon,
   Receipt,
+  Settings,
   ShieldCheck,
   Sun,
   Upload,
@@ -36,10 +37,12 @@ const INGESTION_NAV = [
   { href: "/remittances", label: "Remittances", icon: Receipt, perm: "remittances.view" },
 ];
 
-// SUPER_ADMIN-only administration links.
-const ADMIN_NAV = [
-  { href: "/users", label: "Users", icon: ShieldCheck },
-  { href: "/permissions", label: "Permissions", icon: KeyRound },
+// Administration links. Users/Permissions are SUPER_ADMIN-only; Settings is
+// permission-gated so ADMINs with settings.view see it too.
+const ADMIN_NAV: NavItem[] = [
+  { href: "/users", label: "Users", icon: ShieldCheck, superAdminOnly: true },
+  { href: "/permissions", label: "Permissions", icon: KeyRound, superAdminOnly: true },
+  { href: "/settings", label: "Settings", icon: Settings, perm: "settings.view" },
 ];
 
 const COLLAPSE_KEY = "rose-sidebar-collapsed";
@@ -51,6 +54,7 @@ type NavItem = {
   icon: typeof FileText;
   showBadge?: boolean;
   perm?: string;
+  superAdminOnly?: boolean;
 };
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -118,7 +122,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const renderNav = (items: NavItem[]) =>
     items
-      .filter(({ perm }) => !perm || can(perm))
+      .filter(
+        ({ perm, superAdminOnly }) =>
+          (!superAdminOnly || user.role === "SUPER_ADMIN") &&
+          (!perm || can(perm)),
+      )
       .map(({ href, label, icon: Icon, showBadge }) => {
         const active = pathname === href || pathname.startsWith(`${href}/`);
         const hasBadge = showBadge && pendingCount > 0;
@@ -156,18 +164,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       {/* ── Carbon UI Shell header (dark, 48px) ── */}
-      <header className="sticky top-0 z-40 flex h-12 shrink-0 items-center gap-2 bg-[var(--cds-gray-100)] pr-3 pl-1 text-white">
+      <header className="sticky top-0 z-40 flex h-12 shrink-0 items-center gap-2 border-b border-border-subtle bg-background pr-3 pl-1 text-text-primary dark:border-transparent dark:bg-[var(--cds-gray-100)] dark:text-white">
         <button
           type="button"
           onClick={toggleCollapsed}
           aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
-          className="hidden size-12 items-center justify-center text-white/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white focus-visible:outline-none md:inline-flex"
+          className="hidden size-12 items-center justify-center text-text-secondary transition-colors hover:bg-layer-hover hover:text-text-primary focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-interactive focus-visible:outline-none dark:text-white/80 dark:hover:bg-white/10 dark:hover:text-white dark:focus-visible:ring-white md:inline-flex"
         >
           <Menu className="size-5" />
         </button>
         <Link
           href="/dashboard"
-          className="flex items-center gap-2 px-2 type-heading-compact-02 tracking-tight text-white focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white focus-visible:outline-none"
+          className="flex items-center gap-2 px-2 type-heading-compact-02 tracking-tight text-text-primary focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-interactive focus-visible:outline-none dark:text-white dark:focus-visible:ring-white"
         >
           <span className="inline-block size-2 rounded-full bg-interactive" />
           RoseSystem
@@ -180,7 +188,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           onClick={toggleTheme}
           aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}
           title={dark ? "Light theme" : "Dark theme"}
-          className="inline-flex size-9 items-center justify-center rounded-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white focus-visible:outline-none"
+          className="inline-flex size-9 items-center justify-center rounded-sm text-text-secondary transition-colors hover:bg-layer-hover hover:text-text-primary focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-interactive focus-visible:outline-none dark:text-white/80 dark:hover:bg-white/10 dark:hover:text-white dark:focus-visible:ring-white"
         >
           {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
         </button>
@@ -193,15 +201,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {initial}
           </div>
           <div className="hidden min-w-0 leading-tight sm:block">
-            <p className="truncate type-label-01 font-medium text-white">{name}</p>
-            <p className="truncate type-label-01 text-white/60">{user.role}</p>
+            <p className="truncate type-label-01 font-medium text-text-primary dark:text-white">{name}</p>
+            <p className="truncate type-label-01 text-text-secondary dark:text-white/60">{user.role}</p>
           </div>
           <button
             type="button"
             onClick={logout}
             title="Sign out"
             aria-label="Sign out"
-            className="inline-flex size-9 items-center justify-center rounded-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white focus-visible:outline-none"
+            className="inline-flex size-9 items-center justify-center rounded-sm text-text-secondary transition-colors hover:bg-layer-hover hover:text-text-primary focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-interactive focus-visible:outline-none dark:text-white/80 dark:hover:bg-white/10 dark:hover:text-white dark:focus-visible:ring-white"
           >
             <LogOut className="size-4" />
           </button>
@@ -220,7 +228,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {renderNav(PRIMARY_NAV)}
             <div className="mx-4 my-2 border-t border-border-subtle" />
             {renderNav(INGESTION_NAV)}
-            {user.role === "SUPER_ADMIN" && (
+            {(user.role === "SUPER_ADMIN" || can("settings.view")) && (
               <>
                 <div className="mx-4 my-2 border-t border-border-subtle" />
                 {renderNav(ADMIN_NAV)}

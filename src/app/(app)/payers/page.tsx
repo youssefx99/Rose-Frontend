@@ -19,9 +19,11 @@ import { CascadeDeleteDialog } from "@/components/ui/cascade-delete-dialog";
 import { useAuth } from "@/lib/auth-context";
 import { deactivatePayer, listPayers, type Payer } from "@/lib/payers";
 import { PayerFormDialog } from "./payer-form-dialog";
+import { useRouter } from "next/navigation";
 
 export default function PayersPage() {
   const { can } = useAuth();
+  const router = useRouter();
   const [payers, setPayers] = useState<Payer[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -131,7 +133,11 @@ export default function PayersPage() {
               </TableRow>
             ) : (
               payers.map((payer) => (
-                <TableRow key={payer.id}>
+                <TableRow
+                  key={payer.id}
+                  className="cursor-pointer"
+                  onClick={() => router.push(`/payers/${payer.id}`)}
+                >
                   <TableCell className="font-medium text-text-primary">
                     {payer.name}
                   </TableCell>
@@ -142,7 +148,10 @@ export default function PayersPage() {
                     {payer.state ?? "—"}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
+                    <div
+                      className="flex items-center justify-end gap-1"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       {can("payers.edit") && (
                         <Button
                           variant="ghost"

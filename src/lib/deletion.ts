@@ -19,13 +19,14 @@ export interface DeletionImpact {
   totalDeleted: number;
 }
 
-export type DeletableType = "client" | "payer" | "claim" | "remittance";
+export type DeletableType = "client" | "payer" | "claim" | "remittance" | "document";
 
 const PATH: Record<DeletableType, string> = {
   client: "clients",
   payer: "payers",
   claim: "claims",
   remittance: "remittances",
+  document: "documents",
 };
 
 /** Previews exactly what deleting this record will remove or affect. */

@@ -7,6 +7,7 @@ import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { CascadeDeleteDialog } from "@/components/ui/cascade-delete-dialog";
 import { PageHeader } from "@/components/ui/page-header";
@@ -19,22 +20,28 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getClaim, formatMoney, formatDate, type Claim } from "@/lib/claims";
-import { formatDateTime } from "@/lib/format";
+import {
+  getClaim,
+  listClaims,
+  listClaimNotes,
+  addClaimNote,
+  formatMoney,
+  formatDate,
+  type Claim,
+  type ArNote,
+} from "@/lib/claims";
+import { formatDateTime, formatDate as fmtDate, timeAgo } from "@/lib/format";
 import { useAuth } from "@/lib/auth-context";
 import { ClaimFormPanel } from "../claim-form-panel";
 import { StatusActions } from "./status-actions";
-import { ArNotesPanel } from "./ar-notes-panel";
 
-/** Decimal fraction (0.6) → "60%". */
 function pct(value: string | null): string {
   if (value == null || value === "") return "—";
   return `${(Number(value) * 100).toFixed(1)}%`;
 }
 
 function serviceRange(claim: Claim): string {
-  return claim.dateOfServiceEnd &&
-    claim.dateOfServiceEnd !== claim.dateOfService
+  return claim.dateOfServiceEnd && claim.dateOfServiceEnd !== claim.dateOfService
     ? `${formatDate(claim.dateOfService)} – ${formatDate(claim.dateOfServiceEnd)}`
     : formatDate(claim.dateOfService);
 }
@@ -43,17 +50,154 @@ function userName(u?: { firstName: string; lastName: string } | null): string {
   return u ? `${u.firstName} ${u.lastName}` : "—";
 }
 
+/** Compact inline AR notes section replacing the slide-over. */
+function ArNotesSection({
+  claimId,
+  notes,
+  onAdded,
+  canEdit,
+}: {
+  claimId: string;
+  notes: ArNote[];
+  onAdded: () => void;
+  canEdit: boolean;
+}) {
+  const [text, setText] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const add = async () => {
+    const value = text.trim();
+    if (!value) return;
+    setSaving(true);
+    try {
+      await addClaimNote(claimId, value);
+      setText("");
+      onAdded();
+      toast.success("Note added.");
+    } catch {
+      toast.error("Failed to add note.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      {canEdit && (
+        <div className="space-y-2">
+          <Textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Add a note…"
+            rows={2}
+          />
+          <div className="flex justify-end">
+            <Button
+              size="sm"
+              disabled={saving || !text.trim()}
+              onClick={add}
+            >
+              {saving ? "Adding…" : "Add Note"}
+            </Button>
+          </div>
+        </div>
+      )}
+      {notes.length === 0 ? (
+        <p className="py-2 type-body-01 text-text-secondary">No notes yet.</p>
+      ) : (
+        <ul className="space-y-2.5">
+          {notes.map((note) => (
+            <li
+              key={note.id}
+              className="rounded-md border border-border-subtle bg-layer p-3"
+            >
+              <p className="whitespace-pre-wrap type-body-compact-01 text-text-primary">
+                {note.noteText}
+              </p>
+              <p className="mt-1 type-label-01 text-text-secondary">
+                {note.user.firstName} {note.user.lastName} ·{" "}
+                {fmtDate(note.noteDate)}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/** Other open claims for the same client. */
+function RelatedClaimsSection({
+  clientId,
+  currentClaimId,
+  clientName,
+}: {
+  clientId: string;
+  currentClaimId: string;
+  clientName: string;
+}) {
+  const [related, setRelated] = useState<Claim[]>([]);
+
+  useEffect(() => {
+    listClaims({ clientId })
+      .then(({ data }) =>
+        setRelated(data.filter((c) => c.id !== currentClaimId).slice(0, 5)),
+      )
+      .catch(() => undefined);
+  }, [clientId, currentClaimId]);
+
+  if (related.length === 0) return null;
+
+  return (
+    <Section
+      title="Related claims"
+      subtitle={`Other claims for ${clientName}`}
+    >
+      <ul className="space-y-2.5">
+        {related.map((c) => (
+          <li key={c.id}>
+            <Link
+              href={`/claims/${c.id}`}
+              className="flex items-center justify-between gap-2 rounded-md px-1 py-1 transition-colors hover:bg-layer-hover"
+            >
+              <span className="font-mono type-label-01 text-link">
+                {c.claimReference}
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="font-mono type-label-01 tabular-nums text-text-secondary">
+                  {formatMoney(c.chargeAmount)}
+                </span>
+                <StatusBadge status={c.status} />
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-3 border-t border-border-subtle pt-3">
+        <Link
+          href={`/clients/${clientId}`}
+          className="type-label-01 text-link hover:underline"
+        >
+          View full client profile →
+        </Link>
+      </div>
+    </Section>
+  );
+}
+
 export default function ClaimDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { can } = useAuth();
   const id = params.id;
+
   const [claim, setClaim] = useState<Claim | null>(null);
+  const [notes, setNotes] = useState<ArNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const load = useCallback(async () => {
+  const loadClaim = useCallback(async () => {
     try {
       setClaim(await getClaim(id));
     } catch {
@@ -63,16 +207,23 @@ export default function ClaimDetailPage() {
     }
   }, [id]);
 
+  const loadNotes = useCallback(async () => {
+    try {
+      setNotes(await listClaimNotes(id));
+    } catch {
+      // non-fatal
+    }
+  }, [id]);
+
   useEffect(() => {
-    load();
-  }, [load]);
+    loadClaim();
+    loadNotes();
+  }, [loadClaim, loadNotes]);
 
   if (loading)
     return <p className="type-body-01 text-text-secondary">Loading…</p>;
   if (!claim)
-    return (
-      <p className="type-body-01 text-text-secondary">Claim not found.</p>
-    );
+    return <p className="type-body-01 text-text-secondary">Claim not found.</p>;
 
   const lines = claim.remittanceLines ?? [];
   const lineTotals = lines.reduce(
@@ -93,14 +244,9 @@ export default function ClaimDetailPage() {
         <ArrowLeft className="size-4" /> Back to claims
       </Link>
 
-      {/* Header */}
       <PageHeader
         title={claim.claimReference}
-        description={[
-          claim.client?.displayName,
-          claim.payer?.name,
-          claim.payer?.state,
-        ]
+        description={[claim.client?.displayName, claim.payer?.name, claim.payer?.state]
           .filter(Boolean)
           .join(" · ")}
       >
@@ -125,11 +271,7 @@ export default function ClaimDetailPage() {
       {/* KPI strip */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Stat label="Charge" value={formatMoney(claim.chargeAmount)} />
-        <Stat
-          label="Payer paid"
-          value={formatMoney(claim.payerPaidAmount)}
-          accent="green"
-        />
+        <Stat label="Payer paid" value={formatMoney(claim.payerPaidAmount)} accent="green" />
         <Stat label="Pay rate" value={pct(claim.payPct)} hint="paid ÷ charge" />
         <Stat
           label="In bank"
@@ -146,48 +288,23 @@ export default function ClaimDetailPage() {
       )}
 
       <div className="grid gap-6 lg:grid-cols-3">
+        {/* Main content */}
         <div className="space-y-6 lg:col-span-2">
           <Section title="Claim details">
             <DataList>
-              <DataRow
-                label="External claim #"
-                value={claim.externalClaimNumber ?? "—"}
-                mono
-              />
-              <DataRow
-                label="Patient account #"
-                value={claim.patientAccountNumber ?? "—"}
-                mono
-              />
+              <DataRow label="External claim #" value={claim.externalClaimNumber ?? "—"} mono />
+              <DataRow label="Patient account #" value={claim.patientAccountNumber ?? "—"} mono />
               <DataRow label="Service dates" value={serviceRange(claim)} />
               <DataRow label="Date billed" value={formatDate(claim.dateBilled)} />
-              <DataRow
-                label="Pay to patient"
-                value={claim.payToPatient ? "Yes" : "No"}
-              />
             </DataList>
           </Section>
 
-          <Section
-            title="Negotiation & banking"
-            subtitle="Set only when the claim is negotiated"
-          >
+          <Section title="Negotiation & banking" subtitle="Set only when the claim is negotiated">
             <DataList>
               <DataRow label="Nego %" value={pct(claim.negoPct)} mono />
-              <DataRow
-                label="Allowed amount"
-                value={formatMoney(claim.allowedAmount)}
-                mono
-              />
-              <DataRow
-                label="Balance needed"
-                value={formatMoney(claim.balanceNeeded)}
-                mono
-              />
-              <DataRow
-                label="Negotiation date"
-                value={formatDate(claim.negotiationDate)}
-              />
+              <DataRow label="Allowed amount" value={formatMoney(claim.allowedAmount)} mono />
+              <DataRow label="Balance needed" value={formatMoney(claim.balanceNeeded)} mono />
+              <DataRow label="Negotiation date" value={formatDate(claim.negotiationDate)} />
             </DataList>
           </Section>
 
@@ -272,9 +389,31 @@ export default function ClaimDetailPage() {
           )}
         </div>
 
+        {/* Sidebar */}
         <div className="space-y-6">
-          <ArNotesPanel claimId={claim.id} />
+          {/* Inline AR Notes */}
+          <Section
+            title="AR Notes"
+            subtitle={`${notes.length} note${notes.length === 1 ? "" : "s"}`}
+          >
+            <ArNotesSection
+              claimId={claim.id}
+              notes={notes}
+              onAdded={loadNotes}
+              canEdit={can("claims.edit")}
+            />
+          </Section>
 
+          {/* Related claims for same client */}
+          {claim.client && (
+            <RelatedClaimsSection
+              clientId={claim.clientId}
+              currentClaimId={claim.id}
+              clientName={claim.client.displayName}
+            />
+          )}
+
+          {/* Record metadata */}
           <Section title="Record">
             <DataList>
               <DataRow label="Created by" value={userName(claim.createdBy)} />
@@ -285,18 +424,13 @@ export default function ClaimDetailPage() {
               />
               <DataRow label="Updated by" value={userName(claim.updatedBy)} />
               <DataRow
-                label="Updated"
-                value={formatDateTime(claim.updatedAt)}
+                label="Last activity"
+                value={timeAgo(claim.updatedAt)}
                 muted
               />
               <DataRow
                 label="Payment lines"
                 value={claim._count?.remittanceLines ?? lines.length}
-                mono
-              />
-              <DataRow
-                label="AR notes"
-                value={claim._count?.arNotes ?? 0}
                 mono
               />
             </DataList>

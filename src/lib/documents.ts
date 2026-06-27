@@ -3,25 +3,11 @@ import type { PaginatedResult } from "./payers";
 
 // ── Enums (mirror backend Prisma enums) ──────────────────────────────────────
 
-export type DocumentType =
-  | "EOB_HORIZON"
-  | "EOB_INDEPENDENCE"
-  | "EOB_AETNA"
-  | "EOB_GENERIC"
-  | "XLSX_IMPORT";
-
-export const DOCUMENT_TYPES: { value: DocumentType; label: string }[] = [
-  { value: "EOB_GENERIC", label: "EOB — Generic" },
-  { value: "EOB_AETNA", label: "EOB — Aetna" },
-  { value: "EOB_HORIZON", label: "EOB — Horizon BCBS" },
-  { value: "EOB_INDEPENDENCE", label: "EOB — Independence BC" },
-  { value: "XLSX_IMPORT", label: "Spreadsheet Import" },
-];
-
 export type IngestionStatus =
   | "QUEUED"
   | "PROCESSING"
   | "EXTRACTED"
+  | "VALIDATING"
   | "IN_REVIEW"
   | "APPROVED"
   | "REJECTED"
@@ -47,7 +33,6 @@ export interface IngestionJob {
   id: string;
   fileName: string;
   fileMimeType: string | null;
-  documentType: DocumentType;
   status: IngestionStatus;
   errorMessage: string | null;
   createdAt: string;
@@ -62,7 +47,6 @@ export interface JobStatus {
   status: IngestionStatus;
   errorMessage: string | null;
   fileName: string;
-  documentType: DocumentType;
   createdAt: string;
   startedAt: string | null;
   completedAt: string | null;
@@ -72,7 +56,6 @@ export interface JobStatus {
 export interface QueueJob {
   id: string;
   fileName: string;
-  documentType: DocumentType;
   status: IngestionStatus;
   createdAt: string;
   submittedBy?: UserRef;
@@ -141,10 +124,19 @@ export interface ExtractionCost {
   egp: number;
 }
 
+export interface ValidationFlag {
+  field: string;
+  message: string;
+  severity: "info" | "warning" | "error";
+}
+
 export interface ReviewJobDetail extends IngestionJob {
   rawExtractedData: unknown;
   /** Null for jobs extracted before token tracking was added. */
   extractionCost: ExtractionCost | null;
+  /** 0–100 quality score from the fast validation pass; null if skipped. */
+  validationScore: number | null;
+  validationFlags: ValidationFlag[] | null;
   header: ReviewItem | null;
   claimGroups: ClaimGroup[];
 }
@@ -164,13 +156,11 @@ export interface ApproveAllResult {
 
 export async function uploadDocument(
   file: File,
-  documentType: DocumentType,
   pages: number[] = [],
   allowDuplicate = false,
 ): Promise<UploadResult> {
   const form = new FormData();
   form.append("file", file);
-  form.append("documentType", documentType);
   // Omit when empty so the backend treats it as "process the whole document".
   if (pages.length > 0) form.append("pages", pages.join(","));
   // Set only after the user confirms a duplicate-file warning.
@@ -233,6 +223,13 @@ export interface RejectAllResult {
 export async function rejectAllJob(jobId: string): Promise<RejectAllResult> {
   const { data } = await api.post<RejectAllResult>(
     `/review-queue/jobs/${jobId}/reject-all`,
+  );
+  return data;
+}
+
+export async function reopenJob(jobId: string): Promise<{ reopened: number }> {
+  const { data } = await api.post<{ reopened: number }>(
+    `/review-queue/jobs/${jobId}/reopen`,
   );
   return data;
 }

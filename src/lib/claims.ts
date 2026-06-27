@@ -91,7 +91,6 @@ export interface Claim {
   negotiationDate: string | null;
   inBankAmount: string;
   bankDate: string | null;
-  payToPatient: boolean;
   notes: string | null;
   internalNote: string | null;
   createdAt: string;
@@ -128,7 +127,6 @@ export interface ClaimInput {
   negotiationDate?: string;
   inBankAmount?: number;
   bankDate?: string;
-  payToPatient?: boolean;
   notes?: string;
   internalNote?: string;
 }
@@ -148,7 +146,6 @@ export interface ClaimQuery {
   dateTo?: string;
   minCharge?: number;
   maxCharge?: number;
-  payToPatient?: boolean;
   outstandingOnly?: boolean;
 }
 

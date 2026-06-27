@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { toast } from "sonner";
-import { Inbox } from "lucide-react";
 
 import { getDashboard, type Dashboard } from "@/lib/dashboard";
 import { formatMoney } from "@/lib/format";
 import { PageHeader } from "@/components/ui/page-header";
+import { ActionCenter } from "./action-center";
 import { StatCard } from "./stat-card";
 import { MonthlyTrendCard } from "./monthly-trend-card";
 import { ClaimsStatusCard } from "./claims-status-card";
@@ -25,6 +24,7 @@ function Block({ className }: { className: string }) {
 function DashboardSkeleton() {
   return (
     <div className="space-y-4">
+      <Block className="h-36" />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Block className="h-28" />
         <Block className="h-28" />
@@ -68,22 +68,14 @@ export default function DashboardPage() {
             ? `${data.totals.claimCount} claims · ${data.totals.clientCount} clients · ${data.totals.payerCount} payers`
             : undefined
         }
-      >
-        {data && data.pendingReviewCount > 0 && (
-          <Link
-            href="/review"
-            className="inline-flex items-center gap-2 rounded-md border border-support-warning bg-support-warning-bg px-3 py-1.5 type-body-compact-01 font-medium text-text-primary transition-colors duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-background"
-          >
-            <Inbox className="size-4 text-support-warning" />
-            {data.pendingReviewCount} pending review
-          </Link>
-        )}
-      </PageHeader>
+      />
 
       {loading || !data ? (
         <DashboardSkeleton />
       ) : (
         <div className="space-y-4">
+          <ActionCenter data={data} />
+
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <StatCard
               label="Total billed"
@@ -122,6 +114,7 @@ export default function DashboardPage() {
               <TopClientsCard data={data.topClients} />
             </div>
           </div>
+
         </div>
       )}
     </div>
