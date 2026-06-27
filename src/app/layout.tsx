@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   title: "RoseSystem",
   description: "Workflow & transaction ledger platform",
   icons: {
-    icon: "/roselogo.png",
+    icon: "/billinglogo.png",
   },
 };
 
