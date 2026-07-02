@@ -292,7 +292,8 @@ export function ClaimGroupCard({
                 {match.client?.displayName ?? "—"}
               </p>
               <p className="mt-0.5 type-label-01 text-text-secondary">
-                On approval this existing claim is updated with the payment above.
+                Matches this imported claim on client, charge and service dates —
+                approving fills in the payment above (no duplicate created).
               </p>
             </Link>
           ) : (

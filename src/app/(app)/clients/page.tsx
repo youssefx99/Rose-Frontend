@@ -24,8 +24,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CascadeDeleteDialog } from "@/components/ui/cascade-delete-dialog";
+import { BulkDeleteDialog } from "@/components/ui/bulk-delete-dialog";
 import { FilterBar, FilterField, type ActiveFilterChip } from "@/components/ui/filter-bar";
 import { useAuth } from "@/lib/auth-context";
+import { useRowSelection } from "@/lib/use-row-selection";
 import {
   deactivateClient,
   listClients,
@@ -60,6 +62,10 @@ export default function ClientsPage() {
   const [editing, setEditing] = useState<Client | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [deleting, setDeleting] = useState<Client | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
+
+  const canDelete = can("clients.delete");
+  const selection = useRowSelection(clients);
 
   useEffect(() => {
     listPayers()
@@ -200,10 +206,43 @@ export default function ClientsPage() {
         </FilterField>
       </FilterBar>
 
+      {canDelete && selection.selectedIds.size > 0 && (
+        <div className="flex flex-wrap items-center gap-3 rounded-md border border-interactive bg-highlight px-4 py-2.5">
+          <span className="type-body-compact-01 font-medium text-text-primary">
+            {selection.selectedIds.size} selected
+          </span>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setBulkOpen(true)}
+          >
+            <Trash2 className="size-3.5" /> Delete
+          </Button>
+          <button
+            type="button"
+            onClick={selection.clear}
+            className="ml-auto type-label-01 text-text-secondary hover:text-text-primary"
+          >
+            Clear selection
+          </button>
+        </div>
+      )}
+
       <div className="overflow-hidden rounded-md border border-border-subtle bg-card">
         <Table>
           <TableHeader>
             <TableRow>
+              {canDelete && (
+                <TableHead className="w-10 pr-0">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all clients"
+                    checked={selection.allSelected}
+                    onChange={selection.toggleAll}
+                    className="size-4 rounded-sm border-border-strong accent-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                  />
+                </TableHead>
+              )}
               <TableHead>Name</TableHead>
               <TableHead className="text-right">Account&nbsp;#s</TableHead>
               <TableHead className="text-right">Claims</TableHead>
@@ -213,13 +252,13 @@ export default function ClientsPage() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={4} className="py-8 text-center text-text-secondary">
+                <TableCell colSpan={canDelete ? 5 : 4} className="py-8 text-center text-text-secondary">
                   Loading…
                 </TableCell>
               </TableRow>
             ) : clients.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="py-8 text-center text-text-secondary">
+                <TableCell colSpan={canDelete ? 5 : 4} className="py-8 text-center text-text-secondary">
                   No clients found.
                 </TableCell>
               </TableRow>
@@ -229,7 +268,19 @@ export default function ClientsPage() {
                   key={client.id}
                   onClick={() => router.push(`/clients/${client.id}`)}
                   className="cursor-pointer"
+                  data-state={selection.selectedIds.has(client.id) ? "selected" : undefined}
                 >
+                  {canDelete && (
+                    <TableCell className="w-10 pr-0" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        aria-label={`Select ${client.displayName}`}
+                        checked={selection.selectedIds.has(client.id)}
+                        onChange={() => selection.toggleOne(client.id)}
+                        className="size-4 rounded-sm border-border-strong accent-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                      />
+                    </TableCell>
+                  )}
                   <TableCell className="font-medium">
                     <Link
                       href={`/clients/${client.id}`}
@@ -298,6 +349,18 @@ export default function ClientsPage() {
           deleting ? () => deactivateClient(deleting.id) : undefined
         }
         onDone={() => load(search, filters)}
+      />
+
+      <BulkDeleteDialog
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        type="client"
+        ids={selection.ids}
+        noun="client"
+        onDone={() => {
+          selection.clear();
+          load(search, filters);
+        }}
       />
     </div>
   );

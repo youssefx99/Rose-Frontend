@@ -3,13 +3,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { Download, Inbox } from "lucide-react";
+import { Download, Inbox, Trash2 } from "lucide-react";
 import { isAxiosError } from "axios";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { BulkDeleteDialog } from "@/components/ui/bulk-delete-dialog";
 import { FilterBar, FilterField, type ActiveFilterChip } from "@/components/ui/filter-bar";
 import { ClaimFormPanel } from "./claim-form-panel";
 import {
@@ -42,6 +43,7 @@ import { listPayers, type Payer } from "@/lib/payers";
 import { listClients, type Client } from "@/lib/clients";
 import { timeAgo } from "@/lib/format";
 import { useAuth } from "@/lib/auth-context";
+import { useRowSelection } from "@/lib/use-row-selection";
 import { cn } from "@/lib/utils";
 
 const ALL = "__all__";
@@ -340,26 +342,18 @@ export default function ClaimsPage() {
     setClaims((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
 
   // ── Bulk selection ────────────────────────────────────────────────────────
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const {
+    selectedIds,
+    ids: selectedIdList,
+    allSelected,
+    toggleOne,
+    toggleAll,
+    clear: clearSelection,
+  } = useRowSelection(claims);
   const [bulkTarget, setBulkTarget] = useState<ClaimStatus | "">("");
   const [bulkBusy, setBulkBusy] = useState(false);
-
-  // Clear selection when claims list changes.
-  useEffect(() => setSelectedIds(new Set()), [claims]);
-
-  const toggleAll = () =>
-    setSelectedIds((prev) =>
-      prev.size === claims.length
-        ? new Set()
-        : new Set(claims.map((c) => c.id)),
-    );
-
-  const toggleOne = (id: string) =>
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const canDelete = can("claims.delete");
 
   const applyBulk = async () => {
     if (!bulkTarget) return;
@@ -384,7 +378,7 @@ export default function ClaimsPage() {
       }
     }
     setBulkBusy(false);
-    setSelectedIds(new Set());
+    clearSelection();
     setBulkTarget("");
     toast.success(`Updated ${updated} of ${targets.length} selected claims.`);
   };
@@ -482,9 +476,19 @@ export default function ClaimsPage() {
           >
             {bulkBusy ? "Applying…" : "Apply"}
           </Button>
+          {canDelete && (
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={bulkBusy}
+              onClick={() => setBulkDeleteOpen(true)}
+            >
+              <Trash2 className="size-3.5" /> Delete
+            </Button>
+          )}
           <button
             type="button"
-            onClick={() => setSelectedIds(new Set())}
+            onClick={clearSelection}
             className="ml-auto type-label-01 text-text-secondary hover:text-text-primary"
           >
             Clear selection
@@ -597,7 +601,7 @@ export default function ClaimsPage() {
                 <input
                   type="checkbox"
                   aria-label="Select all"
-                  checked={claims.length > 0 && selectedIds.size === claims.length}
+                  checked={allSelected}
                   onChange={toggleAll}
                   className="size-4 rounded-sm border-border-strong accent-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                 />
@@ -731,6 +735,18 @@ export default function ClaimsPage() {
         onOpenChange={setCreateOpen}
         mode="create"
         onSaved={(claim) => router.push(`/claims/${claim.id}`)}
+      />
+
+      <BulkDeleteDialog
+        open={bulkDeleteOpen}
+        onOpenChange={setBulkDeleteOpen}
+        type="claim"
+        ids={selectedIdList}
+        noun="claim"
+        onDone={() => {
+          clearSelection();
+          load(search, filters);
+        }}
       />
     </div>
   );

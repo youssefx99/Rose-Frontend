@@ -10,6 +10,14 @@ import { isAxiosError } from "axios";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   approveAllJob,
   getReviewJob,
   rejectAllJob,
@@ -69,6 +77,7 @@ export default function ReviewDetailPage() {
   const [job, setJob] = useState<ReviewJobDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [bulk, setBulk] = useState<"approve" | "reject" | "reopen" | null>(null);
+  const [rejectConfirmOpen, setRejectConfirmOpen] = useState(false);
 
   // Resizable split between the document (left) and review items (right).
   const splitRef = useRef<HTMLDivElement>(null);
@@ -239,23 +248,40 @@ export default function ReviewDetailPage() {
               {bulk === "reopen" ? "Reopening…" : "↩ Undo Reject All"}
             </Button>
           )}
-          {pendingCount > 0 && can("review.reject") && (
-            <Button
-              variant="destructive"
-              disabled={bulk !== null}
-              onClick={rejectAll}
-            >
-              {bulk === "reject" ? "Rejecting…" : `Reject All (${pendingCount})`}
-            </Button>
-          )}
-          {pendingCount > 0 && can("review.approve") && (
-            <Button
-              variant="rose"
-              disabled={bulk !== null}
-              onClick={approveAll}
-            >
-              {bulk === "approve" ? "Approving…" : `Approve All (${pendingCount})`}
-            </Button>
+          {pendingCount > 0 && (can("review.reject") || can("review.approve")) && (
+            <div className="flex items-center gap-3">
+              {/* Low-emphasis destructive action: a quiet ghost button that only
+                  reddens on hover, kept apart from the primary CTA and behind a
+                  confirmation step so it can't be fired by an errant click. */}
+              {can("review.reject") && (
+                <Button
+                  variant="ghost"
+                  disabled={bulk !== null}
+                  onClick={() => setRejectConfirmOpen(true)}
+                  className="text-text-secondary hover:bg-support-error-bg hover:text-support-error"
+                >
+                  {bulk === "reject" ? "Rejecting…" : "Reject all"}
+                </Button>
+              )}
+              {can("review.reject") && can("review.approve") && (
+                <span
+                  aria-hidden
+                  className="h-6 w-px bg-border-subtle"
+                />
+              )}
+              {/* Primary CTA — the safe, expected action gets all the emphasis. */}
+              {can("review.approve") && (
+                <Button
+                  variant="rose"
+                  disabled={bulk !== null}
+                  onClick={approveAll}
+                >
+                  {bulk === "approve"
+                    ? "Approving…"
+                    : `Approve All (${pendingCount})`}
+                </Button>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -337,6 +363,43 @@ export default function ReviewDetailPage() {
       {/* While dragging, this overlay sits above the iframe so it can't swallow
           the pointer stream (and shows the resize cursor everywhere). */}
       {dragging && <div className="fixed inset-0 z-50 cursor-col-resize" />}
+
+      {/* Confirmation gate for the destructive bulk reject. */}
+      <Dialog open={rejectConfirmOpen} onOpenChange={setRejectConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Reject all {pendingCount} pending item
+              {pendingCount === 1 ? "" : "s"}?
+            </DialogTitle>
+            <DialogDescription>
+              Every pending item in{" "}
+              <span className="font-medium text-text-primary">
+                {job.fileName}
+              </span>{" "}
+              will be rejected. Nothing is written to the ledger, and you can
+              undo this afterwards with “Undo Reject All”.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setRejectConfirmOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setRejectConfirmOpen(false);
+                rejectAll();
+              }}
+            >
+              Reject all ({pendingCount})
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

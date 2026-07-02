@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Building2,
+  FileSpreadsheet,
   FileText,
   Inbox,
   KeyRound,
@@ -33,6 +34,7 @@ const PRIMARY_NAV = [
 
 const INGESTION_NAV = [
   { href: "/documents", label: "Documents", icon: Upload, perm: "documents.view" },
+  { href: "/import", label: "Import Sheet", icon: FileSpreadsheet, perm: "claims.create" },
   { href: "/review", label: "Review Queue", icon: Inbox, showBadge: true, perm: "review.view" },
   { href: "/remittances", label: "Remittances", icon: Receipt, perm: "remittances.view" },
 ];

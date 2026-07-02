@@ -16,7 +16,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CascadeDeleteDialog } from "@/components/ui/cascade-delete-dialog";
+import { BulkDeleteDialog } from "@/components/ui/bulk-delete-dialog";
 import { useAuth } from "@/lib/auth-context";
+import { useRowSelection } from "@/lib/use-row-selection";
 import { deactivatePayer, listPayers, type Payer } from "@/lib/payers";
 import { PayerFormDialog } from "./payer-form-dialog";
 import { useRouter } from "next/navigation";
@@ -30,6 +32,10 @@ export default function PayersPage() {
   const [editing, setEditing] = useState<Payer | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState<Payer | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
+
+  const canDelete = can("payers.delete");
+  const selection = useRowSelection(payers);
 
   const load = useCallback(async (term: string) => {
     setLoading(true);
@@ -77,10 +83,43 @@ export default function PayersPage() {
         className="max-w-sm"
       />
 
+      {canDelete && selection.selectedIds.size > 0 && (
+        <div className="flex flex-wrap items-center gap-3 rounded-md border border-interactive bg-highlight px-4 py-2.5">
+          <span className="type-body-compact-01 font-medium text-text-primary">
+            {selection.selectedIds.size} selected
+          </span>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setBulkOpen(true)}
+          >
+            <Trash2 className="size-3.5" /> Delete
+          </Button>
+          <button
+            type="button"
+            onClick={selection.clear}
+            className="ml-auto type-label-01 text-text-secondary hover:text-text-primary"
+          >
+            Clear selection
+          </button>
+        </div>
+      )}
+
       <div className="overflow-hidden rounded-md border border-border-subtle bg-card">
         <Table>
           <TableHeader>
             <TableRow>
+              {canDelete && (
+                <TableHead className="w-10 pr-0">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all payers"
+                    checked={selection.allSelected}
+                    onChange={selection.toggleAll}
+                    className="size-4 rounded-sm border-border-strong accent-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                  />
+                </TableHead>
+              )}
               <TableHead>Name</TableHead>
               <TableHead>Short Code</TableHead>
               <TableHead>State</TableHead>
@@ -91,6 +130,7 @@ export default function PayersPage() {
             {loading ? (
               [...Array(5)].map((_, i) => (
                 <TableRow key={i}>
+                  {canDelete && <TableCell className="w-10 pr-0" />}
                   <TableCell>
                     <div className="h-4 w-40 animate-pulse rounded bg-skeleton-background" />
                   </TableCell>
@@ -107,7 +147,7 @@ export default function PayersPage() {
               ))
             ) : payers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="py-16 whitespace-normal">
+                <TableCell colSpan={canDelete ? 5 : 4} className="py-16 whitespace-normal">
                   <div className="flex flex-col items-center justify-center gap-3 text-center">
                     <Building2
                       className="size-8 text-text-secondary"
@@ -137,7 +177,19 @@ export default function PayersPage() {
                   key={payer.id}
                   className="cursor-pointer"
                   onClick={() => router.push(`/payers/${payer.id}`)}
+                  data-state={selection.selectedIds.has(payer.id) ? "selected" : undefined}
                 >
+                  {canDelete && (
+                    <TableCell className="w-10 pr-0" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        aria-label={`Select ${payer.name}`}
+                        checked={selection.selectedIds.has(payer.id)}
+                        onChange={() => selection.toggleOne(payer.id)}
+                        className="size-4 rounded-sm border-border-strong accent-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                      />
+                    </TableCell>
+                  )}
                   <TableCell className="font-medium text-text-primary">
                     {payer.name}
                   </TableCell>
@@ -197,6 +249,18 @@ export default function PayersPage() {
         title="Delete payer"
         onDeactivate={deleting ? () => deactivatePayer(deleting.id) : undefined}
         onDone={() => load(search)}
+      />
+
+      <BulkDeleteDialog
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        type="payer"
+        ids={selection.ids}
+        noun="payer"
+        onDone={() => {
+          selection.clear();
+          load(search);
+        }}
       />
     </div>
   );
