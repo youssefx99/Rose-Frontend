@@ -6,6 +6,8 @@ export interface OrgSettings {
   validationEnabled: boolean;
   /** Also block re-uploads by name + size + type, not just content hash. */
   strictDuplicateDetection: boolean;
+  /** Commit extracted claims straight to the ledger, skipping manual review. */
+  autoAcceptReview: boolean;
   /** FX rate used to display AI extraction cost in EGP (1 USD = N EGP). */
   usdToEgpRate: number;
 }

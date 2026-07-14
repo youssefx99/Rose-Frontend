@@ -119,6 +119,7 @@ export default function SettingsPage() {
     return (
       form.validationEnabled !== initial.validationEnabled ||
       form.strictDuplicateDetection !== initial.strictDuplicateDetection ||
+      form.autoAcceptReview !== initial.autoAcceptReview ||
       (parsedRate !== null && parsedRate !== initial.usdToEgpRate)
     );
   }, [initial, form, parsedRate]);
@@ -134,6 +135,7 @@ export default function SettingsPage() {
       const saved = await updateSettings({
         validationEnabled: form.validationEnabled,
         strictDuplicateDetection: form.strictDuplicateDetection,
+        autoAcceptReview: form.autoAcceptReview,
         usdToEgpRate: parsedRate,
       });
       setInitial(saved);
@@ -202,6 +204,17 @@ export default function SettingsPage() {
               checked={form.strictDuplicateDetection}
               disabled={!canEdit}
               onChange={(v) => set("strictDuplicateDetection", v)}
+            />
+          </SettingRow>
+          <SettingRow
+            title="Auto-accept review"
+            description="Commit extracted claims straight to the ledger once processing finishes — no manual review. Turn off to approve or reject each upload by hand."
+          >
+            <Toggle
+              label="Auto-accept review"
+              checked={form.autoAcceptReview}
+              disabled={!canEdit}
+              onChange={(v) => set("autoAcceptReview", v)}
             />
           </SettingRow>
         </CardContent>
