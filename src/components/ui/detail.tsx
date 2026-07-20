@@ -61,7 +61,7 @@ export function DataRow({
       <dt className="shrink-0 text-text-secondary">{label}</dt>
       <dd
         className={cn(
-          "min-w-0 text-right text-text-primary",
+          "min-w-0 text-end text-text-primary",
           mono && "font-mono tabular-nums",
           muted && "text-text-helper",
         )}

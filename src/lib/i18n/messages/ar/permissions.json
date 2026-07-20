@@ -1,0 +1,83 @@
+{
+  "title": "الصلاحيات",
+  "subtitle": "تحكَّم في ما يمكن لكل دور فعله. تُضبط استثناءات كل مستخدم من صفحة المستخدمين.",
+  "noAccess": "ليس لديك صلاحية الوصول إلى هذه الإعدادات.",
+  "unsavedChanges": "تغييرات غير محفوظة",
+
+  "table.permission": "الصلاحية",
+
+  "aria.rolePermission": "{permission} لدور {role}",
+
+  "toast.saved": "تم حفظ الصلاحيات.",
+  "toast.loadFailed": "تعذّر تحميل الصلاحيات.",
+  "toast.saveFailed": "تعذّر حفظ الصلاحيات.",
+
+  "module.clients.label": "العملاء",
+  "module.payers.label": "جهات الدفع",
+  "module.claims.label": "المطالبات",
+  "module.documents.label": "المستندات",
+  "module.review.label": "قائمة المراجعة",
+  "module.remittances.label": "إشعارات السداد",
+  "module.dashboard.label": "لوحة المعلومات",
+  "module.users.label": "المستخدمون",
+  "module.settings.label": "الإعدادات",
+
+  "clients.view.label": "عرض",
+  "clients.view.description": "عرض العملاء ووثائق تأمينهم.",
+  "clients.create.label": "إنشاء",
+  "clients.create.description": "إضافة عملاء جدد.",
+  "clients.edit.label": "تعديل",
+  "clients.edit.description": "تعديل العملاء وإدارة وثائق تأمينهم.",
+  "clients.delete.label": "حذف",
+  "clients.delete.description": "تعطيل العملاء أو حذفهم نهائيًا.",
+
+  "payers.view.label": "عرض",
+  "payers.view.description": "عرض جهات الدفع.",
+  "payers.create.label": "إنشاء",
+  "payers.create.description": "إضافة جهات دفع جديدة.",
+  "payers.edit.label": "تعديل",
+  "payers.edit.description": "تعديل بيانات جهة الدفع.",
+  "payers.delete.label": "حذف",
+  "payers.delete.description": "تعطيل جهات الدفع أو حذفها نهائيًا.",
+
+  "claims.view.label": "عرض",
+  "claims.view.description": "عرض المطالبات والملاحظات على الذمم.",
+  "claims.create.label": "إنشاء",
+  "claims.create.description": "إنشاء مطالبات جديدة.",
+  "claims.edit.label": "تعديل",
+  "claims.edit.description": "تعديل المطالبات وتغيير حالتها وإضافة ملاحظات على الذمم.",
+  "claims.delete.label": "حذف",
+  "claims.delete.description": "حذف المطالبات نهائيًا.",
+
+  "documents.view.label": "عرض",
+  "documents.view.description": "عرض المستندات المرفوعة ومهام المعالجة.",
+  "documents.upload.label": "رفع",
+  "documents.upload.description": "رفع مستندات بيان المزايا (EOB) للاستخراج بالذكاء الاصطناعي.",
+  "documents.delete.label": "حذف",
+  "documents.delete.description": "حذف المستندات المرفوعة وعناصر مراجعتها نهائيًا.",
+
+  "review.view.label": "عرض",
+  "review.view.description": "عرض قائمة المراجعة والعناصر المستخرجة.",
+  "review.approve.label": "اعتماد",
+  "review.approve.description": "اعتماد العناصر المستخرجة (فرديًا أو عبر «اعتماد الكل»).",
+  "review.reject.label": "رفض",
+  "review.reject.description": "رفض العناصر المستخرجة.",
+
+  "remittances.view.label": "عرض",
+  "remittances.view.description": "عرض إشعارات السداد المُرحَّلة.",
+  "remittances.delete.label": "حذف",
+  "remittances.delete.description": "حذف إشعارات السداد وعكس قيودها في دفتر الأستاذ.",
+
+  "dashboard.view.label": "عرض",
+  "dashboard.view.description": "عرض لوحة معلومات المؤسسة.",
+
+  "users.view.label": "عرض",
+  "users.view.description": "عرض قائمة المستخدمين.",
+  "users.manage.label": "إدارة",
+  "users.manage.description": "إنشاء المستخدمين وتعديل أدوارهم وحالاتهم.",
+
+  "settings.view.label": "عرض",
+  "settings.view.description": "عرض إعدادات نظام المؤسسة.",
+  "settings.edit.label": "تعديل",
+  "settings.edit.description": "تغيير إعدادات المؤسسة (التحقق بالذكاء الاصطناعي، كشف التكرار، سعر الصرف)."
+}

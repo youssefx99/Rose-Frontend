@@ -14,10 +14,13 @@ import {
 } from "@/components/ui/table";
 import { PageHeader } from "@/components/ui/page-header";
 import { listReviewQueue, type QueueJob } from "@/lib/documents";
-import { formatDateTime } from "@/lib/format";
+import { useFormat } from "@/lib/i18n/format";
+import { useT } from "@/lib/i18n/provider";
 
 export default function ReviewQueuePage() {
   const router = useRouter();
+  const t = useT("review");
+  const { formatDateTime } = useFormat();
   const [jobs, setJobs] = useState<QueueJob[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -26,42 +29,39 @@ export default function ReviewQueuePage() {
       try {
         setJobs(await listReviewQueue());
       } catch {
-        toast.error("Failed to load review queue.");
+        toast.error(t("review.toast.queueLoadFailed"));
       } finally {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [t]);
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Review Queue"
-        description="Documents extracted by AI, awaiting your review before they commit to the ledger."
-      />
+      <PageHeader title={t("title")} description={t("description")} />
 
       <div className="overflow-hidden rounded-md border border-border-subtle bg-card">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Document</TableHead>
-              <TableHead>Payer</TableHead>
-              <TableHead>Uploaded</TableHead>
-              <TableHead className="text-right">Pending</TableHead>
-              <TableHead className="text-right">Total Items</TableHead>
+              <TableHead>{t("review.table.document")}</TableHead>
+              <TableHead>{t("review.table.payer")}</TableHead>
+              <TableHead>{t("review.table.uploaded")}</TableHead>
+              <TableHead className="text-end">{t("review.table.pending")}</TableHead>
+              <TableHead className="text-end">{t("review.table.totalItems")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
                 <TableCell colSpan={5} className="py-8 text-center text-text-secondary">
-                  Loading…
+                  {t("common.loading")}
                 </TableCell>
               </TableRow>
             ) : jobs.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="py-8 text-center text-text-secondary">
-                  Nothing to review. Upload a document to get started.
+                  {t("review.empty.title")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -80,7 +80,7 @@ export default function ReviewQueuePage() {
                   <TableCell className="text-text-secondary">
                     {formatDateTime(job.createdAt)}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-end">
                     {job.counts.pending > 0 ? (
                       <span className="inline-flex w-fit items-center rounded-full bg-highlight px-2 py-0.5 type-label-01 font-medium text-interactive tabular-nums">
                         {job.counts.pending}
@@ -89,7 +89,7 @@ export default function ReviewQueuePage() {
                       <span className="text-text-helper tabular-nums">0</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums text-text-primary">
+                  <TableCell className="text-end font-mono tabular-nums text-text-primary">
                     {job.totalItems}
                   </TableCell>
                 </TableRow>

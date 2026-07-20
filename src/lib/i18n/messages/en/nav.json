@@ -1,0 +1,21 @@
+{
+  "dashboard": "Dashboard",
+  "claims": "Claims",
+  "clients": "Clients",
+  "payers": "Payers",
+  "documents": "Documents",
+  "import": "Import Sheet",
+  "review": "Review Queue",
+  "remittances": "Remittances",
+  "users": "Users",
+  "permissions": "Permissions",
+  "settings": "Settings",
+
+  "expandNavigation": "Expand navigation",
+  "collapseNavigation": "Collapse navigation",
+  "lightTheme": "Light theme",
+  "darkTheme": "Dark theme",
+  "switchToLightTheme": "Switch to light theme",
+  "switchToDarkTheme": "Switch to dark theme",
+  "signOut": "Sign out"
+}

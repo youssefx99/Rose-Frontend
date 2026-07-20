@@ -19,15 +19,18 @@ import { cn } from "@/lib/utils";
 import {
   listUsers,
   roleColor,
-  roleLabel,
+  roleLabelKey,
   type User,
 } from "@/lib/users";
-import { formatDate } from "@/lib/format";
+import { useT } from "@/lib/i18n/provider";
+import { useFormat } from "@/lib/i18n/format";
 import { UserFormDialog } from "./user-form-dialog";
 import { UserEditDialog } from "./user-edit-dialog";
 import { UserPermissionsDialog } from "./user-permissions-dialog";
 
 export default function UsersPage() {
+  const t = useT();
+  const { formatDate } = useFormat();
   const { user } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,11 +45,11 @@ export default function UsersPage() {
     try {
       setUsers(await listUsers());
     } catch {
-      toast.error("Failed to load users.");
+      toast.error(t("users.toast.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (isSuperAdmin) load();
@@ -54,31 +57,26 @@ export default function UsersPage() {
 
   if (user && !isSuperAdmin) {
     return (
-      <p className="type-body-01 text-text-secondary">
-        You don&apos;t have access to user management.
-      </p>
+      <p className="type-body-01 text-text-secondary">{t("users.noAccess")}</p>
     );
   }
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Users"
-        description="Manage who can access RoseSystem and what they can do."
-      >
-        <Button onClick={() => setFormOpen(true)}>New user</Button>
+      <PageHeader title={t("users.title")} description={t("users.description")}>
+        <Button onClick={() => setFormOpen(true)}>{t("users.newUser")}</Button>
       </PageHeader>
 
       <div className="overflow-hidden rounded-md border border-border-subtle bg-card">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Last Active</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t("common.name")}</TableHead>
+              <TableHead>{t("users.table.email")}</TableHead>
+              <TableHead>{t("users.table.role")}</TableHead>
+              <TableHead>{t("common.status")}</TableHead>
+              <TableHead>{t("users.table.lastActive")}</TableHead>
+              <TableHead className="text-end">{t("common.actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -88,7 +86,7 @@ export default function UsersPage() {
                   colSpan={6}
                   className="py-8 text-center text-text-secondary"
                 >
-                  Loading…
+                  {t("common.loading")}
                 </TableCell>
               </TableRow>
             ) : users.length === 0 ? (
@@ -98,13 +96,15 @@ export default function UsersPage() {
                     <UsersIcon className="size-8 text-text-secondary" />
                     <div className="space-y-1">
                       <p className="type-heading-02 text-text-primary">
-                        No users yet
+                        {t("users.empty.title")}
                       </p>
                       <p className="type-body-01 text-text-secondary">
-                        Add a teammate to give them access to RoseSystem.
+                        {t("users.empty.description")}
                       </p>
                     </div>
-                    <Button onClick={() => setFormOpen(true)}>New user</Button>
+                    <Button onClick={() => setFormOpen(true)}>
+                      {t("users.newUser")}
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -122,33 +122,39 @@ export default function UsersPage() {
                         roleColor(u.role),
                       )}
                     >
-                      {roleLabel(u.role)}
+                      {t(roleLabelKey(u.role))}
                     </span>
                   </TableCell>
                   <TableCell>
                     {u.isActive ? (
                       <span className="type-body-compact-01 text-support-success">
-                        Active
+                        {t("common.active")}
                       </span>
                     ) : (
                       <span className="type-body-compact-01 text-text-helper">
-                        Disabled
+                        {t("common.disabled")}
                       </span>
                     )}
                   </TableCell>
                   <TableCell className="text-text-secondary">
-                    {u.lastLoginAt ? formatDate(u.lastLoginAt) : "Never"}
+                    {u.lastLoginAt
+                      ? formatDate(u.lastLoginAt)
+                      : t("users.neverSignedIn")}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-end">
                     {u.id === user?.id ? (
-                      <span className="type-label-01 text-text-helper">You</span>
+                      <span className="type-label-01 text-text-helper">
+                        {t("users.you")}
+                      </span>
                     ) : (
                       <div className="flex items-center justify-end gap-1">
                         <Button
                           variant="ghost"
                           size="icon"
                           className="size-8"
-                          aria-label={`Edit permissions for ${u.firstName} ${u.lastName}`}
+                          aria-label={t("users.aria.editPermissions", {
+                            name: `${u.firstName} ${u.lastName}`,
+                          })}
                           onClick={() => setPermissionsUser(u)}
                         >
                           <KeyRound className="size-4" />
@@ -157,7 +163,9 @@ export default function UsersPage() {
                           variant="ghost"
                           size="icon"
                           className="size-8"
-                          aria-label={`Edit ${u.firstName} ${u.lastName}`}
+                          aria-label={t("users.aria.editUser", {
+                            name: `${u.firstName} ${u.lastName}`,
+                          })}
                           onClick={() => setEditing(u)}
                         >
                           <Pencil className="size-4" />

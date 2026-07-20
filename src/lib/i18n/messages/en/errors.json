@@ -1,0 +1,9 @@
+{
+  "loadFailed": "Failed to load.",
+  "saveFailed": "Failed to save.",
+  "deleteFailed": "Failed to delete.",
+  "networkError": "Network error. Check your connection and try again.",
+  "unauthorized": "You do not have permission to do that.",
+  "notFound": "Not found.",
+  "unexpected": "Something went wrong. Please try again."
+}

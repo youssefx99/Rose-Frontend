@@ -238,25 +238,26 @@ export async function reopenJob(jobId: string): Promise<{ reopened: number }> {
 
 export interface FieldSpec {
   key: string;
-  label: string;
+  /** Absolute translation key — resolve with t(field.labelKey) at render. */
+  labelKey: string;
   kind: "text" | "money" | "date" | "number" | "list";
 }
 
 export const HEADER_FIELDS: FieldSpec[] = [
-  { key: "payerName", label: "Payer", kind: "text" },
-  { key: "checkNumber", label: "Check #", kind: "text" },
-  { key: "checkDate", label: "Check Date", kind: "date" },
-  { key: "checkAmount", label: "Check Amount", kind: "money" },
+  { key: "payerName", labelKey: "documents.field.payerName", kind: "text" },
+  { key: "checkNumber", labelKey: "documents.field.checkNumber", kind: "text" },
+  { key: "checkDate", labelKey: "documents.field.checkDate", kind: "date" },
+  { key: "checkAmount", labelKey: "documents.field.checkAmount", kind: "money" },
 ];
 
 export const LINE_FIELDS: FieldSpec[] = [
-  { key: "patientNameOnEob", label: "Client", kind: "text" },
-  { key: "claimNumber", label: "Claim #", kind: "text" },
-  { key: "patientAccountNumber", label: "Account #", kind: "text" },
-  { key: "dateOfService", label: "Date of Service", kind: "date" },
-  { key: "billedAmount", label: "Billed", kind: "money" },
-  { key: "allowedAmount", label: "Allowed", kind: "money" },
-  { key: "paidAmount", label: "Paid", kind: "money" },
+  { key: "patientNameOnEob", labelKey: "documents.field.patientNameOnEob", kind: "text" },
+  { key: "claimNumber", labelKey: "documents.field.claimNumber", kind: "text" },
+  { key: "patientAccountNumber", labelKey: "documents.field.patientAccountNumber", kind: "text" },
+  { key: "dateOfService", labelKey: "documents.field.dateOfService", kind: "date" },
+  { key: "billedAmount", labelKey: "documents.field.billedAmount", kind: "money" },
+  { key: "allowedAmount", labelKey: "documents.field.allowedAmount", kind: "money" },
+  { key: "paidAmount", labelKey: "documents.field.paidAmount", kind: "money" },
 ];
 
 export function fieldsFor(itemType: ReviewItemType): FieldSpec[] {

@@ -1,0 +1,68 @@
+{
+  "title": "المستخدمون",
+  "description": "إدارة من يمكنه الوصول إلى RoseSystem وما يمكنه فعله.",
+  "newUser": "مستخدم جديد",
+  "noAccess": "ليس لديك صلاحية الوصول إلى إدارة المستخدمين.",
+  "you": "أنت",
+  "neverSignedIn": "لم يسجّل الدخول",
+
+  "table.email": "البريد الإلكتروني",
+  "table.role": "الدور",
+  "table.lastActive": "آخر نشاط",
+
+  "empty.title": "لا يوجد مستخدمون بعد",
+  "empty.description": "أضف زميلاً لمنحه حق الوصول إلى RoseSystem.",
+
+  "role.SUPER_ADMIN": "مسؤول عام",
+  "role.ADMIN": "مسؤول",
+  "role.ACCOUNTANT": "محاسب",
+  "role.VIEWER": "مُطّلِع",
+
+  "roleDescription.SUPER_ADMIN": "وصول كامل على مستوى المؤسسة، بما في ذلك إدارة المستخدمين.",
+  "roleDescription.ADMIN": "وصول كامل إلى البيانات وإدارة المستخدمين. يمكنه حذف إشعارات السداد.",
+  "roleDescription.ACCOUNTANT": "إنشاء وتعديل العملاء وجهات الدفع والمطالبات، واعتماد المراجعات. لا يشمل إدارة المستخدمين، ولا يمكنه حذف إشعارات السداد.",
+  "roleDescription.VIEWER": "اطّلاع فقط على جميع البيانات. لا يمكنه إجراء أي تغييرات.",
+
+  "form.title": "مستخدم جديد",
+  "form.description": "ادعُ زميلاً وحدّد دوره.",
+  "form.firstName": "الاسم الأول",
+  "form.lastName": "اسم العائلة",
+  "form.email": "البريد الإلكتروني",
+  "form.role": "الدور",
+  "form.password": "كلمة مرور مؤقتة",
+  "form.passwordHint": "8 أحرف على الأقل مع حرف كبير وحرف صغير ورقم. شاركها بأمان — يمكن للمستخدم تغييرها لاحقًا.",
+  "form.creating": "جارٍ الإنشاء…",
+  "form.submit": "إنشاء المستخدم",
+  "form.firstNameRequired": "الاسم الأول مطلوب.",
+  "form.lastNameRequired": "اسم العائلة مطلوب.",
+  "form.emailInvalid": "أدخل بريدًا إلكترونيًا صالحًا.",
+  "form.passwordTooShort": "8 أحرف على الأقل.",
+  "form.passwordWeak": "يجب أن تتضمن حرفًا كبيرًا وحرفًا صغيرًا ورقمًا.",
+
+  "edit.title": "تعديل المستخدم",
+  "edit.statusHint": "يتم تسجيل خروج المستخدمين المعطَّلين خلال 15 دقيقة ولا يمكنهم تسجيل الدخول.",
+
+  "permissions.title": "الصلاحيات",
+  "permissions.superAdminNotice": "هذا المستخدم {role} يتمتع بوصول كامل وغير مقيّد. لا تنطبق الاستثناءات على مستوى المستخدم.",
+  "permissions.hintDefault": "تتبع كل صلاحية إعدادات دور {role} افتراضيًا.",
+  "permissions.hintOverride": "اختر {allow} أو {deny} لاستثناء هذا المستخدم فقط.",
+  "permissions.granted": "ممنوحة",
+  "permissions.notGranted": "غير ممنوحة",
+  "permissions.saveOverrides": "حفظ الاستثناءات",
+
+  "override.allow": "سماح",
+  "override.inherit": "افتراضي",
+  "override.deny": "منع",
+
+  "toast.loadFailed": "تعذّر تحميل المستخدمين.",
+  "toast.created": "تم إنشاء المستخدم.",
+  "toast.createFailed": "تعذّر إنشاء المستخدم.",
+  "toast.updated": "تم تحديث المستخدم.",
+  "toast.updateFailed": "تعذّر تحديث المستخدم.",
+  "toast.permissionsLoadFailed": "تعذّر تحميل الصلاحيات.",
+  "toast.permissionsUpdated": "تم تحديث الصلاحيات.",
+  "toast.permissionsUpdateFailed": "تعذّر تحديث الصلاحيات.",
+
+  "aria.editPermissions": "تعديل صلاحيات {name}",
+  "aria.editUser": "تعديل {name}"
+}

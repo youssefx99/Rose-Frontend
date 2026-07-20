@@ -18,6 +18,9 @@ export interface Remittance {
   checkAmount: string;
   sourceFileName: string;
   createdAt: string;
+  /** Σ of the deposit's claim lines — what was charged vs what actually arrived. */
+  billedAmount?: string;
+  paidAmount?: string;
   payer?: PayerRef;
   _count?: { claimLines: number };
 }
@@ -32,6 +35,11 @@ export interface RemittanceClaimLine {
   billedAmount: string;
   allowedAmount: string;
   paidAmount: string;
+  discountAmount: string;
+  deductibleAmount: string;
+  copayAmount: string;
+  coinsuranceAmount: string;
+  patientResponsibility: string;
   claim?: {
     id: string;
     claimReference: string;
@@ -67,7 +75,7 @@ export async function getRemittance(id: string): Promise<RemittanceDetail> {
 
 /**
  * Permanently deletes a remittance and unwinds its effects: claim lines, the
- * payment on any matched claims (reverted to PENDING), and the bank fields.
+ * payment on any matched claims (reverted to OPEN), and the bank fields.
  */
 export async function deleteRemittance(id: string): Promise<void> {
   await api.delete(`/remittances/${id}`);

@@ -8,10 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { SlideOver } from "@/components/ui/slide-over";
 import { addClaimNote, listClaimNotes, type ArNote } from "@/lib/claims";
-import { formatDate } from "@/lib/format";
+import { useFormat } from "@/lib/i18n/format";
+import { useT } from "@/lib/i18n/provider";
 import { useAuth } from "@/lib/auth-context";
 
 export function ArNotesPanel({ claimId }: { claimId: string }) {
+  const t = useT();
+  const { formatDate } = useFormat();
   const { can } = useAuth();
   const canEdit = can("claims.edit");
   const [open, setOpen] = useState(false);
@@ -39,9 +42,9 @@ export function ArNotesPanel({ claimId }: { claimId: string }) {
       await addClaimNote(claimId, value);
       setText("");
       await load();
-      toast.success("Note added.");
+      toast.success(t("claims.toast.noteAdded"));
     } catch {
-      toast.error("Failed to add note.");
+      toast.error(t("claims.toast.noteAddFailed"));
     } finally {
       setSaving(false);
     }
@@ -55,7 +58,7 @@ export function ArNotesPanel({ claimId }: { claimId: string }) {
         onClick={() => setOpen(true)}
       >
         <span className="flex items-center gap-2">
-          <MessageSquare className="size-4" /> AR Notes
+          <MessageSquare className="size-4" /> {t("claims.arNotes.title")}
         </span>
         <span className="rounded-full bg-layer px-2 py-0.5 type-label-01 tabular-nums text-text-secondary">
           {notes.length}
@@ -65,7 +68,7 @@ export function ArNotesPanel({ claimId }: { claimId: string }) {
       <SlideOver
         open={open}
         onOpenChange={setOpen}
-        title="AR Notes"
+        title={t("claims.arNotes.title")}
         footer={
           <>
             <Button
@@ -73,7 +76,7 @@ export function ArNotesPanel({ claimId }: { claimId: string }) {
               variant="outline"
               onClick={() => setOpen(false)}
             >
-              Close
+              {t("common.close")}
             </Button>
             {canEdit && (
               <Button
@@ -81,7 +84,7 @@ export function ArNotesPanel({ claimId }: { claimId: string }) {
                 onClick={add}
                 disabled={saving || !text.trim()}
               >
-                {saving ? "Adding…" : "Add Note"}
+                {saving ? t("claims.arNotes.adding") : t("claims.arNotes.add")}
               </Button>
             )}
           </>
@@ -92,12 +95,14 @@ export function ArNotesPanel({ claimId }: { claimId: string }) {
             <Textarea
               value={text}
               onChange={(event) => setText(event.target.value)}
-              placeholder="Add a note…"
+              placeholder={t("claims.arNotes.placeholder")}
             />
           )}
           <div className="space-y-3">
             {notes.length === 0 ? (
-              <p className="type-body-01 text-text-secondary">No notes yet.</p>
+              <p className="type-body-01 text-text-secondary">
+                {t("claims.arNotes.empty")}
+              </p>
             ) : (
               notes.map((note) => (
                 <div

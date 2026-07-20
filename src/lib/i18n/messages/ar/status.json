@@ -1,0 +1,17 @@
+{
+  "OPEN": "مفتوحة",
+  "PARTIALLY_PAID": "مدفوعة جزئياً",
+  "PAID": "مدفوعة بالكامل",
+
+  "QUEUED": "في الانتظار",
+  "PROCESSING": "قيد المعالجة",
+  "EXTRACTED": "تم الاستخراج",
+  "VALIDATING": "قيد التحقق",
+  "IN_REVIEW": "قيد المراجعة",
+  "APPROVED": "معتمد",
+  "REJECTED": "مرفوض",
+  "FAILED": "فشل",
+
+  "MODIFIED": "معدَّل",
+  "PARTIAL": "مراجعة جزئية"
+}

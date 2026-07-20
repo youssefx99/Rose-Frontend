@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 
 interface PdfPageSelectorProps {
@@ -31,6 +32,7 @@ export function PdfPageSelector({
   onLoaded,
   onError,
 }: PdfPageSelectorProps) {
+  const t = useT();
   const [thumbnails, setThumbnails] = useState<PageThumbnail[]>([]);
   const [pageCount, setPageCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -96,7 +98,7 @@ export function PdfPageSelector({
     return (
       <div className="flex items-start gap-2 rounded-md border border-support-warning bg-support-warning-bg px-3 py-2.5 type-label-01 text-text-primary">
         <AlertTriangle className="mt-0.5 size-4 shrink-0 text-support-warning" />
-        <span>Could not preview this file — all pages will be processed.</span>
+        <span>{t("ui.pdfPages.previewFailed")}</span>
       </div>
     );
   }
@@ -118,10 +120,10 @@ export function PdfPageSelector({
     <div className="space-y-3">
       <div>
         <p className="type-heading-compact-01 text-text-primary">
-          Select pages to process
+          {t("ui.pdfPages.title")}
         </p>
         <p className="type-label-01 text-text-secondary">
-          Only selected pages are sent to the AI.
+          {t("ui.pdfPages.hint")}
         </p>
       </div>
 
@@ -134,7 +136,7 @@ export function PdfPageSelector({
           disabled={loading}
           onClick={() => onChange(allPages)}
         >
-          Select All
+          {t("common.selectAll")}
         </Button>
         <Button
           type="button"
@@ -144,7 +146,7 @@ export function PdfPageSelector({
           disabled={loading}
           onClick={() => onChange([])}
         >
-          Deselect All
+          {t("common.deselectAll")}
         </Button>
 
       </div>
@@ -152,7 +154,7 @@ export function PdfPageSelector({
       {loading && thumbnails.length === 0 ? (
         <div className="flex items-center justify-center gap-2 rounded-md border border-border-subtle bg-layer py-10 type-body-compact-01 text-text-secondary">
           <Loader2 className="size-4 animate-spin" />
-          Rendering page previews…
+          {t("ui.pdfPages.rendering")}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -164,7 +166,7 @@ export function PdfPageSelector({
                 type="button"
                 onClick={() => toggle(pageNumber)}
                 className={cn(
-                  "overflow-hidden rounded-md text-left transition-all duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                  "overflow-hidden rounded-md text-start transition-all duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                   selected
                     ? "bg-highlight ring-2 ring-border-interactive"
                     : "border border-border-subtle bg-card hover:border-border-strong",
@@ -174,7 +176,7 @@ export function PdfPageSelector({
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={dataUrl}
-                    alt={`Page ${pageNumber}`}
+                    alt={t("ui.pdfPages.page", { page: pageNumber })}
                     className="max-h-40 w-auto object-contain shadow-sm"
                   />
                 </div>
@@ -187,7 +189,7 @@ export function PdfPageSelector({
                     className="size-3.5 accent-interactive"
                   />
                   <span className="type-label-01 font-medium text-text-primary">
-                    Page {pageNumber}
+                    {t("ui.pdfPages.page", { page: pageNumber })}
                   </span>
                 </div>
               </button>

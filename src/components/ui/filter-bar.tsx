@@ -4,6 +4,8 @@ import * as React from "react";
 import { SlidersHorizontal, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n/provider";
+import { useFormat } from "@/lib/i18n/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -30,20 +32,22 @@ interface FilterBarProps {
 export function FilterBar({
   search,
   onSearchChange,
-  searchPlaceholder = "Search…",
+  searchPlaceholder,
   activeCount,
   chips,
   onClearAll,
   children,
   className,
 }: FilterBarProps) {
+  const t = useT();
+  const { formatNumber } = useFormat();
   const [open, setOpen] = React.useState(false);
 
   return (
     <div className={cn("space-y-3", className)}>
       <div className="flex flex-wrap items-center gap-3">
         <Input
-          placeholder={searchPlaceholder}
+          placeholder={searchPlaceholder ?? t("common.searchPlaceholder")}
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
           className="max-w-sm flex-1"
@@ -56,10 +60,10 @@ export function FilterBar({
           className={cn("gap-2", open && "bg-layer")}
         >
           <SlidersHorizontal className="size-4" />
-          Filters
+          {t("common.filters")}
           {activeCount > 0 && (
-            <span className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-interactive px-1 type-label-01 tabular-nums text-text-on-color">
-              {activeCount}
+            <span className="ms-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-interactive px-1 type-label-01 tabular-nums text-text-on-color">
+              {formatNumber(activeCount)}
             </span>
           )}
         </Button>
@@ -78,10 +82,10 @@ export function FilterBar({
               onClick={onClearAll}
               disabled={activeCount === 0}
             >
-              Clear all
+              {t("common.clearAll")}
             </Button>
             <Button type="button" size="sm" onClick={() => setOpen(false)}>
-              Done
+              {t("common.done")}
             </Button>
           </div>
         </div>
@@ -92,13 +96,13 @@ export function FilterBar({
           {chips.map((chip) => (
             <span
               key={chip.key}
-              className="inline-flex items-center gap-1 rounded-full border border-border-subtle bg-card py-1 pr-1 pl-2.5 type-label-01 text-text-secondary"
+              className="inline-flex items-center gap-1 rounded-full border border-border-subtle bg-card py-1 pe-1 ps-2.5 type-label-01 text-text-secondary"
             >
               {chip.label}
               <button
                 type="button"
                 onClick={chip.onRemove}
-                aria-label={`Remove ${chip.label}`}
+                aria-label={t("ui.filterBar.removeFilter", { label: chip.label })}
                 className="inline-flex size-4 items-center justify-center rounded-full text-icon-secondary transition-colors hover:bg-layer-hover hover:text-icon-primary"
               >
                 <X className="size-3" />
@@ -110,7 +114,7 @@ export function FilterBar({
             onClick={onClearAll}
             className="type-label-01 font-medium text-link transition-colors hover:text-link-hover hover:underline"
           >
-            Clear all
+            {t("common.clearAll")}
           </button>
         </div>
       )}

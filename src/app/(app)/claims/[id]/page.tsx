@@ -25,22 +25,96 @@ import {
   listClaims,
   listClaimNotes,
   addClaimNote,
-  formatMoney,
-  formatDate,
   type Claim,
   type ArNote,
 } from "@/lib/claims";
-import { formatDateTime, formatDate as fmtDate, timeAgo } from "@/lib/format";
+import { useFormat, type Formatter } from "@/lib/i18n/format";
+import { useT } from "@/lib/i18n/provider";
 import { useAuth } from "@/lib/auth-context";
 import { ClaimFormPanel } from "../claim-form-panel";
 import { StatusActions } from "./status-actions";
 
-function pct(value: string | null): string {
-  if (value == null || value === "") return "—";
-  return `${(Number(value) * 100).toFixed(1)}%`;
+/**
+ * How the payer got from the charge to what it actually paid. Each row is a
+ * step: the write-off the provider eats, then the patient-share columns the
+ * payer withheld, down to the realized pay rate.
+ */
+function AdjudicationBreakdown({ claim }: { claim: Claim }) {
+  const t = useT();
+  const { formatMoney, formatPercent } = useFormat();
+  const charge = Number(claim.chargeAmount);
+  const paid = Number(claim.payerPaidAmount);
+
+  const steps: { label: string; value: string; strong?: boolean }[] = [
+    { label: t("claims.field.charge"), value: formatMoney(charge), strong: true },
+    {
+      label: t("claims.breakdown.discount"),
+      value: `− ${formatMoney(claim.discountAmount)}`,
+    },
+    {
+      label: t("claims.field.allowedAmount"),
+      value: formatMoney(claim.allowedAmount),
+      strong: true,
+    },
+    {
+      label: t("claims.breakdown.deductible"),
+      value: `− ${formatMoney(claim.deductibleAmount)}`,
+    },
+    {
+      label: t("claims.breakdown.copay"),
+      value: `− ${formatMoney(claim.copayAmount)}`,
+    },
+    {
+      label: t("claims.breakdown.coinsurance"),
+      value: `− ${formatMoney(claim.coinsuranceAmount)}`,
+    },
+    {
+      label: t("claims.breakdown.patientResponsibility"),
+      value: formatMoney(claim.patientResponsibility),
+      strong: true,
+    },
+    {
+      label: t("claims.field.payerPaid"),
+      value: formatMoney(paid),
+      strong: true,
+    },
+  ];
+
+  return (
+    <Section
+      title={t("claims.breakdown.title")}
+      subtitle={t("claims.breakdown.subtitle")}
+    >
+      <DataList>
+        {steps.map((step) => (
+          <DataRow
+            key={step.label}
+            label={step.label}
+            value={
+              step.strong ? (
+                <span className="font-medium">{step.value}</span>
+              ) : (
+                step.value
+              )
+            }
+            mono
+            muted={!step.strong}
+          />
+        ))}
+      </DataList>
+      <div className="mt-1 flex items-baseline justify-between gap-4 border-t-2 border-border-subtle pt-3">
+        <span className="type-body-compact-01 font-medium text-text-primary">
+          {t("claims.detail.payRate")}
+        </span>
+        <span className="font-mono type-heading-03 tabular-nums text-support-success">
+          {charge > 0 ? formatPercent(paid / charge) : "—"}
+        </span>
+      </div>
+    </Section>
+  );
 }
 
-function serviceRange(claim: Claim): string {
+function serviceRange(claim: Claim, formatDate: Formatter["formatDate"]): string {
   return claim.dateOfServiceEnd && claim.dateOfServiceEnd !== claim.dateOfService
     ? `${formatDate(claim.dateOfService)} – ${formatDate(claim.dateOfServiceEnd)}`
     : formatDate(claim.dateOfService);
@@ -62,6 +136,8 @@ function ArNotesSection({
   onAdded: () => void;
   canEdit: boolean;
 }) {
+  const t = useT();
+  const { formatDate } = useFormat();
   const [text, setText] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -73,9 +149,9 @@ function ArNotesSection({
       await addClaimNote(claimId, value);
       setText("");
       onAdded();
-      toast.success("Note added.");
+      toast.success(t("claims.toast.noteAdded"));
     } catch {
-      toast.error("Failed to add note.");
+      toast.error(t("claims.toast.noteAddFailed"));
     } finally {
       setSaving(false);
     }
@@ -88,7 +164,7 @@ function ArNotesSection({
           <Textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Add a note…"
+            placeholder={t("claims.arNotes.placeholder")}
             rows={2}
           />
           <div className="flex justify-end">
@@ -97,13 +173,15 @@ function ArNotesSection({
               disabled={saving || !text.trim()}
               onClick={add}
             >
-              {saving ? "Adding…" : "Add Note"}
+              {saving ? t("claims.arNotes.adding") : t("claims.arNotes.add")}
             </Button>
           </div>
         </div>
       )}
       {notes.length === 0 ? (
-        <p className="py-2 type-body-01 text-text-secondary">No notes yet.</p>
+        <p className="py-2 type-body-01 text-text-secondary">
+          {t("claims.arNotes.empty")}
+        </p>
       ) : (
         <ul className="space-y-2.5">
           {notes.map((note) => (
@@ -116,7 +194,7 @@ function ArNotesSection({
               </p>
               <p className="mt-1 type-label-01 text-text-secondary">
                 {note.user.firstName} {note.user.lastName} ·{" "}
-                {fmtDate(note.noteDate)}
+                {formatDate(note.noteDate)}
               </p>
             </li>
           ))}
@@ -136,6 +214,8 @@ function RelatedClaimsSection({
   currentClaimId: string;
   clientName: string;
 }) {
+  const t = useT();
+  const { formatMoney } = useFormat();
   const [related, setRelated] = useState<Claim[]>([]);
 
   useEffect(() => {
@@ -150,8 +230,8 @@ function RelatedClaimsSection({
 
   return (
     <Section
-      title="Related claims"
-      subtitle={`Other claims for ${clientName}`}
+      title={t("claims.related.title")}
+      subtitle={t("claims.related.subtitle", { name: clientName })}
     >
       <ul className="space-y-2.5">
         {related.map((c) => (
@@ -178,7 +258,7 @@ function RelatedClaimsSection({
           href={`/clients/${clientId}`}
           className="type-label-01 text-link hover:underline"
         >
-          View full client profile →
+          {t("claims.related.viewProfile")}
         </Link>
       </div>
     </Section>
@@ -188,6 +268,9 @@ function RelatedClaimsSection({
 export default function ClaimDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const t = useT();
+  const { formatMoney, formatPercent, formatDate, formatDateTime, timeAgo } =
+    useFormat();
   const { can } = useAuth();
   const id = params.id;
 
@@ -201,11 +284,11 @@ export default function ClaimDetailPage() {
     try {
       setClaim(await getClaim(id));
     } catch {
-      toast.error("Failed to load claim.");
+      toast.error(t("claims.toast.loadOneFailed"));
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, t]);
 
   const loadNotes = useCallback(async () => {
     try {
@@ -221,9 +304,13 @@ export default function ClaimDetailPage() {
   }, [loadClaim, loadNotes]);
 
   if (loading)
-    return <p className="type-body-01 text-text-secondary">Loading…</p>;
+    return <p className="type-body-01 text-text-secondary">{t("common.loading")}</p>;
   if (!claim)
-    return <p className="type-body-01 text-text-secondary">Claim not found.</p>;
+    return (
+      <p className="type-body-01 text-text-secondary">
+        {t("claims.detail.notFound")}
+      </p>
+    );
 
   const lines = claim.remittanceLines ?? [];
   const lineTotals = lines.reduce(
@@ -241,7 +328,8 @@ export default function ClaimDetailPage() {
         href="/claims"
         className="inline-flex items-center gap-1 type-body-compact-01 text-text-secondary transition-colors duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] hover:text-text-primary"
       >
-        <ArrowLeft className="size-4" /> Back to claims
+        <ArrowLeft className="size-4 rtl:rotate-180" />{" "}
+        {t("claims.action.backToClaims")}
       </Link>
 
       <PageHeader
@@ -253,7 +341,7 @@ export default function ClaimDetailPage() {
         <StatusBadge status={claim.status} />
         {can("claims.edit") && (
           <Button size="sm" onClick={() => setEditOpen(true)}>
-            <Pencil className="size-3.5" /> Edit
+            <Pencil className="size-3.5" /> {t("common.edit")}
           </Button>
         )}
         {can("claims.delete") && (
@@ -263,26 +351,30 @@ export default function ClaimDetailPage() {
             className="text-support-error hover:bg-support-error-bg hover:text-support-error"
             onClick={() => setDeleteOpen(true)}
           >
-            <Trash2 className="size-3.5" /> Delete
+            <Trash2 className="size-3.5" /> {t("common.delete")}
           </Button>
         )}
       </PageHeader>
 
       {/* KPI strip */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Stat label="Charge" value={formatMoney(claim.chargeAmount)} />
-        <Stat label="Payer paid" value={formatMoney(claim.payerPaidAmount)} accent="green" />
-        <Stat label="Pay rate" value={pct(claim.payPct)} hint="paid ÷ charge" />
+        <Stat label={t("claims.field.charge")} value={formatMoney(claim.chargeAmount)} />
+        <Stat label={t("claims.field.payerPaid")} value={formatMoney(claim.payerPaidAmount)} accent="green" />
         <Stat
-          label="In bank"
+          label={t("claims.detail.payRate")}
+          value={formatPercent(claim.payPct)}
+          hint={t("claims.detail.payRateHint")}
+        />
+        <Stat
+          label={t("claims.field.inBank")}
           value={formatMoney(claim.inBankAmount)}
-          hint={claim.bankDate ? formatDate(claim.bankDate) : "Not banked"}
+          hint={claim.bankDate ? formatDate(claim.bankDate) : t("claims.detail.notBanked")}
         />
       </div>
 
       {/* Status transitions */}
       {can("claims.edit") && (
-        <Section title="Move status">
+        <Section title={t("claims.detail.moveStatus")}>
           <StatusActions claim={claim} onChanged={setClaim} />
         </Section>
       )}
@@ -290,42 +382,47 @@ export default function ClaimDetailPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Main content */}
         <div className="space-y-6 lg:col-span-2">
-          <Section title="Claim details">
+          <Section title={t("claims.detail.claimDetails")}>
             <DataList>
-              <DataRow label="External claim #" value={claim.externalClaimNumber ?? "—"} mono />
-              <DataRow label="Patient account #" value={claim.patientAccountNumber ?? "—"} mono />
-              <DataRow label="Service dates" value={serviceRange(claim)} />
-              <DataRow label="Date billed" value={formatDate(claim.dateBilled)} />
+              <DataRow label={t("claims.field.externalClaimNumber")} value={claim.externalClaimNumber ?? t("common.emDash")} mono />
+              <DataRow label={t("claims.field.patientAccountNumber")} value={claim.patientAccountNumber ?? t("common.emDash")} mono />
+              <DataRow label={t("claims.field.serviceDates")} value={serviceRange(claim, formatDate)} />
+              <DataRow label={t("claims.field.dateBilled")} value={formatDate(claim.dateBilled)} />
             </DataList>
           </Section>
 
-          <Section title="Negotiation & banking" subtitle="Set only when the claim is negotiated">
+          <AdjudicationBreakdown claim={claim} />
+
+          <Section title={t("claims.detail.negotiationBanking")} subtitle={t("claims.detail.negotiationBankingHint")}>
             <DataList>
-              <DataRow label="Nego %" value={pct(claim.negoPct)} mono />
-              <DataRow label="Allowed amount" value={formatMoney(claim.allowedAmount)} mono />
-              <DataRow label="Balance needed" value={formatMoney(claim.balanceNeeded)} mono />
-              <DataRow label="Negotiation date" value={formatDate(claim.negotiationDate)} />
+              <DataRow label={t("claims.field.beforeNegotiation")} value={formatMoney(claim.beforeNegotiationAmount)} mono />
+              <DataRow label={t("claims.field.afterNegotiation")} value={formatMoney(claim.afterNegotiationAmount)} mono />
+              <DataRow label={t("claims.field.negoPctShort")} value={formatPercent(claim.negoPct)} mono />
+              <DataRow label={t("claims.field.allowedAmount")} value={formatMoney(claim.allowedAmount)} mono />
+              <DataRow label={t("claims.field.balanceNeeded")} value={formatMoney(claim.balanceNeeded)} mono />
+              <DataRow label={t("claims.field.negotiationDate")} value={formatDate(claim.negotiationDate)} />
+              <DataRow label={t("claims.field.negotiationNote")} value={claim.negotiationNote ?? "—"} />
             </DataList>
           </Section>
 
           <Section
-            title="Payment lines"
-            subtitle="The EOB daily lines that build this claim"
+            title={t("claims.detail.paymentLines")}
+            subtitle={t("claims.detail.paymentLinesHint")}
             bodyClassName="px-0 py-0"
           >
             {lines.length === 0 ? (
               <p className="px-5 py-6 text-center type-body-01 text-text-secondary">
-                No payment lines — this claim was entered manually.
+                {t("claims.detail.noPaymentLines")}
               </p>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Service date</TableHead>
-                    <TableHead className="text-right">Billed</TableHead>
-                    <TableHead className="text-right">Allowed</TableHead>
-                    <TableHead className="text-right">Paid</TableHead>
-                    <TableHead>Check</TableHead>
+                    <TableHead>{t("claims.field.serviceDate")}</TableHead>
+                    <TableHead className="text-end">{t("claims.field.billed")}</TableHead>
+                    <TableHead className="text-end">{t("claims.field.allowed")}</TableHead>
+                    <TableHead className="text-end">{t("claims.field.paid")}</TableHead>
+                    <TableHead>{t("claims.field.check")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -334,20 +431,20 @@ export default function ClaimDetailPage() {
                       <TableCell className="text-text-secondary">
                         {formatDate(l.dateOfService)}
                       </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums">
+                      <TableCell className="text-end font-mono tabular-nums">
                         {formatMoney(l.billedAmount)}
                       </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-text-secondary">
+                      <TableCell className="text-end font-mono tabular-nums text-text-secondary">
                         {formatMoney(l.allowedAmount)}
                       </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums">
+                      <TableCell className="text-end font-mono tabular-nums">
                         {formatMoney(l.paidAmount)}
                       </TableCell>
                       <TableCell className="text-text-secondary">
                         <span className="type-code-01">
-                          {l.remittance.checkNumber ?? "—"}
+                          {l.remittance.checkNumber ?? t("common.emDash")}
                         </span>
-                        <span className="ml-1 type-label-01 text-text-helper">
+                        <span className="ms-1 type-label-01 text-text-helper">
                           {formatDate(l.remittance.checkDate)}
                         </span>
                       </TableCell>
@@ -355,15 +452,15 @@ export default function ClaimDetailPage() {
                   ))}
                   <TableRow className="border-t-2 border-border-subtle bg-layer font-medium">
                     <TableCell className="text-text-primary">
-                      {lines.length} line{lines.length === 1 ? "" : "s"}
+                      {t("claims.detail.lineCount", { count: lines.length })}
                     </TableCell>
-                    <TableCell className="text-right font-mono tabular-nums">
+                    <TableCell className="text-end font-mono tabular-nums">
                       {formatMoney(lineTotals.billed)}
                     </TableCell>
-                    <TableCell className="text-right font-mono tabular-nums text-text-secondary">
+                    <TableCell className="text-end font-mono tabular-nums text-text-secondary">
                       {formatMoney(lineTotals.allowed)}
                     </TableCell>
-                    <TableCell className="text-right font-mono tabular-nums">
+                    <TableCell className="text-end font-mono tabular-nums">
                       {formatMoney(lineTotals.paid)}
                     </TableCell>
                     <TableCell />
@@ -374,14 +471,14 @@ export default function ClaimDetailPage() {
           </Section>
 
           {claim.notes && (
-            <Section title="Notes">
+            <Section title={t("common.notes")}>
               <p className="whitespace-pre-wrap type-body-01 text-text-primary">
                 {claim.notes}
               </p>
             </Section>
           )}
           {claim.internalNote && (
-            <Section title="Internal note" subtitle="Not shown to clients">
+            <Section title={t("claims.detail.internalNoteTitle")} subtitle={t("claims.detail.internalNoteHint")}>
               <p className="whitespace-pre-wrap type-body-01 text-text-primary">
                 {claim.internalNote}
               </p>
@@ -393,8 +490,8 @@ export default function ClaimDetailPage() {
         <div className="space-y-6">
           {/* Inline AR Notes */}
           <Section
-            title="AR Notes"
-            subtitle={`${notes.length} note${notes.length === 1 ? "" : "s"}`}
+            title={t("claims.arNotes.title")}
+            subtitle={t("claims.arNotes.count", { count: notes.length })}
           >
             <ArNotesSection
               claimId={claim.id}
@@ -414,22 +511,22 @@ export default function ClaimDetailPage() {
           )}
 
           {/* Record metadata */}
-          <Section title="Record">
+          <Section title={t("claims.detail.record")}>
             <DataList>
-              <DataRow label="Created by" value={userName(claim.createdBy)} />
+              <DataRow label={t("common.createdBy")} value={userName(claim.createdBy)} />
               <DataRow
-                label="Created"
+                label={t("common.createdAt")}
                 value={formatDateTime(claim.createdAt)}
                 muted
               />
-              <DataRow label="Updated by" value={userName(claim.updatedBy)} />
+              <DataRow label={t("common.updatedBy")} value={userName(claim.updatedBy)} />
               <DataRow
-                label="Last activity"
+                label={t("claims.field.lastActivity")}
                 value={timeAgo(claim.updatedAt)}
                 muted
               />
               <DataRow
-                label="Payment lines"
+                label={t("claims.detail.paymentLines")}
                 value={claim._count?.remittanceLines ?? lines.length}
                 mono
               />
@@ -451,7 +548,7 @@ export default function ClaimDetailPage() {
         onOpenChange={setDeleteOpen}
         type="claim"
         id={claim.id}
-        title="Delete claim"
+        title={t("claims.detail.deleteTitle")}
         onDone={() => router.push("/claims")}
       />
     </div>

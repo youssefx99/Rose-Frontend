@@ -16,7 +16,8 @@ import {
   type ExtractedData,
   type ReviewItem,
 } from "@/lib/documents";
-import { formatDate, formatMoney } from "@/lib/format";
+import { useFormat } from "@/lib/i18n/format";
+import { useT } from "@/lib/i18n/provider";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +50,7 @@ function DetailLineRow({
   canReject: boolean;
   onChanged: () => void;
 }) {
+  const t = useT("review");
   const data = effective(item);
   const [dos, setDos] = useState(String(data.dateOfService ?? ""));
   const [billed, setBilled] = useState(String(data.billedAmount ?? ""));
@@ -86,7 +88,7 @@ function DetailLineRow({
 
   const cell = "px-2 py-1.5 align-middle";
   const moneyInput =
-    "h-8 w-24 text-right font-mono tabular-nums disabled:opacity-100";
+    "h-8 w-24 text-end font-mono tabular-nums disabled:opacity-100";
 
   return (
     <tr className="border-t border-border-subtle">
@@ -94,7 +96,7 @@ function DetailLineRow({
         <Input
           value={dos}
           disabled={!editable}
-          aria-label="Date of service"
+          aria-label={t("documents.field.dateOfService")}
           onChange={(e) => setDos(e.target.value)}
           className="h-8 w-32 disabled:opacity-100"
         />
@@ -104,7 +106,7 @@ function DetailLineRow({
           value={billed}
           disabled={!editable}
           inputMode="decimal"
-          aria-label="Billed"
+          aria-label={t("documents.field.billedAmount")}
           onChange={(e) => setBilled(e.target.value)}
           className={moneyInput}
         />
@@ -114,7 +116,7 @@ function DetailLineRow({
           value={allowed}
           disabled={!editable}
           inputMode="decimal"
-          aria-label="Allowed"
+          aria-label={t("documents.field.allowedAmount")}
           onChange={(e) => setAllowed(e.target.value)}
           className={moneyInput}
         />
@@ -124,7 +126,7 @@ function DetailLineRow({
           value={paid}
           disabled={!editable}
           inputMode="decimal"
-          aria-label="Paid"
+          aria-label={t("documents.field.paidAmount")}
           onChange={(e) => setPaid(e.target.value)}
           className={moneyInput}
         />
@@ -132,7 +134,7 @@ function DetailLineRow({
       <td className={cell}>
         <StatusBadge status={item.status} />
       </td>
-      <td className={cn(cell, "whitespace-nowrap text-right")}>
+      <td className={cn(cell, "whitespace-nowrap text-end")}>
         {pending ? (
           <div className="inline-flex gap-1">
             {canApprove && (
@@ -140,8 +142,13 @@ function DetailLineRow({
                 size="sm"
                 variant="ghost"
                 disabled={busy}
-                title="Approve line"
-                onClick={() => run(() => approveItem(item.id, buildChanges()), "Approve failed.")}
+                title={t("review.line.approveTitle")}
+                onClick={() =>
+                  run(
+                    () => approveItem(item.id, buildChanges()),
+                    t("review.toast.approveFailed"),
+                  )
+                }
                 className="h-7 px-2 text-support-success hover:bg-support-success-bg"
               >
                 <Check className="size-4" />
@@ -152,8 +159,10 @@ function DetailLineRow({
                 size="sm"
                 variant="ghost"
                 disabled={busy}
-                title="Reject line"
-                onClick={() => run(() => rejectItem(item.id), "Reject failed.")}
+                title={t("review.line.rejectTitle")}
+                onClick={() =>
+                  run(() => rejectItem(item.id), t("review.toast.rejectFailed"))
+                }
                 className="h-7 px-2 text-support-error hover:bg-support-error-bg"
               >
                 <X className="size-4" />
@@ -162,7 +171,9 @@ function DetailLineRow({
           </div>
         ) : (
           <span className="type-label-01 text-text-helper">
-            {item.status === "REJECTED" ? "rejected" : "committed"}
+            {item.status === "REJECTED"
+              ? t("review.line.rejected")
+              : t("review.line.committed")}
           </span>
         )}
       </td>
@@ -178,6 +189,8 @@ export function ClaimGroupCard({
   group: ClaimGroup;
   onChanged: () => void;
 }) {
+  const t = useT("review");
+  const { formatDate, formatMoney } = useFormat();
   const { can } = useAuth();
   const canApprove = can("review.approve");
   const canReject = can("review.reject");
@@ -200,17 +213,18 @@ export function ClaimGroupCard({
   // the backend's idempotent aggregate keeps the claim totals consistent.
   const runBulk = async (
     action: (id: string) => Promise<unknown>,
-    verb: string,
+    successKey: string,
+    failureKey: string,
   ) => {
     setBusy(true);
     try {
       for (const item of pendingItems) {
         await action(item.id);
       }
-      toast.success(`${verb} claim — ${pendingItems.length} line(s).`);
+      toast.success(t(successKey, { count: pendingItems.length }));
       onChanged();
     } catch (e) {
-      handleApiError(e, `${verb} claim failed.`);
+      handleApiError(e, t(failureKey));
     } finally {
       setBusy(false);
     }
@@ -243,23 +257,30 @@ export function ClaimGroupCard({
               <StatusBadge status={group.status} />
             </div>
             <p className="mt-0.5 type-label-01 text-text-secondary">
-              Claim{" "}
+              {t("review.group.claim")}{" "}
               <span className="font-mono text-text-primary">
                 {group.claimNumber ?? "—"}
               </span>
               {group.patientAccountNumber ? (
                 <>
-                  {" · Acct "}
+                  {` · ${t("review.group.acct")} `}
                   <span className="font-mono">{group.patientAccountNumber}</span>
                 </>
               ) : null}
             </p>
           </div>
-          <div className="text-right type-label-01 text-text-secondary">
-            {group.lineCount} service line{group.lineCount === 1 ? "" : "s"}
+          <div className="text-end type-label-01 text-text-secondary">
+            {t("review.group.serviceLineCount", { count: group.lineCount })}
             <br />
-            {group.counts.pending} pending · {group.counts.approved} done
-            {group.counts.rejected ? ` · ${group.counts.rejected} rejected` : ""}
+            {t("review.group.pendingDone", {
+              pending: group.counts.pending,
+              done: group.counts.approved,
+            })}
+            {group.counts.rejected
+              ? t("review.group.rejectedSuffix", {
+                  rejected: group.counts.rejected,
+                })
+              : ""}
           </div>
         </div>
       </div>
@@ -267,15 +288,15 @@ export function ClaimGroupCard({
       {/* Summary metrics + the claim record this rolls into */}
       <div className="grid gap-5 p-5 lg:grid-cols-2">
         <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
-          {metric("Service dates", range)}
-          {metric("Billed", formatMoney(group.billedAmount))}
-          {metric("Allowed", formatMoney(group.allowedAmount))}
-          {metric("Paid", formatMoney(group.paidAmount), true)}
-          {metric("Pay %", `${(group.payPct * 100).toFixed(1)}%`)}
+          {metric(t("review.metric.serviceDates"), range)}
+          {metric(t("documents.field.billedAmount"), formatMoney(group.billedAmount))}
+          {metric(t("documents.field.allowedAmount"), formatMoney(group.allowedAmount))}
+          {metric(t("documents.field.paidAmount"), formatMoney(group.paidAmount), true)}
+          {metric(t("review.metric.payPct"), `${(group.payPct * 100).toFixed(1)}%`)}
         </div>
         <div>
           <p className="mb-2 type-label-01 font-medium uppercase tracking-wider text-text-secondary">
-            Claim record
+            {t("review.group.claimRecord")}
           </p>
           {match ? (
             <Link
@@ -292,17 +313,16 @@ export function ClaimGroupCard({
                 {match.client?.displayName ?? "—"}
               </p>
               <p className="mt-0.5 type-label-01 text-text-secondary">
-                Matches this imported claim on client, charge and service dates —
-                approving fills in the payment above (no duplicate created).
+                {t("review.group.matchNote")}
               </p>
             </Link>
           ) : (
             <div className="rounded-md border border-dashed border-border-strong p-3 type-body-compact-01 text-text-secondary">
-              No existing claim yet — approving creates one claim for{" "}
+              {t("review.group.noMatchBefore")}
               <span className="font-mono text-text-primary">
                 {group.claimNumber ?? "—"}
-              </span>{" "}
-              with the summed totals above.
+              </span>
+              {t("review.group.noMatchAfter")}
             </div>
           )}
         </div>
@@ -321,8 +341,9 @@ export function ClaimGroupCard({
               expanded && "rotate-180",
             )}
           />
-          {expanded ? "Hide" : "Show"} {group.lineCount} service line
-          {group.lineCount === 1 ? "" : "s"}
+          {t(expanded ? "review.group.hideLines" : "review.group.showLines", {
+            count: group.lineCount,
+          })}
         </button>
         {hasPending && (canApprove || canReject) && (
           <div className="flex gap-2">
@@ -331,9 +352,15 @@ export function ClaimGroupCard({
                 variant="destructive"
                 size="sm"
                 disabled={busy}
-                onClick={() => runBulk(rejectItem, "Rejected")}
+                onClick={() =>
+                  runBulk(
+                    rejectItem,
+                    "review.toast.rejectedClaim",
+                    "review.toast.rejectClaimFailed",
+                  )
+                }
               >
-                Reject claim
+                {t("review.group.rejectClaim")}
               </Button>
             )}
             {canApprove && (
@@ -341,9 +368,15 @@ export function ClaimGroupCard({
                 variant="rose"
                 size="sm"
                 disabled={busy}
-                onClick={() => runBulk((id) => approveItem(id), "Approved")}
+                onClick={() =>
+                  runBulk(
+                    (id) => approveItem(id),
+                    "review.toast.approvedClaim",
+                    "review.toast.approveClaimFailed",
+                  )
+                }
               >
-                {busy ? "Working…" : "Approve claim"}
+                {busy ? t("working") : t("review.group.approveClaim")}
               </Button>
             )}
           </div>
@@ -355,13 +388,23 @@ export function ClaimGroupCard({
         <div className="overflow-x-auto border-t border-border-subtle bg-layer px-5 py-4">
           <table className="w-full border-collapse text-sm">
             <thead>
-              <tr className="text-left type-label-01 uppercase tracking-wider text-text-secondary">
-                <th className="px-2 py-1 font-medium">Date of service</th>
-                <th className="px-2 py-1 text-right font-medium">Billed</th>
-                <th className="px-2 py-1 text-right font-medium">Allowed</th>
-                <th className="px-2 py-1 text-right font-medium">Paid</th>
-                <th className="px-2 py-1 font-medium">Status</th>
-                <th className="px-2 py-1 text-right font-medium">Actions</th>
+              <tr className="text-start type-label-01 uppercase tracking-wider text-text-secondary">
+                <th className="px-2 py-1 font-medium">
+                  {t("documents.field.dateOfService")}
+                </th>
+                <th className="px-2 py-1 text-end font-medium">
+                  {t("documents.field.billedAmount")}
+                </th>
+                <th className="px-2 py-1 text-end font-medium">
+                  {t("documents.field.allowedAmount")}
+                </th>
+                <th className="px-2 py-1 text-end font-medium">
+                  {t("documents.field.paidAmount")}
+                </th>
+                <th className="px-2 py-1 font-medium">{t("common.status")}</th>
+                <th className="px-2 py-1 text-end font-medium">
+                  {t("common.actions")}
+                </th>
               </tr>
             </thead>
             <tbody>

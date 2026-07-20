@@ -1,0 +1,87 @@
+{
+  "title": "Clients",
+  "description": "People served by your organization.",
+  "newClient": "New Client",
+  "notFound": "Client not found.",
+  "backToClients": "Back to clients",
+  "searchPlaceholder": "Search name or account #…",
+
+  "filter.payer": "Payer",
+  "filter.payerFallback": "Payer",
+  "filter.anyPayer": "Any payer",
+  "filter.balance": "Balance",
+  "filter.any": "Any",
+  "filter.hasUnpaidClaims": "Has unpaid claims",
+  "filter.statusChip": "Status: {value}",
+  "filter.hasOutstandingChip": "Has outstanding",
+
+  "bulk.clearSelection": "Clear selection",
+
+  "table.selectAllAria": "Select all clients",
+  "table.selectRowAria": "Select {name}",
+  "table.editAria": "Edit {name}",
+  "table.deleteAria": "Delete {name}",
+  "table.accountNumbers": "Account #s",
+  "table.claims": "Claims",
+  "table.claim": "Claim",
+  "table.payer": "Payer",
+  "table.serviceDates": "Service dates",
+  "table.billed": "Billed",
+  "table.paid": "Paid",
+  "table.payPct": "Pay%",
+
+  "empty.noClients": "No clients found.",
+  "empty.noClaims": "No claims yet.",
+  "empty.noPayers": "No payers yet.",
+  "empty.noAccounts": "No account numbers on file.",
+
+  "delete.title": "Delete client",
+
+  "stat.totalBilled": "Total billed",
+  "stat.collected": "Collected",
+  "stat.collectionRate": "Collection rate",
+  "stat.collectionRateHint": "collected ÷ billed",
+  "stat.openAr": "Open AR",
+  "stat.openArHint_one": "{count} unpaid claim",
+  "stat.openArHint_other": "{count} unpaid claims",
+
+  "section.claimsByStatus": "Claims by status",
+  "section.paymentMetrics": "Payment metrics",
+  "section.payers": "Payers",
+  "section.payersSubtitle": "{total} on file",
+  "section.accountNumbers": "Account numbers",
+  "section.accountNumbersSubtitle": "One person, several payer authorizations",
+  "section.claims": "Claims",
+  "section.claimsSubtitle": "{total} total",
+
+  "metrics.lastBilled": "Last billed",
+  "metrics.paidClaims": "Paid claims",
+
+  "footer.billed": "Billed:",
+  "footer.collected": "Collected:",
+  "footer.outstanding": "Outstanding:",
+
+  "summary.claimCount_one": "{count} claim",
+  "summary.claimCount_other": "{count} claims",
+  "summary.accountCount_one": "{count} account #",
+  "summary.accountCount_other": "{count} account #s",
+  "summary.payerCount_one": "{count} payer",
+  "summary.payerCount_other": "{count} payers",
+
+  "claimCount_one": "{count} claim",
+  "claimCount_other": "{count} claims",
+
+  "form.editTitle": "Edit Client",
+  "form.description": "Person served by the organization.",
+  "form.firstName": "First Name",
+  "form.lastName": "Last Name",
+  "form.accountNumber": "Account Number",
+  "form.firstNameRequired": "First name is required.",
+  "form.lastNameRequired": "Last name is required.",
+
+  "toast.loadFailed": "Failed to load clients.",
+  "toast.loadDetailFailed": "Failed to load client.",
+  "toast.created": "Client created.",
+  "toast.updated": "Client updated.",
+  "toast.saveFailed": "Failed to save client."
+}

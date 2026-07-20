@@ -1,0 +1,71 @@
+{
+  "title": "Import",
+  "description": "Bulk-seed payers, clients and claims from your Billing.xlsx — an alternative to entering claims one by one.",
+  "importSheet": "Import Sheet",
+  "importClaims": "Import claims",
+  "importing": "Importing…",
+
+  "lastImport": "Last import",
+  "viewClaims": "View claims →",
+
+  "stat.rows": "Rows",
+  "stat.created": "Created",
+  "stat.skipped": "Skipped",
+  "stat.errors": "Errors",
+  "stat.newClients": "New clients",
+  "stat.newPayers": "New payers",
+
+  "table.row": "Row",
+  "table.client": "Client",
+  "table.payer": "Payer",
+  "table.reference": "Reference / note",
+
+  "rowStatus.created": "Created",
+  "rowStatus.skipped": "Skipped",
+  "rowStatus.error": "Error",
+  "rowStatus.skippedNote": "Claim already exists — skipped.",
+
+  "rowError.missingPayer": "Missing Payer.",
+  "rowError.invalidClient": "Missing or invalid Client.",
+  "rowError.invalidDateBilled": "Invalid Date Billed.",
+  "rowError.invalidDateOfService": "Invalid Date of Service.",
+  "rowError.invalidCharge": "Invalid Charge.",
+  "rowError.saveFailed": "Could not save this row.",
+
+  "empty.title": "No imports yet",
+  "empty.description": "Upload a Billing.xlsx to seed payers, clients and claims in one go.",
+
+  "slideOver.title": "Import from spreadsheet",
+  "slideOver.description": "Excel .xlsx · the first worksheet is read",
+
+  "dropzone.title": "Click or drop an Excel .xlsx here",
+  "dropzone.hint": "Billing sheet export — one file",
+
+  "file.sizeKb": "{size} KB",
+  "aria.removeFile": "Remove file",
+
+  "columns.title": "Columns read from the sheet",
+  "columns.payer": "Payer",
+  "columns.state": "State",
+  "columns.dateBilled": "Date Billed",
+  "columns.dateOfService": "Date of Service",
+  "columns.client": "Client",
+  "columns.charge": "Charge",
+  "columns.note": "Other columns are ignored. Re-running is safe — existing claims are skipped.",
+
+  "progress.label": "Reading the sheet and creating records…",
+
+  "toast.notXlsx": "Please choose an Excel .xlsx file.",
+  "toast.importedClaims_one": "Imported {count} claim.",
+  "toast.importedClaims_other": "Imported {count} claims.",
+  "toast.skippedRows_one": "{count} row skipped.",
+  "toast.skippedRows_other": "{count} rows skipped.",
+  "toast.failedRows_one": "{count} row failed.",
+  "toast.failedRows_other": "{count} rows failed.",
+  "toast.nothingNew_one": "Nothing new — {count} row already existed.",
+  "toast.nothingNew_other": "Nothing new — {count} rows already existed.",
+  "toast.noneCreated_one": "No claims created — {count} row had errors.",
+  "toast.noneCreated_other": "No claims created — {count} rows had errors.",
+  "toast.noRows": "No data rows found in the sheet.",
+  "toast.importFailed": "Import failed."
+}

@@ -15,13 +15,13 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
       className={cn(
         "flex h-10 w-full min-w-0 rounded-md border border-border-strong bg-field px-3 text-sm text-text-primary outline-none transition-colors duration-[var(--dur-fast-01)]",
         "[&[type=date]]:appearance-auto [&[type=datetime-local]]:appearance-auto [&[type=time]]:appearance-auto",
-        "[&[type=date]]:pr-2 [&[type=datetime-local]]:pr-2 [&[type=time]]:pr-2",
+        "[&[type=date]]:pe-2 [&[type=datetime-local]]:pe-2 [&[type=time]]:pe-2",
         "placeholder:text-text-placeholder selection:bg-interactive selection:text-text-on-color",
         "hover:bg-field-hover",
         "focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-0",
         "disabled:cursor-not-allowed disabled:opacity-50",
         "aria-invalid:border-support-error aria-invalid:ring-2 aria-invalid:ring-support-error/40",
-        "file:mr-3 file:inline-flex file:h-8 file:items-center file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-text-primary",
+        "file:me-3 file:inline-flex file:h-8 file:items-center file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-text-primary",
         className,
       )}
       {...props}

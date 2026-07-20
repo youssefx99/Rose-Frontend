@@ -27,6 +27,8 @@ import { CascadeDeleteDialog } from "@/components/ui/cascade-delete-dialog";
 import { BulkDeleteDialog } from "@/components/ui/bulk-delete-dialog";
 import { FilterBar, FilterField, type ActiveFilterChip } from "@/components/ui/filter-bar";
 import { useAuth } from "@/lib/auth-context";
+import { useT, useLocale } from "@/lib/i18n/provider";
+import { useFormat } from "@/lib/i18n/format";
 import { useRowSelection } from "@/lib/use-row-selection";
 import {
   deactivateClient,
@@ -53,6 +55,9 @@ const EMPTY_FILTERS: ClientFilters = {
 
 export default function ClientsPage() {
   const { can } = useAuth();
+  const t = useT("clients");
+  const { dir } = useLocale();
+  const { formatNumber } = useFormat();
   const router = useRouter();
   const [clients, setClients] = useState<Client[]>([]);
   const [search, setSearch] = useState("");
@@ -90,11 +95,11 @@ export default function ClientsPage() {
       });
       setClients(data);
     } catch {
-      toast.error("Failed to load clients.");
+      toast.error(t("clients.toast.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const timer = setTimeout(() => load(search, filters), 300);
@@ -112,7 +117,7 @@ export default function ClientsPage() {
   };
 
   const payerName = (id: string) =>
-    payers.find((p) => p.id === id)?.name ?? "Payer";
+    payers.find((p) => p.id === id)?.name ?? t("clients.filter.payerFallback");
 
   // "active" is the default view, so it doesn't count as an applied filter.
   const chips = useMemo<ActiveFilterChip[]>(() => {
@@ -120,7 +125,11 @@ export default function ClientsPage() {
     if (filters.status !== "active")
       list.push({
         key: "status",
-        label: `Status: ${filters.status}`,
+        label: t("clients.filter.statusChip", {
+          value: t(
+            filters.status === "inactive" ? "common.inactive" : "common.all",
+          ),
+        }),
         onRemove: () => set("status", "active"),
       });
     if (filters.payerId !== ALL)
@@ -132,34 +141,35 @@ export default function ClientsPage() {
     if (filters.hasOutstanding)
       list.push({
         key: "outstanding",
-        label: "Has outstanding",
+        label: t("clients.filter.hasOutstandingChip"),
         onRemove: () => set("hasOutstanding", false),
       });
     return list;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, payers]);
+  }, [filters, payers, t]);
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Clients"
-        description="People served by your organization."
+        title={t("title")}
+        description={t("description")}
       >
         {can("clients.create") && (
-          <Button onClick={handleNew}>New Client</Button>
+          <Button onClick={handleNew}>{t("newClient")}</Button>
         )}
       </PageHeader>
 
       <FilterBar
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search name or account #…"
+        searchPlaceholder={t("searchPlaceholder")}
         activeCount={chips.length}
         chips={chips}
         onClearAll={() => setFilters(EMPTY_FILTERS)}
       >
-        <FilterField label="Status">
+        <FilterField label={t("common.status")}>
           <Select
+            dir={dir}
             value={filters.status}
             onValueChange={(v) => set("status", v as ClientStatusFilter)}
           >
@@ -167,20 +177,20 @@ export default function ClientsPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="active">{t("common.active")}</SelectItem>
+              <SelectItem value="inactive">{t("common.inactive")}</SelectItem>
+              <SelectItem value="all">{t("common.all")}</SelectItem>
             </SelectContent>
           </Select>
         </FilterField>
 
-        <FilterField label="Payer">
-          <Select value={filters.payerId} onValueChange={(v) => set("payerId", v)}>
+        <FilterField label={t("clients.filter.payer")}>
+          <Select dir={dir} value={filters.payerId} onValueChange={(v) => set("payerId", v)}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL}>Any payer</SelectItem>
+              <SelectItem value={ALL}>{t("clients.filter.anyPayer")}</SelectItem>
               {payers.map((p) => (
                 <SelectItem key={p.id} value={p.id}>
                   {p.name}
@@ -190,8 +200,9 @@ export default function ClientsPage() {
           </Select>
         </FilterField>
 
-        <FilterField label="Balance">
+        <FilterField label={t("clients.filter.balance")}>
           <Select
+            dir={dir}
             value={filters.hasOutstanding ? "outstanding" : "any"}
             onValueChange={(v) => set("hasOutstanding", v === "outstanding")}
           >
@@ -199,8 +210,8 @@ export default function ClientsPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="any">Any</SelectItem>
-              <SelectItem value="outstanding">Has unpaid claims</SelectItem>
+              <SelectItem value="any">{t("clients.filter.any")}</SelectItem>
+              <SelectItem value="outstanding">{t("clients.filter.hasUnpaidClaims")}</SelectItem>
             </SelectContent>
           </Select>
         </FilterField>
@@ -209,21 +220,21 @@ export default function ClientsPage() {
       {canDelete && selection.selectedIds.size > 0 && (
         <div className="flex flex-wrap items-center gap-3 rounded-md border border-interactive bg-highlight px-4 py-2.5">
           <span className="type-body-compact-01 font-medium text-text-primary">
-            {selection.selectedIds.size} selected
+            {t("common.selectedCount", { count: selection.selectedIds.size })}
           </span>
           <Button
             variant="destructive"
             size="sm"
             onClick={() => setBulkOpen(true)}
           >
-            <Trash2 className="size-3.5" /> Delete
+            <Trash2 className="size-3.5" /> {t("common.delete")}
           </Button>
           <button
             type="button"
             onClick={selection.clear}
-            className="ml-auto type-label-01 text-text-secondary hover:text-text-primary"
+            className="ms-auto type-label-01 text-text-secondary hover:text-text-primary"
           >
-            Clear selection
+            {t("clients.bulk.clearSelection")}
           </button>
         </div>
       )}
@@ -233,33 +244,33 @@ export default function ClientsPage() {
           <TableHeader>
             <TableRow>
               {canDelete && (
-                <TableHead className="w-10 pr-0">
+                <TableHead className="w-10 pe-0">
                   <input
                     type="checkbox"
-                    aria-label="Select all clients"
+                    aria-label={t("clients.table.selectAllAria")}
                     checked={selection.allSelected}
                     onChange={selection.toggleAll}
                     className="size-4 rounded-sm border-border-strong accent-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                   />
                 </TableHead>
               )}
-              <TableHead>Name</TableHead>
-              <TableHead className="text-right">Account&nbsp;#s</TableHead>
-              <TableHead className="text-right">Claims</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t("common.name")}</TableHead>
+              <TableHead className="text-end">{t("clients.table.accountNumbers")}</TableHead>
+              <TableHead className="text-end">{t("clients.table.claims")}</TableHead>
+              <TableHead className="text-end">{t("common.actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
                 <TableCell colSpan={canDelete ? 5 : 4} className="py-8 text-center text-text-secondary">
-                  Loading…
+                  {t("common.loading")}
                 </TableCell>
               </TableRow>
             ) : clients.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={canDelete ? 5 : 4} className="py-8 text-center text-text-secondary">
-                  No clients found.
+                  {t("clients.empty.noClients")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -271,10 +282,10 @@ export default function ClientsPage() {
                   data-state={selection.selectedIds.has(client.id) ? "selected" : undefined}
                 >
                   {canDelete && (
-                    <TableCell className="w-10 pr-0" onClick={(e) => e.stopPropagation()}>
+                    <TableCell className="w-10 pe-0" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
-                        aria-label={`Select ${client.displayName}`}
+                        aria-label={t("clients.table.selectRowAria", { name: client.displayName })}
                         checked={selection.selectedIds.has(client.id)}
                         onChange={() => selection.toggleOne(client.id)}
                         className="size-4 rounded-sm border-border-strong accent-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
@@ -290,18 +301,18 @@ export default function ClientsPage() {
                       {client.displayName}
                     </Link>
                   </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums text-text-secondary">
-                    {client.accountCount ?? 0}
+                  <TableCell className="text-end font-mono tabular-nums text-text-secondary">
+                    {formatNumber(client.accountCount ?? 0)}
                   </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums text-text-secondary">
-                    {client.claimCount ?? 0}
+                  <TableCell className="text-end font-mono tabular-nums text-text-secondary">
+                    {formatNumber(client.claimCount ?? 0)}
                   </TableCell>
-                  <TableCell className="space-x-1 text-right">
+                  <TableCell className="space-x-1 text-end">
                     {can("clients.edit") && (
                       <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Edit ${client.displayName}`}
+                        aria-label={t("clients.table.editAria", { name: client.displayName })}
                         onClick={(e) => {
                           e.stopPropagation();
                           handleEdit(client);
@@ -314,7 +325,7 @@ export default function ClientsPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Delete ${client.displayName}`}
+                        aria-label={t("clients.table.deleteAria", { name: client.displayName })}
                         className="text-support-error hover:bg-support-error-bg hover:text-support-error"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -344,7 +355,7 @@ export default function ClientsPage() {
         onOpenChange={(open) => !open && setDeleting(null)}
         type="client"
         id={deleting?.id ?? null}
-        title="Delete client"
+        title={t("clients.delete.title")}
         onDeactivate={
           deleting ? () => deactivateClient(deleting.id) : undefined
         }

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SlideOver } from "@/components/ui/slide-over";
+import { useT } from "@/lib/i18n/provider";
 import {
   createClient,
   updateClient,
@@ -19,9 +20,10 @@ import {
 
 const FORM_ID = "client-form";
 
+// Messages are translation keys — the schema is module-level and cannot call hooks.
 const schema = z.object({
-  firstName: z.string().min(1, "First name is required."),
-  lastName: z.string().min(1, "Last name is required."),
+  firstName: z.string().min(1, "clients.form.firstNameRequired"),
+  lastName: z.string().min(1, "clients.form.lastNameRequired"),
   clientAccountNumber: z.string().optional(),
 });
 
@@ -46,6 +48,7 @@ export function ClientFormDialog({
   client,
   onSaved,
 }: ClientFormDialogProps) {
+  const t = useT("clients");
   const {
     register,
     handleSubmit,
@@ -79,15 +82,15 @@ export function ClientFormDialog({
     try {
       if (client) {
         await updateClient(client.id, payload);
-        toast.success("Client updated.");
+        toast.success(t("clients.toast.updated"));
       } else {
         await createClient(payload);
-        toast.success("Client created.");
+        toast.success(t("clients.toast.created"));
       }
       onOpenChange(false);
       onSaved();
     } catch {
-      toast.error("Failed to save client.");
+      toast.error(t("clients.toast.saveFailed"));
     }
   });
 
@@ -95,8 +98,8 @@ export function ClientFormDialog({
     <SlideOver
       open={open}
       onOpenChange={onOpenChange}
-      title={client ? "Edit Client" : "New Client"}
-      description="Person served by the organization."
+      title={client ? t("clients.form.editTitle") : t("newClient")}
+      description={t("clients.form.description")}
       footer={
         <>
           <Button
@@ -104,35 +107,35 @@ export function ClientFormDialog({
             variant="outline"
             onClick={() => onOpenChange(false)}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button type="submit" form={FORM_ID} disabled={isSubmitting}>
-            {isSubmitting ? "Saving…" : "Save"}
+            {isSubmitting ? t("common.saving") : t("common.save")}
           </Button>
         </>
       }
     >
       <form id={FORM_ID} onSubmit={onSubmit} className="space-y-6" noValidate>
         <div className="space-y-2">
-          <Label htmlFor="firstName">First Name</Label>
+          <Label htmlFor="firstName">{t("clients.form.firstName")}</Label>
           <Input id="firstName" {...register("firstName")} />
-          {errors.firstName && (
+          {errors.firstName?.message && (
             <p className="type-label-01 text-support-error">
-              {errors.firstName.message}
+              {t(errors.firstName.message)}
             </p>
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="lastName">Last Name</Label>
+          <Label htmlFor="lastName">{t("clients.form.lastName")}</Label>
           <Input id="lastName" {...register("lastName")} />
-          {errors.lastName && (
+          {errors.lastName?.message && (
             <p className="type-label-01 text-support-error">
-              {errors.lastName.message}
+              {t(errors.lastName.message)}
             </p>
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="clientAccountNumber">Account Number</Label>
+          <Label htmlFor="clientAccountNumber">{t("clients.form.accountNumber")}</Label>
           <Input id="clientAccountNumber" {...register("clientAccountNumber")} />
         </div>
       </form>

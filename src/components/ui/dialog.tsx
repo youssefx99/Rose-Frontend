@@ -4,6 +4,7 @@ import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { XIcon } from "lucide-react";
 
+import { useT } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 
 function Dialog(props: React.ComponentProps<typeof DialogPrimitive.Root>) {
@@ -48,6 +49,7 @@ function DialogContent({
   children,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content>) {
+  const t = useT();
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -62,11 +64,11 @@ function DialogContent({
       >
         {children}
         <DialogPrimitive.Close
-          aria-label="Close"
-          className="absolute top-4 right-4 rounded-sm p-1 text-icon-secondary opacity-80 transition-opacity hover:bg-layer-hover hover:opacity-100 focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none disabled:pointer-events-none [&_svg]:size-4"
+          aria-label={t("common.close")}
+          className="absolute top-4 end-4 rounded-sm p-1 text-icon-secondary opacity-80 transition-opacity hover:bg-layer-hover hover:opacity-100 focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none disabled:pointer-events-none [&_svg]:size-4"
         >
           <XIcon />
-          <span className="sr-only">Close</span>
+          <span className="sr-only">{t("common.close")}</span>
         </DialogPrimitive.Close>
       </DialogPrimitive.Content>
     </DialogPortal>
@@ -77,7 +79,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn("flex flex-col gap-1.5 text-left", className)}
+      className={cn("flex flex-col gap-1.5 text-start", className)}
       {...props}
     />
   );

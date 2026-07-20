@@ -25,14 +25,17 @@ import {
   type ReviewJobDetail,
   type ValidationFlag,
 } from "@/lib/documents";
-import { formatDateTime } from "@/lib/format";
+import { useFormat } from "@/lib/i18n/format";
+import { useLocale, useT } from "@/lib/i18n/provider";
 import { useAuth } from "@/lib/auth-context";
+import { catalogText } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { ReviewItemCard } from "./review-item-card";
 import { ClaimGroupCard } from "./claim-group-card";
 import { DocumentViewer, useDocumentFile } from "@/components/document-viewer";
 
 function ValidationBadge({ score, flags }: { score: number; flags: ValidationFlag[] }) {
+  const t = useT("review");
   const errors = flags.filter((f) => f.severity === "error");
   const warnings = flags.filter((f) => f.severity === "warning");
   const color =
@@ -40,8 +43,16 @@ function ValidationBadge({ score, flags }: { score: number; flags: ValidationFla
     : score >= 70 ? "text-support-warning border-support-warning bg-support-warning-bg"
     : "text-support-error border-support-error bg-support-error-bg";
   const tooltip = flags.length === 0
-    ? "No issues found"
-    : flags.map((f) => `[${f.severity.toUpperCase()}] ${f.field}: ${f.message}`).join("\n");
+    ? t("review.validation.noIssues")
+    : flags
+        .map((f) =>
+          t("review.validation.flag", {
+            severity: t(`review.validation.severity.${f.severity}`),
+            field: catalogText(t, `documents.field.${f.field}`, f.field),
+            message: f.message,
+          }),
+        )
+        .join("\n");
   return (
     <span
       title={tooltip}
@@ -51,12 +62,15 @@ function ValidationBadge({ score, flags }: { score: number; flags: ValidationFla
       )}
     >
       <ShieldCheck className="size-3.5" />
-      Validation: <span className="font-semibold tabular-nums">{score}/100</span>
+      {t("review.validation.label")}{" "}
+      <span className="font-semibold tabular-nums">
+        {t("review.validation.score", { score })}
+      </span>
       {errors.length > 0 && (
-        <span className="font-medium">&nbsp;· {errors.length} error{errors.length > 1 ? "s" : ""}</span>
+        <span className="font-medium">&nbsp;· {t("review.validation.errorCount", { count: errors.length })}</span>
       )}
       {warnings.length > 0 && (
-        <span className="font-medium">&nbsp;· {warnings.length} warning{warnings.length > 1 ? "s" : ""}</span>
+        <span className="font-medium">&nbsp;· {t("review.validation.warningCount", { count: warnings.length })}</span>
       )}
     </span>
   );
@@ -72,6 +86,9 @@ const clampPct = (pct: number) => Math.min(MAX_PCT, Math.max(MIN_PCT, pct));
 export default function ReviewDetailPage() {
   const params = useParams<{ jobId: string }>();
   const jobId = params.jobId;
+  const t = useT("review");
+  const { isRtl } = useLocale();
+  const { formatDateTime, formatMoney, formatNumber } = useFormat();
   const { can } = useAuth();
   const file = useDocumentFile(jobId);
   const [job, setJob] = useState<ReviewJobDetail | null>(null);
@@ -97,7 +114,8 @@ export default function ReviewDetailPage() {
     const onMove = (event: PointerEvent) => {
       const rect = splitRef.current?.getBoundingClientRect();
       if (!rect || rect.width === 0) return;
-      setLeftPct(clampPct(((event.clientX - rect.left) / rect.width) * 100));
+      const offset = isRtl ? rect.right - event.clientX : event.clientX - rect.left;
+      setLeftPct(clampPct((offset / rect.width) * 100));
     };
     const stop = () => setDragging(false);
     window.addEventListener("pointermove", onMove);
@@ -106,7 +124,7 @@ export default function ReviewDetailPage() {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", stop);
     };
-  }, [dragging]);
+  }, [dragging, isRtl]);
 
   // Persist once the split settles (not on every drag frame).
   useEffect(() => {
@@ -119,18 +137,18 @@ export default function ReviewDetailPage() {
     try {
       setJob(await getReviewJob(jobId));
     } catch {
-      toast.error("Failed to load review.");
+      toast.error(t("review.toast.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, [jobId]);
+  }, [jobId, t]);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  if (loading) return <p className="text-text-secondary">Loading…</p>;
-  if (!job) return <p className="text-text-secondary">Document not found.</p>;
+  if (loading) return <p className="text-text-secondary">{t("common.loading")}</p>;
+  if (!job) return <p className="text-text-secondary">{t("notFound")}</p>;
 
   const pendingCount =
     (job.header?.status === "PENDING" ? 1 : 0) +
@@ -144,14 +162,14 @@ export default function ReviewDetailPage() {
     try {
       const result = await approveAllJob(job.id);
       toast.success(
-        `Approved ${result.approved} item(s); matched ${result.matched} claim(s).`,
+        `${t("review.toast.approvedItems", { count: result.approved })} ${t("review.toast.matchedClaims", { count: result.matched })}`,
       );
       await load();
     } catch (error) {
       const message =
         isAxiosError(error) && typeof error.response?.data?.message === "string"
           ? error.response.data.message
-          : "Approve all failed.";
+          : t("review.toast.approveAllFailed");
       toast.error(message);
     } finally {
       setBulk(null);
@@ -162,13 +180,13 @@ export default function ReviewDetailPage() {
     setBulk("reject");
     try {
       const result = await rejectAllJob(job.id);
-      toast.success(`Rejected ${result.rejected} item(s).`);
+      toast.success(t("review.toast.rejectedItems", { count: result.rejected }));
       await load();
     } catch (error) {
       const message =
         isAxiosError(error) && typeof error.response?.data?.message === "string"
           ? error.response.data.message
-          : "Reject all failed.";
+          : t("review.toast.rejectAllFailed");
       toast.error(message);
     } finally {
       setBulk(null);
@@ -179,13 +197,13 @@ export default function ReviewDetailPage() {
     setBulk("reopen");
     try {
       const result = await reopenJob(job.id);
-      toast.success(`Reopened — ${result.reopened} item(s) back to pending.`);
+      toast.success(t("review.toast.reopened", { count: result.reopened }));
       await load();
     } catch (error) {
       const message =
         isAxiosError(error) && typeof error.response?.data?.message === "string"
           ? error.response.data.message
-          : "Reopen failed.";
+          : t("review.toast.reopenFailed");
       toast.error(message);
     } finally {
       setBulk(null);
@@ -198,7 +216,7 @@ export default function ReviewDetailPage() {
         href="/review"
         className="inline-flex items-center gap-1 type-body-compact-01 text-text-secondary transition-colors duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] hover:text-text-primary"
       >
-        <ArrowLeft className="size-4" /> Back to review queue
+        <ArrowLeft className="size-4 rtl:rotate-180" /> {t("backToQueue")}
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -210,23 +228,26 @@ export default function ReviewDetailPage() {
             <StatusBadge status={job.status} />
           </div>
           <p className="type-body-01 text-text-secondary">
-            Uploaded {formatDateTime(job.createdAt)} · {pendingCount} pending of{" "}
-            {totalItems}
+            {t("review.meta.uploaded", { date: formatDateTime(job.createdAt) })} ·{" "}
+            {t("review.meta.pendingOf", { pending: pendingCount, total: totalItems })}
           </p>
           <div className="flex flex-wrap items-center gap-2">
             {job.extractionCost && (
               <span className="inline-flex flex-wrap items-center gap-1.5 rounded-md border border-border-subtle bg-layer px-2 py-1 type-label-01 text-text-secondary">
                 <Coins className="size-3.5 text-support-caution" />
-                AI extraction cost:
+                {t("review.cost.label")}
                 <span className="font-semibold tabular-nums text-text-primary">
-                  {job.extractionCost.egp.toFixed(2)} EGP
+                  {formatMoney(job.extractionCost.egp, "EGP")}
                 </span>
                 <span className="tabular-nums text-text-helper">
-                  (${job.extractionCost.usd.toFixed(4)})
+                  {t("review.cost.usd", { usd: job.extractionCost.usd.toFixed(4) })}
                 </span>
                 <span className="tabular-nums text-text-helper">
-                  · {job.extractionCost.inputTokens.toLocaleString()} in /{" "}
-                  {job.extractionCost.outputTokens.toLocaleString()} out tokens
+                  ·{" "}
+                  {t("review.cost.tokens", {
+                    input: formatNumber(job.extractionCost.inputTokens),
+                    output: formatNumber(job.extractionCost.outputTokens),
+                  })}
                 </span>
               </span>
             )}
@@ -245,7 +266,9 @@ export default function ReviewDetailPage() {
               disabled={bulk !== null}
               onClick={reopen}
             >
-              {bulk === "reopen" ? "Reopening…" : "↩ Undo Reject All"}
+              {bulk === "reopen"
+                ? t("review.bulk.reopening")
+                : t("review.bulk.undoRejectAll")}
             </Button>
           )}
           {pendingCount > 0 && (can("review.reject") || can("review.approve")) && (
@@ -260,7 +283,9 @@ export default function ReviewDetailPage() {
                   onClick={() => setRejectConfirmOpen(true)}
                   className="text-text-secondary hover:bg-support-error-bg hover:text-support-error"
                 >
-                  {bulk === "reject" ? "Rejecting…" : "Reject all"}
+                  {bulk === "reject"
+                    ? t("review.bulk.rejecting")
+                    : t("review.bulk.rejectAll")}
                 </Button>
               )}
               {can("review.reject") && can("review.approve") && (
@@ -277,8 +302,8 @@ export default function ReviewDetailPage() {
                   onClick={approveAll}
                 >
                   {bulk === "approve"
-                    ? "Approving…"
-                    : `Approve All (${pendingCount})`}
+                    ? t("review.bulk.approving")
+                    : t("review.bulk.approveAll", { pending: pendingCount })}
                 </Button>
               )}
             </div>
@@ -294,8 +319,8 @@ export default function ReviewDetailPage() {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 type-body-compact-01 font-medium text-link transition-colors duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] hover:text-link-hover lg:hidden"
         >
-          <ExternalLink className="size-4" />
-          View original file
+          <ExternalLink className="size-4 rtl:-scale-x-100" />
+          {t("viewOriginal")}
         </a>
       )}
 
@@ -322,9 +347,9 @@ export default function ReviewDetailPage() {
           aria-valuenow={Math.round(leftPct)}
           aria-valuemin={MIN_PCT}
           aria-valuemax={MAX_PCT}
-          aria-label="Resize document panel"
+          aria-label={t("review.split.resizeAria")}
           tabIndex={0}
-          title="Drag to resize"
+          title={t("review.split.resizeTitle")}
           onPointerDown={(event) => {
             event.preventDefault();
             setDragging(true);
@@ -332,10 +357,10 @@ export default function ReviewDetailPage() {
           onKeyDown={(event) => {
             if (event.key === "ArrowLeft") {
               event.preventDefault();
-              nudge(-2);
+              nudge(isRtl ? 2 : -2);
             } else if (event.key === "ArrowRight") {
               event.preventDefault();
-              nudge(2);
+              nudge(isRtl ? -2 : 2);
             }
           }}
           className="sticky top-6 hidden shrink-0 cursor-col-resize touch-none items-stretch px-2 outline-none lg:flex"
@@ -369,16 +394,14 @@ export default function ReviewDetailPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              Reject all {pendingCount} pending item
-              {pendingCount === 1 ? "" : "s"}?
+              {t("review.dialog.rejectAllTitle", { count: pendingCount })}
             </DialogTitle>
             <DialogDescription>
-              Every pending item in{" "}
-              <span className="font-medium text-text-primary">
+              {t("review.dialog.rejectAllBodyBefore")}
+              <span dir="ltr" className="font-medium text-text-primary">
                 {job.fileName}
-              </span>{" "}
-              will be rejected. Nothing is written to the ledger, and you can
-              undo this afterwards with “Undo Reject All”.
+              </span>
+              {t("review.dialog.rejectAllBodyAfter")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -386,7 +409,7 @@ export default function ReviewDetailPage() {
               variant="outline"
               onClick={() => setRejectConfirmOpen(false)}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -395,7 +418,7 @@ export default function ReviewDetailPage() {
                 rejectAll();
               }}
             >
-              Reject all ({pendingCount})
+              {t("review.dialog.rejectAllConfirm", { pending: pendingCount })}
             </Button>
           </DialogFooter>
         </DialogContent>

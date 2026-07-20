@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { CircleCheck, DollarSign, TriangleAlert } from "lucide-react";
 
-import { formatMoney } from "@/lib/format";
+import { useFormat } from "@/lib/i18n/format";
+import { useLocale, useT } from "@/lib/i18n/provider";
 
 interface AlertsCardProps {
   pendingReviewCount: number;
@@ -14,6 +15,9 @@ export function AlertsCard({
   pendingReviewCount,
   unmatchedDeposits,
 }: AlertsCardProps) {
+  const t = useT();
+  const { isRtl } = useLocale();
+  const { formatMoney, formatNumber } = useFormat();
   const reviewClear = pendingReviewCount === 0;
   const depositsClear = unmatchedDeposits.count === 0;
 
@@ -24,7 +28,7 @@ export function AlertsCard({
         <div className="flex items-start gap-3 rounded-md border border-support-success bg-support-success-bg p-4">
           <CircleCheck className="mt-0.5 size-5 shrink-0 text-support-success" />
           <p className="type-body-compact-01 font-medium text-text-primary">
-            Review queue is clear
+            {t("dashboard.alerts.reviewClear")}
           </p>
         </div>
       ) : (
@@ -33,11 +37,13 @@ export function AlertsCard({
             <TriangleAlert className="mt-0.5 size-5 shrink-0 text-support-warning" />
             <div className="min-w-0">
               <p className="type-body-compact-01 font-semibold text-text-primary">
-                {pendingReviewCount} item
-                {pendingReviewCount === 1 ? "" : "s"} pending review
+                {t("dashboard.alerts.reviewPending", {
+                  count: pendingReviewCount,
+                  formatted: formatNumber(pendingReviewCount),
+                })}
               </p>
               <p className="type-label-01 text-text-secondary">
-                Unreviewed items block payment posting
+                {t("dashboard.alerts.reviewPendingHint")}
               </p>
             </div>
           </div>
@@ -45,7 +51,7 @@ export function AlertsCard({
             href="/review"
             className="mt-3 inline-block type-body-compact-01 font-medium text-link hover:text-link-hover"
           >
-            Go to Review Queue →
+            {t("dashboard.alerts.goToReview")} {isRtl ? "←" : "→"}
           </Link>
         </div>
       )}
@@ -55,7 +61,7 @@ export function AlertsCard({
         <div className="flex items-start gap-3 rounded-md border border-support-success bg-support-success-bg p-4">
           <CircleCheck className="mt-0.5 size-5 shrink-0 text-support-success" />
           <p className="type-body-compact-01 font-medium text-text-primary">
-            All deposits matched
+            {t("dashboard.alerts.depositsClear")}
           </p>
         </div>
       ) : (
@@ -64,11 +70,15 @@ export function AlertsCard({
             <DollarSign className="mt-0.5 size-5 shrink-0 text-support-info" />
             <div className="min-w-0">
               <p className="type-body-compact-01 font-semibold text-text-primary">
-                {unmatchedDeposits.count} unmatched deposit
-                {unmatchedDeposits.count === 1 ? "" : "s"}
+                {t("dashboard.alerts.depositsUnmatched", {
+                  count: unmatchedDeposits.count,
+                  formatted: formatNumber(unmatchedDeposits.count),
+                })}
               </p>
               <p className="type-label-01 text-text-secondary">
-                {formatMoney(unmatchedDeposits.totalAmount)} total
+                {t("dashboard.alerts.depositsTotal", {
+                  amount: `⁨${formatMoney(unmatchedDeposits.totalAmount)}⁩`,
+                })}
               </p>
             </div>
           </div>
@@ -76,7 +86,7 @@ export function AlertsCard({
             href="/remittances"
             className="mt-3 inline-block type-body-compact-01 font-medium text-text-secondary hover:text-text-primary"
           >
-            View Deposits →
+            {t("dashboard.alerts.viewDeposits")} {isRtl ? "←" : "→"}
           </Link>
         </div>
       )}

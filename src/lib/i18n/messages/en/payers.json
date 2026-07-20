@@ -1,0 +1,66 @@
+{
+  "title": "Payers",
+  "description": "Insurance companies and payer entities.",
+  "newPayer": "New Payer",
+  "editPayer": "Edit Payer",
+  "searchPlaceholder": "Search payers…",
+  "searchLabel": "Search payers",
+  "selectAllLabel": "Select all payers",
+  "selectRowLabel": "Select {name}",
+  "editRowLabel": "Edit {name}",
+  "deleteRowLabel": "Delete {name}",
+  "clearSelection": "Clear selection",
+  "deleteDialogTitle": "Delete payer",
+  "notFound": "Payer not found.",
+  "backToList": "Back to payers",
+
+  "field.shortCode": "Short Code",
+  "field.state": "State",
+  "field.reference": "Reference",
+  "field.client": "Client",
+  "field.serviceDate": "Service date",
+  "field.charge": "Charge",
+  "field.paid": "Paid",
+  "field.activity": "Activity",
+
+  "empty.title": "No payers found",
+  "empty.searchHint": "Try a different search term.",
+  "empty.hint": "Add your first payer to get started.",
+  "empty.claims": "No claims yet.",
+
+  "toast.loadListFailed": "Failed to load payers.",
+  "toast.loadFailed": "Failed to load payer.",
+  "toast.created": "Payer created.",
+  "toast.updated": "Payer updated.",
+  "toast.saveFailed": "Failed to save payer.",
+
+  "stat.totalBilled": "Total billed",
+  "stat.collected": "Collected",
+  "stat.collectionRate": "Collection rate",
+  "stat.collectionRateHint": "collected ÷ billed",
+  "stat.openAr": "Open AR",
+
+  "section.performance": "Performance",
+  "section.claimsByStatus": "Claims by status",
+  "section.quickLinks": "Quick links",
+  "claims": "Claims",
+  "data.remittances": "Remittances",
+  "data.avgCollection": "Avg collection",
+
+  "claimsSubtitle_one": "{count} total (most recent 100)",
+  "claimsSubtitle_other": "{count} total (most recent 100)",
+
+  "footer.billed": "Billed:",
+  "footer.collected": "Collected:",
+  "footer.outstanding": "Outstanding:",
+
+  "link.partiallyPaidClaims": "View partially paid claims →",
+  "link.outstandingClaims": "View outstanding claims →",
+  "link.remittances": "View remittances →",
+
+  "form.description": "Insurance company or payer entity.",
+  "form.nameRequired": "Name is required.",
+  "form.shortCodeRequired": "Short code is required.",
+  "form.stateInvalid": "Use the 2-letter state code.",
+  "form.statePlaceholder": "NJ"
+}

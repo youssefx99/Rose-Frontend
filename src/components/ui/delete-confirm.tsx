@@ -7,6 +7,7 @@ import { TriangleAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { SlideOver } from "@/components/ui/slide-over";
+import { useT } from "@/lib/i18n/provider";
 
 interface DeleteConfirmProps {
   open: boolean;
@@ -42,11 +43,14 @@ export function DeleteConfirm({
   canHardDelete,
   blockedReason,
   onDeactivate,
-  deactivateLabel = "Deactivate",
+  deactivateLabel,
   onDelete,
   onDone,
 }: DeleteConfirmProps) {
+  const t = useT();
   const [busy, setBusy] = useState<"soft" | "hard" | null>(null);
+
+  const deactivateText = deactivateLabel ?? t("ui.deactivate");
 
   const run = async (kind: "soft" | "hard", action: () => Promise<void>) => {
     setBusy(kind);
@@ -55,11 +59,16 @@ export function DeleteConfirm({
       onOpenChange(false);
       onDone();
     } catch (error) {
-      const message =
-        isAxiosError(error) && typeof error.response?.data?.message === "string"
-          ? error.response.data.message
-          : "Action failed.";
-      toast.error(message);
+      const status = isAxiosError(error) ? error.response?.status : undefined;
+      const key =
+        status === 401 || status === 403
+          ? "errors.unauthorized"
+          : status === 404
+            ? "errors.notFound"
+            : isAxiosError(error) && !error.response
+              ? "errors.networkError"
+              : "errors.unexpected";
+      toast.error(t(key));
     } finally {
       setBusy(null);
     }
@@ -78,7 +87,7 @@ export function DeleteConfirm({
             variant="outline"
             onClick={() => onOpenChange(false)}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
           {onDeactivate && (
             <Button
@@ -87,7 +96,7 @@ export function DeleteConfirm({
               disabled={busy !== null}
               onClick={() => run("soft", onDeactivate)}
             >
-              {busy === "soft" ? "Working…" : deactivateLabel}
+              {busy === "soft" ? t("ui.working") : deactivateText}
             </Button>
           )}
           <Button
@@ -96,7 +105,7 @@ export function DeleteConfirm({
             disabled={busy !== null || !canHardDelete}
             onClick={() => run("hard", onDelete)}
           >
-            {busy === "hard" ? "Deleting…" : "Delete permanently"}
+            {busy === "hard" ? t("common.deleting") : t("ui.deletePermanently")}
           </Button>
         </>
       }

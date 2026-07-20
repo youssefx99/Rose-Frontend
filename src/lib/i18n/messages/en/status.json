@@ -1,0 +1,17 @@
+{
+  "OPEN": "Open",
+  "PARTIALLY_PAID": "Partially paid",
+  "PAID": "Paid",
+
+  "QUEUED": "Queued",
+  "PROCESSING": "Processing",
+  "EXTRACTED": "Extracted",
+  "VALIDATING": "Validating",
+  "IN_REVIEW": "In review",
+  "APPROVED": "Approved",
+  "REJECTED": "Rejected",
+  "FAILED": "Failed",
+
+  "MODIFIED": "Modified",
+  "PARTIAL": "Partial"
+}

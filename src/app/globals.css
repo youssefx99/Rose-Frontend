@@ -113,6 +113,12 @@
   --skeleton-element: #c6c6c6;
   --toggle-off: #8d8d8d;
 
+  /* ---- Typefaces ---- */
+  /* Semantic UI face. The raw --font-* vars come from next/font (root layout);
+     this is the token components resolve through, so a scope can swap the face
+     without touching the @theme wiring (see html[dir="rtl"] below). */
+  --font-app-sans: var(--font-geist-sans);
+
   /* ---- Radius (Carbon is near-square; small brand softening) ---- */
   --radius: 0.25rem;          /* 4px base */
   --radius-sm: 0.125rem;      /* 2px */
@@ -316,9 +322,28 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-app-sans);
   --font-mono: var(--font-geist-mono);
   /* Carbon easings are exposed as :root vars; use via ease-[var(--ease-entrance)]. */
+}
+
+/* ============ RTL / Arabic ============ */
+/* Cairo renders both scripts in RTL — Latin runs (claim numbers, USD, enum labels)
+   included, which is why layout.tsx loads Cairo with the "latin" subset. Swapping the
+   semantic face token here reaches both the .font-sans utility and Tailwind's base
+   --default-font-family, because @theme inline resolves --font-sans to this var. */
+html[dir="rtl"] {
+  --font-app-sans: var(--font-cairo), "Noto Sans Arabic", "Segoe UI", Tahoma,
+    sans-serif;
+}
+
+/* Arabic is cursive: letter-spacing opens gaps between joined letterforms without
+   stretching the connecting strokes, so words render visibly broken. Both the
+   Carbon type tokens (.type-label-01 et al) and the `tracking-*` utilities set it,
+   and they live in the components/utilities layers — so this reset must stay
+   unlayered to outrank them. Latin/numeric runs are not cursive and keep tracking. */
+html[dir="rtl"] :not(.font-mono):not(.type-code-01):not(.tabular-nums) {
+  letter-spacing: normal;
 }
 
 @layer base {
@@ -350,6 +375,15 @@
   /* Money, counts, and tables stay column-aligned as values change. */
   th, td {
     font-variant-numeric: tabular-nums;
+  }
+  /* RTL: a value is not prose. Inside an Arabic paragraph the bidi algorithm
+     would reorder the symbol and separators of "$1,234.56" or "31/01/2026", and
+     of claim/account IDs. `plaintext` isolates each value and derives direction
+     from the value itself, so a Latin-formatted amount stays LTR while a CLDR
+     Arabic amount keeps its own intended order. Escape hatch for anything not
+     marked below: put dir="ltr" on the cell. */
+  html[dir="rtl"] :is(.tabular-nums, .font-mono, .type-code-01) {
+    unicode-bidi: plaintext;
   }
   /* Brand-tinted text selection. */
   ::selection {

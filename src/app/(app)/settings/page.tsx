@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ShieldCheck, Save, Coins } from "lucide-react";
+import { ShieldCheck, Save, Coins, Languages } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,8 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 import { getSettings, updateSettings, type OrgSettings } from "@/lib/settings";
+import { LanguageSwitcher } from "@/lib/i18n/language-switcher";
+import { useT } from "@/lib/i18n/provider";
 
 /** Carbon-style switch (no toggle primitive exists in the design system yet). */
 function Toggle({
@@ -47,7 +49,9 @@ function Toggle({
       <span
         className={cn(
           "inline-block size-5 rounded-full bg-white shadow transition-transform duration-[var(--dur-fast-02)]",
-          checked ? "translate-x-[22px]" : "translate-x-0.5",
+          checked
+            ? "translate-x-[22px] rtl:-translate-x-[22px]"
+            : "translate-x-0.5 rtl:-translate-x-0.5",
         )}
       />
     </button>
@@ -79,6 +83,7 @@ function SettingRow({
 
 export default function SettingsPage() {
   const { can } = useAuth();
+  const t = useT();
   const canEdit = can("settings.edit");
 
   const [initial, setInitial] = useState<OrgSettings | null>(null);
@@ -95,10 +100,14 @@ export default function SettingsPage() {
       setForm(data);
       setRateText(String(data.usdToEgpRate));
     } catch {
-      toast.error("Failed to load settings.");
+      toast.error(t("errors.loadFailed"));
     } finally {
       setLoading(false);
     }
+    // `t` changes identity on a language switch, and depending on it here would
+    // refetch and wipe unsaved edits. This only runs at mount, where the locale
+    // is already the cookie's, so the toast is never in a stale language.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -127,7 +136,7 @@ export default function SettingsPage() {
   const save = async () => {
     if (!form || !dirty) return;
     if (parsedRate === null) {
-      toast.error("Exchange rate must be a positive number.");
+      toast.error(t("settings.form.rateInvalid"));
       return;
     }
     setSaving(true);
@@ -141,9 +150,9 @@ export default function SettingsPage() {
       setInitial(saved);
       setForm(saved);
       setRateText(String(saved.usdToEgpRate));
-      toast.success("Settings saved.");
+      toast.success(t("settings.toast.saved"));
     } catch {
-      toast.error("Failed to save settings.");
+      toast.error(t("errors.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -155,122 +164,163 @@ export default function SettingsPage() {
     setRateText(String(initial.usdToEgpRate));
   };
 
-  if (loading || !form) {
-    return <p className="type-body-01 text-text-secondary">Loading…</p>;
-  }
-
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <PageHeader
-        title="Settings"
-        description="Organization-wide system behavior. Changes apply to everyone."
+        title={t("settings.title")}
+        description={t("settings.description")}
       />
 
-      {!canEdit && (
-        <p className="rounded-md border border-border-subtle bg-layer px-3 py-2 type-label-01 text-text-secondary">
-          You have read-only access. Ask an administrator to change these settings.
-        </p>
-      )}
-
-      {/* Document processing */}
+      {/* Language & region — per-user, applied immediately. Deliberately NOT part
+          of the organization-wide save/discard flow below. */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <ShieldCheck className="size-4 text-interactive" />
-            Document processing
+            <Languages className="size-4 text-interactive" />
+            {t("settings.language.title")}
           </CardTitle>
           <CardDescription>
-            How uploaded EOBs are checked before they reach the review queue.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="divide-y divide-border-subtle py-0">
-          <SettingRow
-            title="AI validation layer"
-            description="Run a fast AI quality check after extraction. Surfaces a 0–100 score and field-level flags on the review page. Disabling skips the check (and its cost)."
-          >
-            <Toggle
-              label="AI validation layer"
-              checked={form.validationEnabled}
-              disabled={!canEdit}
-              onChange={(v) => set("validationEnabled", v)}
-            />
-          </SettingRow>
-          <SettingRow
-            title="Strict duplicate detection"
-            description="In addition to the content fingerprint, also block re-uploading a file with the same name, size, and type. Turn off to rely on content hash only."
-          >
-            <Toggle
-              label="Strict duplicate detection"
-              checked={form.strictDuplicateDetection}
-              disabled={!canEdit}
-              onChange={(v) => set("strictDuplicateDetection", v)}
-            />
-          </SettingRow>
-          <SettingRow
-            title="Auto-accept review"
-            description="Commit extracted claims straight to the ledger once processing finishes — no manual review. Turn off to approve or reject each upload by hand."
-          >
-            <Toggle
-              label="Auto-accept review"
-              checked={form.autoAcceptReview}
-              disabled={!canEdit}
-              onChange={(v) => set("autoAcceptReview", v)}
-            />
-          </SettingRow>
-        </CardContent>
-      </Card>
-
-      {/* Cost & currency */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Coins className="size-4 text-support-caution" />
-            Cost &amp; currency
-          </CardTitle>
-          <CardDescription>
-            Controls how AI extraction cost is shown to reviewers.
+            {t("settings.language.description")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <SettingRow
-            title="USD → EGP exchange rate"
-            description="1 US dollar equals this many Egyptian pounds. Used to convert the per-document AI cost shown on the review screen."
+            title={t("settings.language.displayLanguage")}
+            description={t("settings.language.displayLanguageDescription")}
           >
-            <div className="flex items-center gap-2">
-              <span className="type-label-01 text-text-secondary">1 USD =</span>
-              <Input
-                type="number"
-                min={0}
-                step="0.0001"
-                inputMode="decimal"
-                aria-label="USD to EGP exchange rate"
-                disabled={!canEdit}
-                value={rateText}
-                onChange={(e) => setRateText(e.target.value)}
-                className={cn(
-                  "w-28 text-right",
-                  parsedRate === null && "border-support-error",
-                )}
-              />
-              <span className="type-label-01 text-text-secondary">EGP</span>
-            </div>
+            <LanguageSwitcher />
           </SettingRow>
         </CardContent>
       </Card>
 
-      {/* Save bar */}
-      {canEdit && (
-        <div className="flex items-center justify-end gap-2">
-          {dirty && (
-            <Button variant="ghost" onClick={reset} disabled={saving}>
-              Discard
-            </Button>
-          )}
-          <Button onClick={save} disabled={!dirty || saving}>
-            <Save className="size-4" />
-            {saving ? "Saving…" : "Save changes"}
+      {loading && (
+        <p className="type-body-01 text-text-secondary">{t("common.loading")}</p>
+      )}
+
+      {!loading && !form && (
+        <div className="flex items-center justify-between gap-4 rounded-md border border-border-subtle bg-layer px-3 py-2">
+          <p className="type-label-01 text-text-secondary">
+            {t("errors.loadFailed")}
+          </p>
+          <Button variant="ghost" onClick={load}>
+            {t("common.retry")}
           </Button>
         </div>
+      )}
+
+      {form && (
+        <>
+          {!canEdit && (
+            <p className="rounded-md border border-border-subtle bg-layer px-3 py-2 type-label-01 text-text-secondary">
+              {t("common.readOnlyAccess")} {t("common.askAdministrator")}
+            </p>
+          )}
+
+          {/* Document processing */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShieldCheck className="size-4 text-interactive" />
+                {t("settings.processing.title")}
+              </CardTitle>
+              <CardDescription>
+                {t("settings.processing.description")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="divide-y divide-border-subtle py-0">
+              <SettingRow
+                title={t("settings.processing.validation")}
+                description={t("settings.processing.validationDescription")}
+              >
+                <Toggle
+                  label={t("settings.processing.validation")}
+                  checked={form.validationEnabled}
+                  disabled={!canEdit}
+                  onChange={(v) => set("validationEnabled", v)}
+                />
+              </SettingRow>
+              <SettingRow
+                title={t("settings.processing.strictDuplicates")}
+                description={t("settings.processing.strictDuplicatesDescription")}
+              >
+                <Toggle
+                  label={t("settings.processing.strictDuplicates")}
+                  checked={form.strictDuplicateDetection}
+                  disabled={!canEdit}
+                  onChange={(v) => set("strictDuplicateDetection", v)}
+                />
+              </SettingRow>
+              <SettingRow
+                title={t("settings.processing.autoAccept")}
+                description={t("settings.processing.autoAcceptDescription")}
+              >
+                <Toggle
+                  label={t("settings.processing.autoAccept")}
+                  checked={form.autoAcceptReview}
+                  disabled={!canEdit}
+                  onChange={(v) => set("autoAcceptReview", v)}
+                />
+              </SettingRow>
+            </CardContent>
+          </Card>
+
+          {/* Cost & currency */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Coins className="size-4 text-support-caution" />
+                {t("settings.currency.title")}
+              </CardTitle>
+              <CardDescription>
+                {t("settings.currency.description")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SettingRow
+                title={t("settings.currency.rate")}
+                description={t("settings.currency.rateDescription")}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="type-label-01 text-text-secondary">
+                    {t("settings.currency.rateFrom")}
+                  </span>
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.0001"
+                    inputMode="decimal"
+                    aria-label={t("settings.currency.rateAriaLabel")}
+                    disabled={!canEdit}
+                    value={rateText}
+                    onChange={(e) => setRateText(e.target.value)}
+                    className={cn(
+                      "w-28 text-end",
+                      parsedRate === null && "border-support-error",
+                    )}
+                  />
+                  <span className="type-label-01 text-text-secondary">
+                    {t("settings.currency.rateTo")}
+                  </span>
+                </div>
+              </SettingRow>
+            </CardContent>
+          </Card>
+
+          {/* Save bar */}
+          {canEdit && (
+            <div className="flex items-center justify-end gap-2">
+              {dirty && (
+                <Button variant="ghost" onClick={reset} disabled={saving}>
+                  {t("common.discard")}
+                </Button>
+              )}
+              <Button onClick={save} disabled={!dirty || saving}>
+                <Save className="size-4" />
+                {saving ? t("common.saving") : t("common.saveChanges")}
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

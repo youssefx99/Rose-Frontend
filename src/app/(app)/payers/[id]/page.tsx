@@ -20,8 +20,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getPayer, deactivatePayer, type Payer } from "@/lib/payers";
-import { listClaims, formatMoney, formatDate, type Claim, type ClaimStatus } from "@/lib/claims";
-import { timeAgo } from "@/lib/format";
+import { listClaims, type Claim, type ClaimStatus } from "@/lib/claims";
+import { useFormat } from "@/lib/i18n/format";
+import { useT } from "@/lib/i18n/provider";
 import { useAuth } from "@/lib/auth-context";
 import { PayerFormDialog } from "../payer-form-dialog";
 import { CLAIM_STATUSES } from "@/lib/claims";
@@ -41,12 +42,7 @@ function usePayerMetrics(claims: Claim[]) {
       .map((s) => ({ status: s, count: byStatus[s] }))
       .filter((s) => s.count > 0);
 
-    const denialRate =
-      claims.length > 0
-        ? ((byStatus["DENIED"] + byStatus["APPEALED"]) / claims.length) * 100
-        : 0;
-
-    return { billed, collected, outstanding, rate, denialRate, statusBreakdown };
+    return { billed, collected, outstanding, rate, statusBreakdown };
   }, [claims]);
 }
 
@@ -54,6 +50,8 @@ export default function PayerDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { can } = useAuth();
+  const t = useT("payers");
+  const { timeAgo, formatMoney, formatDate } = useFormat();
   const id = params.id;
 
   const [payer, setPayer] = useState<Payer | null>(null);
@@ -71,11 +69,11 @@ export default function PayerDetailPage() {
       setPayer(payerData);
       setClaims(claimsData.data);
     } catch {
-      toast.error("Failed to load payer.");
+      toast.error(t("payers.toast.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     load();
@@ -84,9 +82,11 @@ export default function PayerDetailPage() {
   const metrics = usePayerMetrics(claims);
 
   if (loading)
-    return <p className="type-body-01 text-text-secondary">Loading…</p>;
+    return (
+      <p className="type-body-01 text-text-secondary">{t("common.loading")}</p>
+    );
   if (!payer)
-    return <p className="type-body-01 text-text-secondary">Payer not found.</p>;
+    return <p className="type-body-01 text-text-secondary">{t("notFound")}</p>;
 
   return (
     <div className="space-y-6">
@@ -94,7 +94,7 @@ export default function PayerDetailPage() {
         href="/payers"
         className="inline-flex items-center gap-1 type-body-compact-01 text-text-secondary transition-colors duration-[var(--dur-fast-02)] hover:text-text-primary"
       >
-        <ArrowLeft className="size-4" /> Back to payers
+        <ArrowLeft className="size-4 rtl:-scale-x-100" /> {t("backToList")}
       </Link>
 
       <PageHeader
@@ -103,12 +103,12 @@ export default function PayerDetailPage() {
       >
         {!payer.isActive && (
           <span className="rounded-full bg-support-warning-bg px-2 py-0.5 type-label-01 font-medium text-text-primary">
-            Inactive
+            {t("common.inactive")}
           </span>
         )}
         {can("payers.edit") && (
           <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
-            <Pencil className="size-3.5" /> Edit
+            <Pencil className="size-3.5" /> {t("common.edit")}
           </Button>
         )}
         {can("payers.delete") && (
@@ -118,22 +118,26 @@ export default function PayerDetailPage() {
             className="text-support-error hover:bg-support-error-bg hover:text-support-error"
             onClick={() => setDeleteOpen(true)}
           >
-            <Trash2 className="size-3.5" /> Delete
+            <Trash2 className="size-3.5" /> {t("common.delete")}
           </Button>
         )}
       </PageHeader>
 
       {/* KPI strip */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Stat label="Total billed" value={formatMoney(metrics.billed)} />
-        <Stat label="Collected" value={formatMoney(metrics.collected)} accent="green" />
+        <Stat label={t("payers.stat.totalBilled")} value={formatMoney(metrics.billed)} />
         <Stat
-          label="Collection rate"
-          value={`${metrics.rate.toFixed(1)}%`}
-          hint="collected ÷ billed"
+          label={t("payers.stat.collected")}
+          value={formatMoney(metrics.collected)}
+          accent="green"
         />
         <Stat
-          label="Open AR"
+          label={t("payers.stat.collectionRate")}
+          value={`${metrics.rate.toFixed(1)}%`}
+          hint={t("payers.stat.collectionRateHint")}
+        />
+        <Stat
+          label={t("payers.stat.openAr")}
           value={formatMoney(metrics.outstanding)}
           accent={metrics.outstanding > 0 ? "rose" : "default"}
         />
@@ -142,17 +146,16 @@ export default function PayerDetailPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Aside */}
         <div className="space-y-6">
-          <Section title="Performance">
+          <Section title={t("payers.section.performance")}>
             <DataList>
-              <DataRow label="Claims" value={claims.length} mono />
-              <DataRow label="Remittances" value={payer._count?.remittances ?? "—"} mono />
+              <DataRow label={t("claims")} value={claims.length} mono />
               <DataRow
-                label="Denial rate"
-                value={`${metrics.denialRate.toFixed(1)}%`}
+                label={t("payers.data.remittances")}
+                value={payer._count?.remittances ?? t("common.emDash")}
                 mono
               />
               <DataRow
-                label="Avg collection"
+                label={t("payers.data.avgCollection")}
                 value={`${metrics.rate.toFixed(1)}%`}
                 mono
               />
@@ -160,7 +163,7 @@ export default function PayerDetailPage() {
           </Section>
 
           {metrics.statusBreakdown.length > 0 && (
-            <Section title="Claims by status">
+            <Section title={t("payers.section.claimsByStatus")}>
               <ul className="space-y-2">
                 {metrics.statusBreakdown.map(({ status, count }) => (
                   <li
@@ -177,14 +180,14 @@ export default function PayerDetailPage() {
             </Section>
           )}
 
-          <Section title="Quick links">
+          <Section title={t("payers.section.quickLinks")}>
             <ul className="space-y-2">
               <li>
                 <Link
-                  href={`/claims?payerId=${payer.id}&status=DENIED`}
+                  href={`/claims?payerId=${payer.id}&status=PARTIALLY_PAID`}
                   className="type-body-compact-01 text-link hover:underline"
                 >
-                  View denied claims →
+                  {t("payers.link.partiallyPaidClaims")}
                 </Link>
               </li>
               <li>
@@ -192,7 +195,7 @@ export default function PayerDetailPage() {
                   href={`/claims?payerId=${payer.id}&outstandingOnly=true`}
                   className="type-body-compact-01 text-link hover:underline"
                 >
-                  View outstanding claims →
+                  {t("payers.link.outstandingClaims")}
                 </Link>
               </li>
               <li>
@@ -200,7 +203,7 @@ export default function PayerDetailPage() {
                   href={`/remittances?payerId=${payer.id}`}
                   className="type-body-compact-01 text-link hover:underline"
                 >
-                  View remittances →
+                  {t("payers.link.remittances")}
                 </Link>
               </li>
             </ul>
@@ -210,20 +213,20 @@ export default function PayerDetailPage() {
         {/* Claims table */}
         <div className="lg:col-span-2">
           <Section
-            title="Claims"
-            subtitle={`${claims.length} total (most recent 100)`}
+            title={t("claims")}
+            subtitle={t("claimsSubtitle", { count: claims.length })}
             bodyClassName="px-0 py-0"
           >
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Reference</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Service date</TableHead>
-                  <TableHead className="text-right">Charge</TableHead>
-                  <TableHead className="text-right">Paid</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Activity</TableHead>
+                  <TableHead>{t("payers.field.reference")}</TableHead>
+                  <TableHead>{t("payers.field.client")}</TableHead>
+                  <TableHead>{t("payers.field.serviceDate")}</TableHead>
+                  <TableHead className="text-end">{t("payers.field.charge")}</TableHead>
+                  <TableHead className="text-end">{t("payers.field.paid")}</TableHead>
+                  <TableHead>{t("common.status")}</TableHead>
+                  <TableHead className="text-end">{t("payers.field.activity")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -233,7 +236,7 @@ export default function PayerDetailPage() {
                       colSpan={7}
                       className="py-8 text-center type-body-01 text-text-secondary"
                     >
-                      No claims yet.
+                      {t("payers.empty.claims")}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -247,21 +250,21 @@ export default function PayerDetailPage() {
                         {c.claimReference}
                       </TableCell>
                       <TableCell className="text-text-secondary">
-                        {c.client?.displayName ?? "—"}
+                        {c.client?.displayName ?? t("common.emDash")}
                       </TableCell>
                       <TableCell className="text-text-secondary">
                         {formatDate(c.dateOfService)}
                       </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-text-primary">
+                      <TableCell className="text-end font-mono tabular-nums text-text-primary">
                         {formatMoney(c.chargeAmount)}
                       </TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-text-primary">
+                      <TableCell className="text-end font-mono tabular-nums text-text-primary">
                         {formatMoney(c.payerPaidAmount)}
                       </TableCell>
                       <TableCell>
                         <StatusBadge status={c.status} />
                       </TableCell>
-                      <TableCell className="text-right type-label-01 text-text-secondary">
+                      <TableCell className="text-end type-label-01 text-text-secondary">
                         {timeAgo(c.updatedAt)}
                       </TableCell>
                     </TableRow>
@@ -273,19 +276,19 @@ export default function PayerDetailPage() {
             {claims.length > 0 && (
               <div className="flex flex-wrap items-center gap-x-6 gap-y-1 border-t border-border-subtle bg-layer px-4 py-2.5">
                 <span className="type-label-01 text-text-secondary">
-                  Billed:{" "}
+                  {t("payers.footer.billed")}{" "}
                   <span className="font-mono font-medium tabular-nums text-text-primary">
                     {formatMoney(metrics.billed)}
                   </span>
                 </span>
                 <span className="type-label-01 text-text-secondary">
-                  Collected:{" "}
+                  {t("payers.footer.collected")}{" "}
                   <span className="font-mono font-medium tabular-nums text-support-success">
                     {formatMoney(metrics.collected)}
                   </span>
                 </span>
                 <span className="type-label-01 text-text-secondary">
-                  Outstanding:{" "}
+                  {t("payers.footer.outstanding")}{" "}
                   <span className="font-mono font-medium tabular-nums text-interactive">
                     {formatMoney(metrics.outstanding)}
                   </span>
@@ -307,7 +310,7 @@ export default function PayerDetailPage() {
         onOpenChange={setDeleteOpen}
         type="payer"
         id={payer.id}
-        title="Delete payer"
+        title={t("deleteDialogTitle")}
         onDeactivate={() => deactivatePayer(payer.id)}
         onDone={() => router.push("/payers")}
       />

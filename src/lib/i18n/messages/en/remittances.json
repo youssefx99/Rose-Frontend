@@ -1,0 +1,37 @@
+{
+  "title": "Remittances",
+  "description": "Committed payments from approved EOBs.",
+
+  "detailTitleFallback": "Remittance",
+  "detailDescription": "Check {checkNumber} · {checkDate} · from {fileName}",
+  "notFound": "Remittance not found.",
+  "backToList": "Back to remittances",
+  "deleteTitle": "Delete remittance",
+
+  "toastLoadListFailed": "Failed to load remittances.",
+  "toastLoadFailed": "Failed to load remittance.",
+
+  "tablePayer": "Payer",
+  "tableCheckNumber": "Check #",
+  "tableCheckDate": "Check Date",
+  "tableLines": "Lines",
+  "tableCheckAmount": "Check Amount",
+  "tableCharged": "Charged",
+  "tableReceived": "Received",
+  "tableReceivedPct": "% Received",
+  "tableClient": "Client",
+  "tableClaimNumber": "Claim #",
+  "tableDos": "DOS",
+  "tableBilled": "Billed",
+  "tablePaid": "Paid",
+  "tableMatched": "Matched",
+
+  "emptyTitle": "No remittances yet",
+  "emptyDescription": "Approve a document in the review queue to record a payment.",
+  "emptyClaimLines": "No claim lines.",
+
+  "sectionPaymentSummary": "Payment Summary",
+  "sectionClaimLines": "Claim Lines",
+
+  "unmatched": "Unmatched"
+}

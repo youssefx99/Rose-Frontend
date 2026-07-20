@@ -1,15 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Download, Inbox, Trash2 } from "lucide-react";
-import { isAxiosError } from "axios";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
-import { StatusBadge } from "@/components/ui/status-badge";
+import { StatusBadge, getStatusColorClasses } from "@/components/ui/status-badge";
 import { BulkDeleteDialog } from "@/components/ui/bulk-delete-dialog";
 import { FilterBar, FilterField, type ActiveFilterChip } from "@/components/ui/filter-bar";
 import { ClaimFormPanel } from "./claim-form-panel";
@@ -31,22 +37,45 @@ import {
 import {
   listClaims,
   changeClaimStatus,
-  formatMoney,
-  formatDate,
+  claimOutstanding,
   CLAIM_STATUSES,
   CLAIM_STATUS_TRANSITIONS,
+  CLOSED_STATUSES,
   type Claim,
   type ClaimStatus,
   type ClaimQuery,
 } from "@/lib/claims";
+import {
+  COUNTDOWN_CLASS,
+  countdownTone,
+  followUpDaysLeft,
+} from "@/lib/claim-countdown";
 import { listPayers, type Payer } from "@/lib/payers";
 import { listClients, type Client } from "@/lib/clients";
-import { timeAgo } from "@/lib/format";
+import { useFormat } from "@/lib/i18n/format";
+import { useT, useLocale } from "@/lib/i18n/provider";
 import { useAuth } from "@/lib/auth-context";
 import { useRowSelection } from "@/lib/use-row-selection";
+import { useTableColumns } from "@/lib/use-table-columns";
+import { EditableColumnHead } from "@/components/ui/editable-column-head";
 import { cn } from "@/lib/utils";
 
 const ALL = "__all__";
+
+// Default left-to-right order. The user rearranges and renames these from the
+// header row itself; their arrangement is remembered per browser.
+const COLUMN_KEYS = [
+  "reference",
+  "client",
+  "payer",
+  "serviceDate",
+  "charge",
+  "paid",
+  "bankDate",
+  "status",
+  "countdown",
+  "lastActivity",
+];
 
 interface AdvancedFilters {
   status: ClaimStatus | typeof ALL;
@@ -70,43 +99,6 @@ const EMPTY_FILTERS: AdvancedFilters = {
   outstandingOnly: false,
 };
 
-interface QuickFilter {
-  label: string;
-  match: (f: AdvancedFilters) => boolean;
-  apply: () => AdvancedFilters;
-}
-
-const today = () => new Date().toISOString().slice(0, 10);
-const firstOfMonth = () => new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
-
-const QUICK_FILTERS: QuickFilter[] = [
-  {
-    label: "Denied",
-    match: (f) => f.status === "DENIED",
-    apply: () => ({ ...EMPTY_FILTERS, status: "DENIED" }),
-  },
-  {
-    label: "Appealed",
-    match: (f) => f.status === "APPEALED",
-    apply: () => ({ ...EMPTY_FILTERS, status: "APPEALED" }),
-  },
-  {
-    label: "Pending",
-    match: (f) => f.status === "PENDING",
-    apply: () => ({ ...EMPTY_FILTERS, status: "PENDING" }),
-  },
-  {
-    label: "Paid this month",
-    match: (f) => f.status === "PAID" && f.dateFrom === firstOfMonth(),
-    apply: () => ({ ...EMPTY_FILTERS, status: "PAID", dateFrom: firstOfMonth(), dateTo: today() }),
-  },
-  {
-    label: "Outstanding",
-    match: (f) => f.outstandingOnly,
-    apply: () => ({ ...EMPTY_FILTERS, outstandingOnly: true }),
-  },
-];
-
 /** Searchable client combobox for the filter bar. */
 function ClientCombobox({
   clients,
@@ -117,6 +109,7 @@ function ClientCombobox({
   value: string;
   onChange: (id: string) => void;
 }) {
+  const t = useT();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -143,13 +136,13 @@ function ClientCombobox({
   return (
     <div ref={ref} className="relative">
       <Input
-        placeholder={selected ? selected.displayName : "All clients"}
+        placeholder={selected ? selected.displayName : t("claims.filter.allClients")}
         value={query}
         onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
         onFocus={() => setOpen(true)}
       />
       {open && (
-        <ul className="absolute left-0 top-full z-50 mt-1 max-h-52 w-full min-w-[200px] overflow-y-auto rounded-md border border-border-subtle bg-card shadow-lg">
+        <ul className="absolute start-0 top-full z-50 mt-1 max-h-52 w-full min-w-[200px] overflow-y-auto rounded-md border border-border-subtle bg-card shadow-lg">
           <li
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => { onChange(ALL); setOpen(false); setQuery(""); }}
@@ -158,7 +151,7 @@ function ClientCombobox({
               value === ALL ? "font-medium text-text-primary" : "text-text-secondary",
             )}
           >
-            All clients
+            {t("claims.filter.allClients")}
           </li>
           {filtered.map((c) => (
             <li
@@ -175,7 +168,7 @@ function ClientCombobox({
           ))}
           {filtered.length === 0 && (
             <li className="px-3 py-2 type-body-compact-01 text-text-secondary">
-              No clients found.
+              {t("claims.filter.noClientsFound")}
             </li>
           )}
         </ul>
@@ -184,7 +177,39 @@ function ClientCombobox({
   );
 }
 
-/** Inline status quick-change — stops row click propagation. */
+/**
+ * Days the payer has left to pay before billing chases them, counted from the
+ * date the claim was billed. Closed claims have no clock left to run.
+ */
+function FollowUpCountdown({ claim }: { claim: Claim }) {
+  const t = useT();
+  const { formatDate, formatNumber } = useFormat();
+
+  if (CLOSED_STATUSES.includes(claim.status)) {
+    return <span className="text-text-secondary">{t("common.emDash")}</span>;
+  }
+
+  const daysLeft = followUpDaysLeft(claim.dateBilled);
+  return (
+    <span
+      title={t("claims.countdown.tooltip", {
+        date: formatDate(claim.dateBilled),
+      })}
+      className={cn(
+        "rounded-full px-2 py-0.5 type-label-01 font-medium tabular-nums ring-1 ring-inset",
+        COUNTDOWN_CLASS[countdownTone(daysLeft)],
+      )}
+    >
+      {daysLeft > 0
+        ? t("claims.countdown.daysLeft", { formatted: formatNumber(daysLeft) })
+        : t("claims.countdown.daysOver", {
+            formatted: formatNumber(-daysLeft),
+          })}
+    </span>
+  );
+}
+
+/** Inline status menu — any status, any time. Stops row click propagation. */
 function InlineStatusChange({
   claim,
   onChanged,
@@ -192,49 +217,39 @@ function InlineStatusChange({
   claim: Claim;
   onChanged: (c: Claim) => void;
 }) {
+  const t = useT();
   const [busy, setBusy] = useState(false);
-  const targets = CLAIM_STATUS_TRANSITIONS[claim.status];
-
-  if (targets.length === 0) return <StatusBadge status={claim.status} />;
 
   const go = async (target: ClaimStatus) => {
     setBusy(true);
     try {
       const updated = await changeClaimStatus(claim.id, target);
       onChanged(updated);
-      toast.success(`Marked ${target}.`);
-    } catch (err) {
-      const msg =
-        isAxiosError(err) && typeof err.response?.data?.message === "string"
-          ? err.response.data.message
-          : "Status update failed.";
-      toast.error(msg);
+      toast.success(
+        t("claims.toast.markedStatus", { status: t(`status.${target}`) }),
+      );
+    } catch {
+      toast.error(t("claims.toast.statusUpdateFailed"));
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <div
-      className="flex items-center gap-1.5"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <StatusBadge status={claim.status} />
+    <div onClick={(e) => e.stopPropagation()}>
       <select
         disabled={busy}
-        defaultValue=""
-        aria-label="Change status"
-        className="rounded border border-border-subtle bg-background px-1 py-0.5 type-label-01 text-text-secondary focus:outline-none focus:ring-1 focus:ring-interactive disabled:opacity-50"
-        onChange={async (e) => {
-          const target = e.target.value as ClaimStatus;
-          e.target.value = "";
-          if (target) await go(target);
-        }}
+        value={claim.status}
+        aria-label={t("claims.a11y.changeStatus")}
+        className={cn(
+          "type-label-01 w-fit rounded-full border-0 px-2 py-0.5 whitespace-nowrap focus:outline-none focus:ring-1 focus:ring-interactive disabled:opacity-50",
+          getStatusColorClasses(claim.status),
+        )}
+        onChange={(e) => go(e.target.value as ClaimStatus)}
       >
-        <option value="">→</option>
-        {targets.map((t) => (
-          <option key={t} value={t}>
-            {t}
+        {CLAIM_STATUSES.map((s) => (
+          <option key={s} value={s}>
+            {t(`status.${s}`)}
           </option>
         ))}
       </select>
@@ -245,6 +260,9 @@ function InlineStatusChange({
 export default function ClaimsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useT();
+  const { dir } = useLocale();
+  const { formatMoney, formatDate, timeAgo } = useFormat();
   const { can } = useAuth();
   const [claims, setClaims] = useState<Claim[]>([]);
   const [search, setSearch] = useState("");
@@ -293,47 +311,47 @@ export default function ClaimsPage() {
       const { data } = await listClaims(query);
       setClaims(data);
     } catch {
-      toast.error("Failed to load claims.");
+      toast.error(t("claims.toast.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const timer = setTimeout(() => load(search, filters), 300);
     return () => clearTimeout(timer);
   }, [search, filters, load]);
 
-  const payerName = (id: string) => payers.find((p) => p.id === id)?.name ?? "Payer";
-  const clientName = (id: string) => clients.find((c) => c.id === id)?.displayName ?? "Client";
+  const payerName = (id: string) => payers.find((p) => p.id === id)?.name ?? t("claims.field.payer");
+  const clientName = (id: string) => clients.find((c) => c.id === id)?.displayName ?? t("claims.field.client");
 
   const chips = useMemo<ActiveFilterChip[]>(() => {
     const list: ActiveFilterChip[] = [];
     if (filters.status !== ALL)
-      list.push({ key: "status", label: filters.status, onRemove: () => set("status", ALL) });
+      list.push({ key: "status", label: t(`status.${filters.status}`), onRemove: () => set("status", ALL) });
     if (filters.payerId !== ALL)
       list.push({ key: "payer", label: payerName(filters.payerId), onRemove: () => set("payerId", ALL) });
     if (filters.clientId !== ALL)
       list.push({ key: "client", label: clientName(filters.clientId), onRemove: () => set("clientId", ALL) });
     if (filters.dateFrom)
-      list.push({ key: "dateFrom", label: `From ${filters.dateFrom}`, onRemove: () => set("dateFrom", "") });
+      list.push({ key: "dateFrom", label: t("claims.chip.dateFrom", { date: filters.dateFrom }), onRemove: () => set("dateFrom", "") });
     if (filters.dateTo)
-      list.push({ key: "dateTo", label: `To ${filters.dateTo}`, onRemove: () => set("dateTo", "") });
+      list.push({ key: "dateTo", label: t("claims.chip.dateTo", { date: filters.dateTo }), onRemove: () => set("dateTo", "") });
     if (filters.minCharge)
-      list.push({ key: "minCharge", label: `Charge ≥ ${filters.minCharge}`, onRemove: () => set("minCharge", "") });
+      list.push({ key: "minCharge", label: t("claims.chip.minCharge", { value: filters.minCharge }), onRemove: () => set("minCharge", "") });
     if (filters.maxCharge)
-      list.push({ key: "maxCharge", label: `Charge ≤ ${filters.maxCharge}`, onRemove: () => set("maxCharge", "") });
+      list.push({ key: "maxCharge", label: t("claims.chip.maxCharge", { value: filters.maxCharge }), onRemove: () => set("maxCharge", "") });
     if (filters.outstandingOnly)
-      list.push({ key: "outstanding", label: "Outstanding only", onRemove: () => set("outstandingOnly", false) });
+      list.push({ key: "outstanding", label: t("claims.chip.outstandingOnly"), onRemove: () => set("outstandingOnly", false) });
     return list;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, payers, clients]);
+  }, [filters, payers, clients, t]);
 
   // Financial totals for the current result set.
   const totals = useMemo(() => {
     const billed = claims.reduce((s, c) => s + Number(c.chargeAmount), 0);
     const collected = claims.reduce((s, c) => s + Number(c.payerPaidAmount), 0);
-    const outstanding = claims.reduce((s, c) => s + Number(c.balanceNeeded), 0);
+    const outstanding = claims.reduce((s, c) => s + claimOutstanding(c), 0);
     const rate = billed > 0 ? (collected / billed) * 100 : 0;
     return { billed, collected, outstanding, rate };
   }, [claims]);
@@ -363,7 +381,7 @@ export default function ClaimsPage() {
         CLAIM_STATUS_TRANSITIONS[c.status].includes(bulkTarget),
     );
     if (targets.length === 0) {
-      toast.warning("None of the selected claims can move to that status.");
+      toast.warning(t("claims.toast.bulkNoValidTargets"));
       return;
     }
     setBulkBusy(true);
@@ -380,31 +398,101 @@ export default function ClaimsPage() {
     setBulkBusy(false);
     clearSelection();
     setBulkTarget("");
-    toast.success(`Updated ${updated} of ${targets.length} selected claims.`);
+    toast.success(
+      t("claims.toast.bulkUpdated", { updated, total: targets.length }),
+    );
+  };
+
+  // ── Columns ───────────────────────────────────────────────────────────────
+  const { order, labels, move, rename } = useTableColumns(
+    "claims.columns",
+    COLUMN_KEYS,
+  );
+
+  const columns: Record<
+    string,
+    {
+      label: string;
+      className?: string;
+      cellClassName?: string;
+      cell: (c: Claim) => ReactNode;
+      csv: (c: Claim) => string;
+    }
+  > = {
+    reference: {
+      label: t("claims.field.reference"),
+      cellClassName: "font-mono text-text-primary",
+      cell: (c) => c.claimReference,
+      csv: (c) => c.claimReference,
+    },
+    client: {
+      label: t("claims.field.client"),
+      cell: (c) => c.client?.displayName ?? t("common.emDash"),
+      csv: (c) => c.client?.displayName ?? "",
+    },
+    payer: {
+      label: t("claims.field.payer"),
+      cell: (c) => c.payer?.shortCode ?? t("common.emDash"),
+      csv: (c) => c.payer?.name ?? "",
+    },
+    serviceDate: {
+      label: t("claims.field.serviceDate"),
+      cellClassName: "text-text-secondary",
+      cell: (c) => formatDate(c.dateOfService),
+      csv: (c) => c.dateOfService.slice(0, 10),
+    },
+    charge: {
+      label: t("claims.field.charge"),
+      className: "text-end",
+      cellClassName: "font-mono tabular-nums text-text-primary",
+      cell: (c) => formatMoney(c.chargeAmount),
+      csv: (c) => c.chargeAmount,
+    },
+    paid: {
+      label: t("claims.field.paid"),
+      className: "text-end",
+      cellClassName: "font-mono tabular-nums text-text-primary",
+      cell: (c) => formatMoney(c.payerPaidAmount),
+      csv: (c) => c.payerPaidAmount,
+    },
+    bankDate: {
+      label: t("claims.field.dateOfBank"),
+      cellClassName: "text-text-secondary",
+      cell: (c) => (c.bankDate ? formatDate(c.bankDate) : t("common.emDash")),
+      csv: (c) => c.bankDate ?? "",
+    },
+    status: {
+      label: t("common.status"),
+      cell: (c) =>
+        can("claims.edit") ? (
+          <InlineStatusChange claim={c} onChanged={updateClaim} />
+        ) : (
+          <StatusBadge status={c.status} />
+        ),
+      csv: (c) => c.status,
+    },
+    countdown: {
+      label: t("claims.field.countdown"),
+      cell: (c) => <FollowUpCountdown claim={c} />,
+      csv: (c) => c.dateBilled.slice(0, 10),
+    },
+    lastActivity: {
+      label: t("claims.field.lastActivity"),
+      className: "text-end",
+      cellClassName: "type-label-01 text-text-secondary",
+      cell: (c) => timeAgo(c.updatedAt),
+      csv: (c) => c.updatedAt,
+    },
   };
 
   // ── CSV export ────────────────────────────────────────────────────────────
   const exportCsv = () => {
-    const headers = [
-      "Reference","Client","Payer","Service Date","Date Billed",
-      "Charge","Paid","Balance","Status","Last Activity",
-    ];
-    const rows = claims.map((c) => [
-      c.claimReference,
-      c.client?.displayName ?? "",
-      c.payer?.name ?? "",
-      formatDate(c.dateOfService),
-      formatDate(c.dateBilled),
-      c.chargeAmount,
-      c.payerPaidAmount,
-      c.balanceNeeded,
-      c.status,
-      c.updatedAt,
-    ]);
+    const headers = order.map((key) => labels[key] ?? columns[key].label);
+    const rows = claims.map((c) => order.map((key) => columns[key].csv(c)));
     const csv = [headers, ...rows]
       .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
       .join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -416,57 +504,35 @@ export default function ClaimsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Claims"
-        description="Track billed claims, payer payments, and outstanding balances."
+        title={t("claims.title")}
+        description={t("claims.description")}
       >
         {claims.length > 0 && (
           <Button variant="outline" size="sm" onClick={exportCsv}>
-            <Download className="size-3.5" /> Export CSV
+            <Download className="size-3.5" /> {t("claims.action.exportCsv")}
           </Button>
         )}
         {can("claims.create") && (
-          <Button onClick={() => setCreateOpen(true)}>New Claim</Button>
+          <Button onClick={() => setCreateOpen(true)}>
+            {t("claims.action.newClaim")}
+          </Button>
         )}
       </PageHeader>
-
-      {/* Quick filter chips */}
-      <div className="flex flex-wrap gap-2">
-        {QUICK_FILTERS.map((qf) => {
-          const active = qf.match(filters);
-          return (
-            <button
-              key={qf.label}
-              type="button"
-              onClick={() =>
-                setFilters(active ? EMPTY_FILTERS : qf.apply())
-              }
-              className={cn(
-                "rounded-full border px-3 py-1 type-label-01 font-medium transition-colors duration-[var(--dur-fast-02)]",
-                active
-                  ? "border-interactive bg-interactive text-text-on-color"
-                  : "border-border-subtle bg-background text-text-secondary hover:border-interactive hover:text-interactive",
-              )}
-            >
-              {qf.label}
-            </button>
-          );
-        })}
-      </div>
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
         <div className="flex flex-wrap items-center gap-3 rounded-md border border-interactive bg-highlight px-4 py-2.5">
           <span className="type-body-compact-01 font-medium text-text-primary">
-            {selectedIds.size} selected
+            {t("common.selectedCount", { count: selectedIds.size })}
           </span>
           <select
             value={bulkTarget}
             onChange={(e) => setBulkTarget(e.target.value as ClaimStatus | "")}
             className="rounded border border-border-subtle bg-background px-2 py-1 type-body-compact-01 text-text-primary focus:outline-none focus:ring-1 focus:ring-interactive"
           >
-            <option value="">Mark as…</option>
+            <option value="">{t("claims.bulk.markAs")}</option>
             {CLAIM_STATUSES.map((s) => (
-              <option key={s} value={s}>{s}</option>
+              <option key={s} value={s}>{t(`status.${s}`)}</option>
             ))}
           </select>
           <Button
@@ -474,7 +540,7 @@ export default function ClaimsPage() {
             disabled={!bulkTarget || bulkBusy}
             onClick={applyBulk}
           >
-            {bulkBusy ? "Applying…" : "Apply"}
+            {bulkBusy ? t("claims.bulk.applying") : t("common.apply")}
           </Button>
           {canDelete && (
             <Button
@@ -483,15 +549,15 @@ export default function ClaimsPage() {
               disabled={bulkBusy}
               onClick={() => setBulkDeleteOpen(true)}
             >
-              <Trash2 className="size-3.5" /> Delete
+              <Trash2 className="size-3.5" /> {t("common.delete")}
             </Button>
           )}
           <button
             type="button"
             onClick={clearSelection}
-            className="ml-auto type-label-01 text-text-secondary hover:text-text-primary"
+            className="ms-auto type-label-01 text-text-secondary hover:text-text-primary"
           >
-            Clear selection
+            {t("claims.bulk.clearSelection")}
           </button>
         </div>
       )}
@@ -499,13 +565,14 @@ export default function ClaimsPage() {
       <FilterBar
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search reference, external #, client…"
+        searchPlaceholder={t("claims.filter.searchPlaceholder")}
         activeCount={chips.length}
         chips={chips}
         onClearAll={() => setFilters(EMPTY_FILTERS)}
       >
-        <FilterField label="Status">
+        <FilterField label={t("common.status")}>
           <Select
+            dir={dir}
             value={filters.status}
             onValueChange={(v) => set("status", v as ClaimStatus | typeof ALL)}
           >
@@ -513,19 +580,19 @@ export default function ClaimsPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL}>All statuses</SelectItem>
+              <SelectItem value={ALL}>{t("claims.filter.allStatuses")}</SelectItem>
               {CLAIM_STATUSES.map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
+                <SelectItem key={s} value={s}>{t(`status.${s}`)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </FilterField>
 
-        <FilterField label="Payer">
-          <Select value={filters.payerId} onValueChange={(v) => set("payerId", v)}>
+        <FilterField label={t("claims.field.payer")}>
+          <Select dir={dir} value={filters.payerId} onValueChange={(v) => set("payerId", v)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL}>All payers</SelectItem>
+              <SelectItem value={ALL}>{t("claims.filter.allPayers")}</SelectItem>
               {payers.map((p) => (
                 <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
               ))}
@@ -533,7 +600,7 @@ export default function ClaimsPage() {
           </Select>
         </FilterField>
 
-        <FilterField label="Client">
+        <FilterField label={t("claims.field.client")}>
           <ClientCombobox
             clients={clients}
             value={filters.clientId}
@@ -541,7 +608,7 @@ export default function ClaimsPage() {
           />
         </FilterField>
 
-        <FilterField label="Service date from">
+        <FilterField label={t("claims.filter.serviceDateFrom")}>
           <Input
             type="date"
             value={filters.dateFrom}
@@ -549,7 +616,7 @@ export default function ClaimsPage() {
           />
         </FilterField>
 
-        <FilterField label="Service date to">
+        <FilterField label={t("claims.filter.serviceDateTo")}>
           <Input
             type="date"
             value={filters.dateTo}
@@ -557,20 +624,21 @@ export default function ClaimsPage() {
           />
         </FilterField>
 
-        <FilterField label="Outstanding">
+        <FilterField label={t("claims.filter.outstanding")}>
           <Select
+            dir={dir}
             value={filters.outstandingOnly ? "outstanding" : "any"}
             onValueChange={(v) => set("outstandingOnly", v === "outstanding")}
           >
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="any">Any</SelectItem>
-              <SelectItem value="outstanding">Not yet paid</SelectItem>
+              <SelectItem value="any">{t("claims.filter.any")}</SelectItem>
+              <SelectItem value="outstanding">{t("claims.filter.notYetPaid")}</SelectItem>
             </SelectContent>
           </Select>
         </FilterField>
 
-        <FilterField label="Charge ≥ ($)">
+        <FilterField label={t("claims.filter.chargeMin")}>
           <Input
             type="number"
             min={0}
@@ -581,12 +649,12 @@ export default function ClaimsPage() {
           />
         </FilterField>
 
-        <FilterField label="Charge ≤ ($)">
+        <FilterField label={t("claims.filter.chargeMax")}>
           <Input
             type="number"
             min={0}
             inputMode="decimal"
-            placeholder="No max"
+            placeholder={t("claims.filter.noMax")}
             value={filters.maxCharge}
             onChange={(e) => set("maxCharge", e.target.value)}
           />
@@ -597,54 +665,59 @@ export default function ClaimsPage() {
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="w-10 pr-0">
+              <TableHead className="w-10 pe-0">
                 <input
                   type="checkbox"
-                  aria-label="Select all"
+                  aria-label={t("common.selectAll")}
                   checked={allSelected}
                   onChange={toggleAll}
                   className="size-4 rounded-sm border-border-strong accent-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                 />
               </TableHead>
-              <TableHead>Reference</TableHead>
-              <TableHead>Client</TableHead>
-              <TableHead>Payer</TableHead>
-              <TableHead>Service date</TableHead>
-              <TableHead className="text-right">Charge</TableHead>
-              <TableHead className="text-right">Paid</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Last activity</TableHead>
+              {order.map((key) => (
+                <EditableColumnHead
+                  key={key}
+                  columnKey={key}
+                  label={labels[key] ?? columns[key].label}
+                  title={t("claims.columns.hint")}
+                  className={columns[key].className}
+                  onMove={move}
+                  onRename={rename}
+                />
+              ))}
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={9} className="py-12 text-center text-text-secondary">
-                  Loading…
+                <TableCell colSpan={order.length + 1} className="py-12 text-center text-text-secondary">
+                  {t("common.loading")}
                 </TableCell>
               </TableRow>
             ) : claims.length === 0 ? (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={9} className="py-16">
+                <TableCell colSpan={order.length + 1} className="py-16">
                   <div className="mx-auto flex max-w-sm flex-col items-center gap-3 text-center">
                     <Inbox className="size-8 text-text-secondary" aria-hidden />
                     <div className="space-y-1">
                       <p className="type-heading-02 text-text-primary">
-                        {chips.length > 0 ? "No matching claims" : "No claims yet"}
+                        {chips.length > 0
+                          ? t("claims.empty.noMatchTitle")
+                          : t("claims.empty.title")}
                       </p>
                       <p className="type-body-01 text-text-secondary">
                         {chips.length > 0
-                          ? "No claims match the current filters. Try clearing them."
-                          : "Create your first claim to get started."}
+                          ? t("claims.empty.noMatchDescription")
+                          : t("claims.empty.description")}
                       </p>
                     </div>
                     {chips.length > 0 ? (
                       <Button variant="outline" size="sm" onClick={() => setFilters(EMPTY_FILTERS)}>
-                        Clear filters
+                        {t("common.clearFilters")}
                       </Button>
                     ) : can("claims.create") ? (
                       <Button size="sm" onClick={() => setCreateOpen(true)}>
-                        New Claim
+                        {t("claims.action.newClaim")}
                       </Button>
                     ) : null}
                   </div>
@@ -657,39 +730,26 @@ export default function ClaimsPage() {
                   className="cursor-pointer"
                   onClick={() => router.push(`/claims/${claim.id}`)}
                 >
-                  <TableCell className="w-10 pr-0" onClick={(e) => e.stopPropagation()}>
+                  <TableCell className="w-10 pe-0" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
-                      aria-label={`Select ${claim.claimReference}`}
+                      aria-label={t("claims.a11y.selectRow", { reference: claim.claimReference })}
                       checked={selectedIds.has(claim.id)}
                       onChange={() => toggleOne(claim.id)}
                       className="size-4 rounded-sm border-border-strong accent-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                     />
                   </TableCell>
-                  <TableCell className="font-mono text-text-primary">
-                    {claim.claimReference}
-                  </TableCell>
-                  <TableCell>{claim.client?.displayName ?? "—"}</TableCell>
-                  <TableCell>{claim.payer?.shortCode ?? "—"}</TableCell>
-                  <TableCell className="text-text-secondary">
-                    {formatDate(claim.dateOfService)}
-                  </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums text-text-primary">
-                    {formatMoney(claim.chargeAmount)}
-                  </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums text-text-primary">
-                    {formatMoney(claim.payerPaidAmount)}
-                  </TableCell>
-                  <TableCell>
-                    {can("claims.edit") ? (
-                      <InlineStatusChange claim={claim} onChanged={updateClaim} />
-                    ) : (
-                      <StatusBadge status={claim.status} />
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right type-label-01 text-text-secondary">
-                    {timeAgo(claim.updatedAt)}
-                  </TableCell>
+                  {order.map((key) => (
+                    <TableCell
+                      key={key}
+                      className={cn(
+                        columns[key].className,
+                        columns[key].cellClassName,
+                      )}
+                    >
+                      {columns[key].cell(claim)}
+                    </TableCell>
+                  ))}
                 </TableRow>
               ))
             )}
@@ -700,29 +760,29 @@ export default function ClaimsPage() {
         {!loading && claims.length > 0 && (
           <div className="flex flex-wrap items-center gap-x-8 gap-y-1 border-t border-border-subtle bg-layer px-4 py-2.5">
             <span className="type-label-01 text-text-secondary">
-              {claims.length} claim{claims.length === 1 ? "" : "s"}
+              {t("claims.claimCount", { count: claims.length })}
             </span>
             <span className="type-label-01 text-text-secondary">
-              Billed:{" "}
+              {t("claims.footer.billed")}{" "}
               <span className="font-mono font-medium text-text-primary tabular-nums">
                 {formatMoney(totals.billed)}
               </span>
             </span>
             <span className="type-label-01 text-text-secondary">
-              Collected:{" "}
+              {t("claims.footer.collected")}{" "}
               <span className="font-mono font-medium text-support-success tabular-nums">
                 {formatMoney(totals.collected)}
               </span>
             </span>
             <span className="type-label-01 text-text-secondary">
-              Outstanding:{" "}
+              {t("claims.footer.outstanding")}{" "}
               <span className="font-mono font-medium text-interactive tabular-nums">
                 {formatMoney(totals.outstanding)}
               </span>
             </span>
-            <span className="ml-auto type-label-01 text-text-secondary">
-              Rate:{" "}
-              <span className="font-medium text-text-primary">
+            <span className="ms-auto type-label-01 text-text-secondary">
+              {t("claims.footer.rate")}{" "}
+              <span className="font-medium text-text-primary tabular-nums">
                 {totals.rate.toFixed(1)}%
               </span>
             </span>

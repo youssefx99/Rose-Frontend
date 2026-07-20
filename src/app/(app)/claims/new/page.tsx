@@ -11,10 +11,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ClaimForm } from "../claim-form";
+import { useT } from "@/lib/i18n/provider";
 import type { Claim } from "@/lib/claims";
 
 export default function NewClaimPage() {
   const router = useRouter();
+  const t = useT();
 
   const handleSaved = (claim: Claim) => {
     router.replace(`/claims/${claim.id}`);
@@ -26,11 +28,12 @@ export default function NewClaimPage() {
         href="/claims"
         className="inline-flex items-center gap-1 type-body-compact-01 text-text-secondary transition-colors duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] hover:text-text-primary"
       >
-        <ArrowLeft className="size-4" /> Back to claims
+        <ArrowLeft className="size-4 rtl:rotate-180" />{" "}
+        {t("claims.action.backToClaims")}
       </Link>
       <Card>
         <CardHeader>
-          <CardTitle>New Claim</CardTitle>
+          <CardTitle>{t("claims.action.newClaim")}</CardTitle>
         </CardHeader>
         <CardContent>
           <ClaimForm mode="create" onSaved={handleSaved} />

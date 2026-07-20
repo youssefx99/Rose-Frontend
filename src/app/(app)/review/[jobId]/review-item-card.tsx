@@ -17,7 +17,8 @@ import {
   type FieldSpec,
   type ReviewItem,
 } from "@/lib/documents";
-import { formatMoney } from "@/lib/format";
+import { useFormat } from "@/lib/i18n/format";
+import { useT } from "@/lib/i18n/provider";
 import { useAuth } from "@/lib/auth-context";
 
 interface ReviewItemCardProps {
@@ -25,10 +26,11 @@ interface ReviewItemCardProps {
   onChanged: () => void;
 }
 
+/** Absolute translation keys — resolve with t(TITLES[itemType]) at render. */
 const TITLES: Record<string, string> = {
-  REMITTANCE_HEADER: "Remittance Header",
-  CLAIM_PAYMENT: "Claim Payment Line",
-  SERVICE_LINE_BATCH: "Service Lines",
+  REMITTANCE_HEADER: "review.item.REMITTANCE_HEADER",
+  CLAIM_PAYMENT: "review.item.CLAIM_PAYMENT",
+  SERVICE_LINE_BATCH: "review.item.SERVICE_LINE_BATCH",
 };
 
 function effectiveData(item: ReviewItem): ExtractedData {
@@ -50,6 +52,8 @@ function coerce(kind: FieldSpec["kind"], raw: string): unknown {
 }
 
 export function ReviewItemCard({ item, onChanged }: ReviewItemCardProps) {
+  const t = useT("review");
+  const { formatMoney } = useFormat();
   const { can } = useAuth();
   const canApprove = can("review.approve");
   const canReject = can("review.reject");
@@ -89,10 +93,10 @@ export function ReviewItemCard({ item, onChanged }: ReviewItemCardProps) {
     setBusy(true);
     try {
       await approveItem(item.id, buildChanges());
-      toast.success("Approved.");
+      toast.success(t("review.toast.approved"));
       onChanged();
     } catch (error) {
-      handleError(error, "Approval failed.");
+      handleError(error, t("review.toast.approvalFailed"));
     } finally {
       setBusy(false);
     }
@@ -102,10 +106,10 @@ export function ReviewItemCard({ item, onChanged }: ReviewItemCardProps) {
     setBusy(true);
     try {
       await rejectItem(item.id);
-      toast.success("Rejected.");
+      toast.success(t("review.toast.rejected"));
       onChanged();
     } catch (error) {
-      handleError(error, "Rejection failed.");
+      handleError(error, t("review.toast.rejectionFailed"));
     } finally {
       setBusy(false);
     }
@@ -115,7 +119,7 @@ export function ReviewItemCard({ item, onChanged }: ReviewItemCardProps) {
     <div className="overflow-hidden rounded-md border border-border-subtle bg-card">
       <div className="flex items-center justify-between border-b border-border-subtle bg-layer px-5 py-3">
         <span className="type-heading-02 text-text-primary">
-          {TITLES[item.itemType]}
+          {t(TITLES[item.itemType])}
         </span>
         <StatusBadge status={item.status} />
       </div>
@@ -124,13 +128,13 @@ export function ReviewItemCard({ item, onChanged }: ReviewItemCardProps) {
         {/* Left — extracted / editable */}
         <div>
           <p className="mb-3 type-label-01 font-medium uppercase tracking-wider text-text-secondary">
-            Extracted by AI
+            {t("review.item.extractedByAi")}
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             {fields.map((f) => (
               <div key={f.key} className="space-y-1">
                 <Label htmlFor={`${item.id}-${f.key}`} className="type-label-01 text-text-secondary">
-                  {f.label}
+                  {t(f.labelKey)}
                 </Label>
                 <Input
                   id={`${item.id}-${f.key}`}
@@ -158,7 +162,9 @@ export function ReviewItemCard({ item, onChanged }: ReviewItemCardProps) {
         {/* Right — matched DB record */}
         <div>
           <p className="mb-3 type-label-01 font-medium uppercase tracking-wider text-text-secondary">
-            {item.itemType === "CLAIM_PAYMENT" ? "Matched Claim" : "Will Create"}
+            {item.itemType === "CLAIM_PAYMENT"
+              ? t("review.item.matchedClaim")
+              : t("review.item.willCreate")}
           </p>
           {item.itemType === "CLAIM_PAYMENT" ? (
             match ? (
@@ -176,28 +182,35 @@ export function ReviewItemCard({ item, onChanged }: ReviewItemCardProps) {
                   {match.client?.displayName ?? "—"}
                 </p>
                 <p className="mt-1 type-label-01 text-text-secondary">
-                  Charge {formatMoney(match.chargeAmount)}
+                  {t("review.item.charge", {
+                    amount: formatMoney(match.chargeAmount),
+                  })}
                 </p>
               </Link>
             ) : (
               <div className="rounded-md border border-dashed border-border-strong p-4 type-body-compact-01 text-text-secondary">
-                No existing claim yet. On approval, every line sharing claim{" "}
+                {t("review.item.noMatchBefore")}
                 <span className="font-mono text-text-primary">
                   {String(effective.claimNumber ?? "—")}
-                </span>{" "}
-                is rolled into one claim — charge &amp; paid summed, with the
-                service-date range.
+                </span>
+                {t("review.item.noMatchAfter")}
               </div>
             )
           ) : (
             <div className="rounded-md border border-border-subtle p-4 type-body-compact-01 text-text-secondary">
-              Approving creates a{" "}
-              <span className="font-medium text-text-primary">bank deposit</span> and{" "}
-              <span className="font-medium text-text-primary">remittance</span> for{" "}
+              {t("review.item.createBefore")}
               <span className="font-medium text-text-primary">
-                {String(effective.payerName ?? "this payer")}
-              </span>{" "}
-              of{" "}
+                {t("review.item.bankDeposit")}
+              </span>
+              {t("review.item.createAnd")}
+              <span className="font-medium text-text-primary">
+                {t("review.item.remittance")}
+              </span>
+              {t("review.item.createFor")}
+              <span className="font-medium text-text-primary">
+                {String(effective.payerName ?? t("review.item.thisPayer"))}
+              </span>
+              {t("review.item.createOf")}
               <span className="font-mono">
                 {formatMoney(Number(effective.checkAmount ?? 0))}
               </span>
@@ -207,7 +220,7 @@ export function ReviewItemCard({ item, onChanged }: ReviewItemCardProps) {
 
           {item.status === "REJECTED" && item.rejectionReason && (
             <p className="mt-3 type-label-01 text-support-error">
-              Rejected: {item.rejectionReason}
+              {t("review.item.rejectedReason", { reason: item.rejectionReason })}
             </p>
           )}
         </div>
@@ -222,12 +235,12 @@ export function ReviewItemCard({ item, onChanged }: ReviewItemCardProps) {
               disabled={busy}
               onClick={reject}
             >
-              Reject
+              {t("common.reject")}
             </Button>
           )}
           {canApprove && (
             <Button variant="rose" size="sm" disabled={busy} onClick={approve}>
-              {busy ? "Working…" : "Approve"}
+              {busy ? t("working") : t("common.approve")}
             </Button>
           )}
         </div>

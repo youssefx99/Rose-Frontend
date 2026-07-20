@@ -19,21 +19,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createUser, USER_ROLES, type UserRole } from "@/lib/users";
+import { useT } from "@/lib/i18n/provider";
 
 const FORM_ID = "user-form";
 
+// Messages are translation keys — the schema is module-level and cannot call hooks.
 const schema = z.object({
-  firstName: z.string().min(1, "First name is required."),
-  lastName: z.string().min(1, "Last name is required."),
-  email: z.string().email("Enter a valid email."),
+  firstName: z.string().min(1, "users.form.firstNameRequired"),
+  lastName: z.string().min(1, "users.form.lastNameRequired"),
+  email: z.string().email("users.form.emailInvalid"),
   role: z.enum(["SUPER_ADMIN", "ADMIN", "ACCOUNTANT", "VIEWER"]),
   password: z
     .string()
-    .min(8, "At least 8 characters.")
-    .regex(
-      /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-      "Needs an uppercase letter, a lowercase letter, and a number.",
-    ),
+    .min(8, "users.form.passwordTooShort")
+    .regex(/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "users.form.passwordWeak"),
 });
 
 type Values = z.infer<typeof schema>;
@@ -57,6 +56,7 @@ export function UserFormDialog({
   onOpenChange,
   onSaved,
 }: UserFormDialogProps) {
+  const t = useT();
   const {
     register,
     handleSubmit,
@@ -72,14 +72,14 @@ export function UserFormDialog({
   const onSubmit = handleSubmit(async (values) => {
     try {
       await createUser({ ...values, role: values.role as UserRole });
-      toast.success("User created.");
+      toast.success(t("users.toast.created"));
       onOpenChange(false);
       onSaved();
     } catch (error) {
       const message =
         isAxiosError(error) && typeof error.response?.data?.message === "string"
           ? error.response.data.message
-          : "Failed to create user.";
+          : t("users.toast.createFailed");
       toast.error(message);
     }
   });
@@ -88,8 +88,8 @@ export function UserFormDialog({
     <SlideOver
       open={open}
       onOpenChange={onOpenChange}
-      title="New User"
-      description="Invite a teammate and assign their role."
+      title={t("users.form.title")}
+      description={t("users.form.description")}
       footer={
         <>
           <Button
@@ -97,10 +97,10 @@ export function UserFormDialog({
             variant="outline"
             onClick={() => onOpenChange(false)}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button type="submit" form={FORM_ID} disabled={isSubmitting}>
-            {isSubmitting ? "Creating…" : "Create User"}
+            {isSubmitting ? t("users.form.creating") : t("users.form.submit")}
           </Button>
         </>
       }
@@ -108,31 +108,31 @@ export function UserFormDialog({
       <form id={FORM_ID} onSubmit={onSubmit} className="space-y-4" noValidate>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="firstName">First Name</Label>
+            <Label htmlFor="firstName">{t("users.form.firstName")}</Label>
             <Input id="firstName" {...register("firstName")} />
             {errors.firstName && (
-              <p className="type-label-01 text-support-error">{errors.firstName.message}</p>
+              <p className="type-label-01 text-support-error">{t(errors.firstName.message ?? "")}</p>
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="lastName">Last Name</Label>
+            <Label htmlFor="lastName">{t("users.form.lastName")}</Label>
             <Input id="lastName" {...register("lastName")} />
             {errors.lastName && (
-              <p className="type-label-01 text-support-error">{errors.lastName.message}</p>
+              <p className="type-label-01 text-support-error">{t(errors.lastName.message ?? "")}</p>
             )}
           </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t("users.form.email")}</Label>
           <Input id="email" type="email" {...register("email")} />
           {errors.email && (
-            <p className="type-label-01 text-support-error">{errors.email.message}</p>
+            <p className="type-label-01 text-support-error">{t(errors.email.message ?? "")}</p>
           )}
         </div>
 
         <div className="space-y-2">
-          <Label>Role</Label>
+          <Label>{t("users.form.role")}</Label>
           <Controller
             control={control}
             name="role"
@@ -144,7 +144,7 @@ export function UserFormDialog({
                 <SelectContent>
                   {USER_ROLES.map((r) => (
                     <SelectItem key={r.value} value={r.value}>
-                      {r.label}
+                      {t(r.labelKey)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -154,14 +154,13 @@ export function UserFormDialog({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password">Temporary Password</Label>
+          <Label htmlFor="password">{t("users.form.password")}</Label>
           <Input id="password" type="text" autoComplete="off" {...register("password")} />
           {errors.password ? (
-            <p className="type-label-01 text-support-error">{errors.password.message}</p>
+            <p className="type-label-01 text-support-error">{t(errors.password.message ?? "")}</p>
           ) : (
             <p className="type-label-01 text-text-helper">
-              Min 8 characters with upper, lower, and a number. Share it
-              securely — the user can change it later.
+              {t("users.form.passwordHint")}
             </p>
           )}
         </div>

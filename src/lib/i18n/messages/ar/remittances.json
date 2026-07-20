@@ -1,0 +1,37 @@
+{
+  "title": "إشعارات السداد",
+  "description": "مدفوعات مُرحَّلة من بيانات المزايا (EOB) المعتمدة.",
+
+  "detailTitleFallback": "إشعار سداد",
+  "detailDescription": "شيك رقم ⁨{checkNumber}⁩ · ⁨{checkDate}⁩ · من ⁨{fileName}⁩",
+  "notFound": "إشعار السداد غير موجود.",
+  "backToList": "العودة إلى إشعارات السداد",
+  "deleteTitle": "حذف إشعار السداد",
+
+  "toastLoadListFailed": "تعذّر تحميل إشعارات السداد.",
+  "toastLoadFailed": "تعذّر تحميل إشعار السداد.",
+
+  "tablePayer": "جهة الدفع",
+  "tableCheckNumber": "رقم الشيك",
+  "tableCheckDate": "تاريخ الشيك",
+  "tableLines": "البنود",
+  "tableCheckAmount": "قيمة الشيك",
+  "tableCharged": "المبلغ المفوتر",
+  "tableReceived": "المبلغ المستلَم",
+  "tableReceivedPct": "نسبة الاستلام",
+  "tableClient": "العميل",
+  "tableClaimNumber": "رقم المطالبة",
+  "tableDos": "تاريخ الخدمة",
+  "tableBilled": "المبلغ المفوتر",
+  "tablePaid": "المدفوع",
+  "tableMatched": "المطابقة",
+
+  "emptyTitle": "لا توجد إشعارات سداد بعد",
+  "emptyDescription": "اعتمد مستندًا في قائمة المراجعة لتسجيل عملية سداد.",
+  "emptyClaimLines": "لا توجد بنود مطالبات.",
+
+  "sectionPaymentSummary": "ملخص السداد",
+  "sectionClaimLines": "بنود المطالبات",
+
+  "unmatched": "غير مطابق"
+}

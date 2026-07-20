@@ -1,0 +1,21 @@
+{
+  "dashboard": "لوحة المعلومات",
+  "claims": "المطالبات",
+  "clients": "العملاء",
+  "payers": "جهات الدفع",
+  "documents": "المستندات",
+  "import": "استيراد الملف",
+  "review": "قائمة المراجعة",
+  "remittances": "إشعارات السداد",
+  "users": "المستخدمون",
+  "permissions": "الصلاحيات",
+  "settings": "الإعدادات",
+
+  "expandNavigation": "توسيع شريط التنقل",
+  "collapseNavigation": "طي شريط التنقل",
+  "lightTheme": "المظهر الفاتح",
+  "darkTheme": "المظهر الداكن",
+  "switchToLightTheme": "التبديل إلى المظهر الفاتح",
+  "switchToDarkTheme": "التبديل إلى المظهر الداكن",
+  "signOut": "تسجيل الخروج"
+}

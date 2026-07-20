@@ -19,15 +19,17 @@ import {
 } from "@/components/ui/table";
 import { importClaims, type ImportRowStatus, type ImportSummary } from "@/lib/import";
 import { useAuth } from "@/lib/auth-context";
+import { useFormat } from "@/lib/i18n/format";
+import { useT } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 
-const READ_COLUMNS = [
-  "Payer",
-  "State",
-  "Date Billed",
-  "Date of Service",
-  "Client",
-  "Charge",
+const READ_COLUMN_KEYS = [
+  "import.columns.payer",
+  "import.columns.state",
+  "import.columns.dateBilled",
+  "import.columns.dateOfService",
+  "import.columns.client",
+  "import.columns.charge",
 ];
 
 const ROW_STYLE: Record<ImportRowStatus, string> = {
@@ -35,19 +37,25 @@ const ROW_STYLE: Record<ImportRowStatus, string> = {
   skipped: "bg-support-warning-bg text-text-primary",
   error: "bg-support-error-bg text-support-error",
 };
-const ROW_LABEL: Record<ImportRowStatus, string> = {
-  created: "Created",
-  skipped: "Skipped",
-  error: "Error",
+const ROW_LABEL_KEY: Record<ImportRowStatus, string> = {
+  created: "import.rowStatus.created",
+  skipped: "import.rowStatus.skipped",
+  error: "import.rowStatus.error",
+};
+// The backend reports row failures as English prose; map the known messages to
+// keys and fall back to the raw message for anything it adds later.
+const ROW_ERROR_KEY: Record<string, string> = {
+  "Missing Payer.": "import.rowError.missingPayer",
+  "Missing or invalid Client.": "import.rowError.invalidClient",
+  "Invalid Date Billed.": "import.rowError.invalidDateBilled",
+  "Invalid Date of Service.": "import.rowError.invalidDateOfService",
+  "Invalid Charge.": "import.rowError.invalidCharge",
+  "Could not save this row.": "import.rowError.saveFailed",
 };
 
 function isXlsx(file: File): boolean {
   const name = file.name.toLowerCase();
   return name.endsWith(".xlsx") || name.endsWith(".xlsm");
-}
-
-function fileSizeKb(bytes: number): string {
-  return `${(bytes / 1024).toFixed(0)} KB`;
 }
 
 function errorMessage(error: unknown, fallback: string): string {
@@ -57,6 +65,8 @@ function errorMessage(error: unknown, fallback: string): string {
 }
 
 export default function ImportPage() {
+  const t = useT();
+  const { formatNumber } = useFormat();
   const { can } = useAuth();
   const canImport = can("claims.create");
 
@@ -72,7 +82,7 @@ export default function ImportPage() {
     const candidate = Array.from(incoming)[0];
     if (!candidate) return;
     if (!isXlsx(candidate)) {
-      toast.warning("Please choose an Excel .xlsx file.");
+      toast.warning(t("import.toast.notXlsx"));
       return;
     }
     setFile(candidate);
@@ -92,21 +102,21 @@ export default function ImportPage() {
       setSummary(result);
       if (result.claimsCreated > 0) {
         toast.success(
-          `Imported ${result.claimsCreated} claim${result.claimsCreated === 1 ? "" : "s"}` +
-            `${result.skipped ? `, ${result.skipped} skipped` : ""}` +
-            `${result.errors ? `, ${result.errors} failed` : ""}.`,
+          t("import.toast.importedClaims", { count: result.claimsCreated }) +
+            (result.skipped ? ` ${t("import.toast.skippedRows", { count: result.skipped })}` : "") +
+            (result.errors ? ` ${t("import.toast.failedRows", { count: result.errors })}` : ""),
         );
       } else if (result.skipped > 0 && result.errors === 0) {
-        toast.warning(`Nothing new — ${result.skipped} row(s) already existed.`);
+        toast.warning(t("import.toast.nothingNew", { count: result.skipped }));
       } else if (result.errors > 0) {
-        toast.error(`No claims created — ${result.errors} row(s) had errors.`);
+        toast.error(t("import.toast.noneCreated", { count: result.errors }));
       } else {
-        toast.warning("No data rows found in the sheet.");
+        toast.warning(t("import.toast.noRows"));
       }
       setOpen(false);
       resetForm();
     } catch (error) {
-      toast.error(errorMessage(error, "Import failed."));
+      toast.error(errorMessage(error, t("import.toast.importFailed")));
     } finally {
       setImporting(false);
     }
@@ -114,14 +124,11 @@ export default function ImportPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Import"
-        description="Bulk-seed payers, clients and claims from your Billing.xlsx — an alternative to entering claims one by one."
-      >
+      <PageHeader title={t("import.title")} description={t("import.description")}>
         {canImport && (
           <Button onClick={() => setOpen(true)}>
             <UploadCloud className="size-4" />
-            Import Sheet
+            {t("import.importSheet")}
           </Button>
         )}
       </PageHeader>
@@ -131,8 +138,8 @@ export default function ImportPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <h2 className="type-heading-03 text-text-primary">
-              Last import
-              <span className="ml-2 type-body-01 font-normal text-text-secondary">
+              {t("import.lastImport")}
+              <span className="ms-2 type-body-01 font-normal text-text-secondary">
                 {summary.fileName}
               </span>
             </h2>
@@ -141,29 +148,29 @@ export default function ImportPage() {
                 href="/claims"
                 className="type-body-compact-01 font-medium text-link hover:text-link-hover"
               >
-                View claims →
+                {t("import.viewClaims")}
               </Link>
             )}
           </div>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            <Stat label="Rows" value={summary.rowsTotal} />
-            <Stat label="Created" value={summary.claimsCreated} tone="success" />
-            <Stat label="Skipped" value={summary.skipped} tone="warning" />
-            <Stat label="Errors" value={summary.errors} tone="error" />
-            <Stat label="New clients" value={summary.clientsCreated} />
-            <Stat label="New payers" value={summary.payersCreated} />
+            <Stat label={t("import.stat.rows")} value={summary.rowsTotal} />
+            <Stat label={t("import.stat.created")} value={summary.claimsCreated} tone="success" />
+            <Stat label={t("import.stat.skipped")} value={summary.skipped} tone="warning" />
+            <Stat label={t("import.stat.errors")} value={summary.errors} tone="error" />
+            <Stat label={t("import.stat.newClients")} value={summary.clientsCreated} />
+            <Stat label={t("import.stat.newPayers")} value={summary.payersCreated} />
           </div>
 
           <div className="overflow-hidden rounded-md border border-border-subtle bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-16">Row</TableHead>
-                  <TableHead className="w-28">Status</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Payer</TableHead>
-                  <TableHead>Reference / note</TableHead>
+                  <TableHead className="w-16">{t("import.table.row")}</TableHead>
+                  <TableHead className="w-28">{t("common.status")}</TableHead>
+                  <TableHead>{t("import.table.client")}</TableHead>
+                  <TableHead>{t("import.table.payer")}</TableHead>
+                  <TableHead>{t("import.table.reference")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -179,16 +186,24 @@ export default function ImportPage() {
                           ROW_STYLE[r.status],
                         )}
                       >
-                        {ROW_LABEL[r.status]}
+                        {t(ROW_LABEL_KEY[r.status])}
                       </span>
                     </TableCell>
-                    <TableCell className="text-text-primary">{r.client ?? "—"}</TableCell>
-                    <TableCell className="text-text-secondary">{r.payer ?? "—"}</TableCell>
+                    <TableCell className="text-text-primary">
+                      {r.client ?? t("common.emDash")}
+                    </TableCell>
+                    <TableCell className="text-text-secondary">
+                      {r.payer ?? t("common.emDash")}
+                    </TableCell>
                     <TableCell className="type-code-01 text-text-secondary">
                       {r.status === "created" ? (
                         <span className="text-text-primary">{r.claimReference}</span>
+                      ) : r.status === "skipped" ? (
+                        t("import.rowStatus.skippedNote")
+                      ) : r.message && ROW_ERROR_KEY[r.message] ? (
+                        t(ROW_ERROR_KEY[r.message])
                       ) : (
-                        r.message ?? r.claimReference ?? "—"
+                        r.message ?? r.claimReference ?? t("common.emDash")
                       )}
                     </TableCell>
                   </TableRow>
@@ -202,15 +217,13 @@ export default function ImportPage() {
           <div className="flex flex-col items-center gap-3 py-20 text-center">
             <FileSpreadsheet className="size-10 text-text-secondary" />
             <div className="space-y-1">
-              <p className="type-heading-02 text-text-primary">No imports yet</p>
-              <p className="type-body-01 text-text-secondary">
-                Upload a Billing.xlsx to seed payers, clients and claims in one go.
-              </p>
+              <p className="type-heading-02 text-text-primary">{t("import.empty.title")}</p>
+              <p className="type-body-01 text-text-secondary">{t("import.empty.description")}</p>
             </div>
             {canImport && (
               <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
                 <UploadCloud className="size-4" />
-                Import Sheet
+                {t("import.importSheet")}
               </Button>
             )}
           </div>
@@ -225,8 +238,8 @@ export default function ImportPage() {
           setOpen(next);
           if (!next) resetForm();
         }}
-        title="Import from spreadsheet"
-        description="Excel .xlsx · the first worksheet is read"
+        title={t("import.slideOver.title")}
+        description={t("import.slideOver.description")}
         size="wide"
         footer={
           <>
@@ -238,11 +251,11 @@ export default function ImportPage() {
               }}
               disabled={importing}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button onClick={submit} disabled={!file || importing}>
               <UploadCloud className="size-4" />
-              {importing ? "Importing…" : "Import claims"}
+              {importing ? t("import.importing") : t("import.importClaims")}
             </Button>
           </>
         }
@@ -279,11 +292,9 @@ export default function ImportPage() {
             <FileSpreadsheet className="size-8 text-text-secondary" />
             <div>
               <p className="type-body-compact-01 font-medium text-text-primary">
-                Click or drop an Excel .xlsx here
+                {t("import.dropzone.title")}
               </p>
-              <p className="type-label-01 text-text-secondary">
-                Billing sheet export — one file
-              </p>
+              <p className="type-label-01 text-text-secondary">{t("import.dropzone.hint")}</p>
             </div>
           </label>
 
@@ -293,12 +304,12 @@ export default function ImportPage() {
               <FileSpreadsheet className="size-4 shrink-0 text-icon-secondary" />
               <span className="min-w-0 flex-1 truncate text-text-primary">{file.name}</span>
               <span className="shrink-0 font-mono type-label-01 tabular-nums text-text-helper">
-                {fileSizeKb(file.size)}
+                {t("import.file.sizeKb", { size: formatNumber(Math.round(file.size / 1024)) })}
               </span>
               {!importing && (
                 <button
                   type="button"
-                  aria-label="Remove file"
+                  aria-label={t("import.aria.removeFile")}
                   onClick={resetForm}
                   className="shrink-0 rounded-sm p-1 text-text-helper transition-colors hover:bg-layer-selected hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                 >
@@ -311,21 +322,19 @@ export default function ImportPage() {
           {/* What gets read */}
           <div className="rounded-md border border-border-subtle bg-layer px-4 py-3">
             <p className="type-label-01 font-medium text-text-secondary">
-              Columns read from the sheet
+              {t("import.columns.title")}
             </p>
             <div className="mt-2 flex flex-wrap gap-1.5">
-              {READ_COLUMNS.map((col) => (
+              {READ_COLUMN_KEYS.map((col) => (
                 <span
                   key={col}
                   className="rounded-sm bg-layer-selected px-2 py-0.5 type-label-01 text-text-primary"
                 >
-                  {col}
+                  {t(col)}
                 </span>
               ))}
             </div>
-            <p className="mt-2 type-label-01 text-text-helper">
-              Other columns are ignored. Re-running is safe — existing claims are skipped.
-            </p>
+            <p className="mt-2 type-label-01 text-text-helper">{t("import.columns.note")}</p>
           </div>
 
           {/* Progress */}
@@ -334,9 +343,7 @@ export default function ImportPage() {
               <div className="h-1.5 overflow-hidden rounded-full bg-layer">
                 <div className="h-full w-1/2 animate-pulse rounded-full bg-interactive" />
               </div>
-              <p className="type-label-01 text-text-secondary">
-                Reading the sheet and creating records…
-              </p>
+              <p className="type-label-01 text-text-secondary">{t("import.progress.label")}</p>
             </div>
           )}
         </div>
@@ -354,6 +361,7 @@ function Stat({
   value: number;
   tone?: "success" | "warning" | "error";
 }) {
+  const { formatNumber } = useFormat();
   const toneClass =
     tone === "success"
       ? "text-support-success"
@@ -363,7 +371,9 @@ function Stat({
   return (
     <div className="rounded-md border border-border-subtle bg-card px-4 py-3">
       <p className="type-label-01 text-text-secondary">{label}</p>
-      <p className={cn("type-heading-03 font-semibold tabular-nums", toneClass)}>{value}</p>
+      <p className={cn("type-heading-03 font-semibold tabular-nums", toneClass)}>
+        {formatNumber(value)}
+      </p>
     </div>
   );
 }

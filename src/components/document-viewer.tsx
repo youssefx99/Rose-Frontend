@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Download, ExternalLink, FileText } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n/provider";
 import { api } from "@/lib/api";
 
 export interface DocumentFile {
@@ -65,6 +66,7 @@ export function DocumentViewer({
   fileMimeType,
   file,
 }: DocumentViewerProps) {
+  const t = useT();
   const isPdf = (fileMimeType ?? "application/pdf") === "application/pdf";
 
   return (
@@ -83,24 +85,26 @@ export function DocumentViewer({
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 type-label-01 text-text-secondary transition-colors duration-[var(--dur-fast-02)] ease-[var(--ease-standard)] hover:text-text-primary"
           >
-            <ExternalLink className="size-3" />
-            Open in new tab
+            <ExternalLink className="size-3 rtl:-scale-x-100" />
+            {t("ui.documentViewer.openInNewTab")}
           </a>
         )}
       </div>
 
       {file.loading ? (
         <div className="flex flex-1 items-center justify-center">
-          <p className="type-body-compact-01 text-text-secondary">Loading document…</p>
+          <p className="type-body-compact-01 text-text-secondary">
+            {t("ui.documentViewer.loading")}
+          </p>
         </div>
       ) : file.error || !file.url ? (
         <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
           <FileText className="mb-3 size-10 text-text-helper" />
           <p className="type-body-compact-01 font-medium text-text-primary">
-            Couldn&apos;t load the document
+            {t("ui.documentViewer.loadFailedTitle")}
           </p>
           <p className="mt-1 type-label-01 text-text-secondary">
-            The file may be unavailable or you may not have access.
+            {t("ui.documentViewer.loadFailedHint")}
           </p>
         </div>
       ) : isPdf ? (
@@ -114,12 +118,12 @@ export function DocumentViewer({
           <FileText className="mb-3 size-10 text-text-helper" />
           <p className="mb-1 type-body-compact-01 font-medium text-text-primary">{fileName}</p>
           <p className="mb-4 type-label-01 text-text-secondary">
-            This file type cannot be previewed in the browser.
+            {t("ui.documentViewer.noPreview")}
           </p>
           <Button asChild variant="secondary">
             <a href={file.url} download={fileName}>
               <Download className="size-4" />
-              Download file
+              {t("ui.documentViewer.downloadFile")}
             </a>
           </Button>
         </div>

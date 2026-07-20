@@ -9,13 +9,16 @@ import { isAxiosError } from "axios";
 import { toast } from "sonner";
 
 import { useAuth } from "@/lib/auth-context";
+import { useT } from "@/lib/i18n/provider";
+import { LanguageSwitcher } from "@/lib/i18n/language-switcher";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+// Module scope cannot call useT, so messages carry keys resolved by t() at render.
 const loginSchema = z.object({
-  email: z.string().email({ message: "Enter a valid email." }),
-  password: z.string().min(1, { message: "Password is required." }),
+  email: z.string().email({ message: "auth.form.emailInvalid" }),
+  password: z.string().min(1, { message: "auth.form.passwordRequired" }),
 });
 
 type LoginValues = z.infer<typeof loginSchema>;
@@ -23,6 +26,7 @@ type LoginValues = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const { login, user, isLoading } = useAuth();
   const router = useRouter();
+  const t = useT();
 
   const {
     register,
@@ -45,8 +49,8 @@ export default function LoginPage() {
     } catch (error) {
       const message =
         isAxiosError(error) && error.response?.status === 401
-          ? "Invalid email or password."
-          : "Something went wrong. Please try again.";
+          ? t("auth.toast.invalidCredentials")
+          : t("errors.unexpected");
       toast.error(message);
     }
   });
@@ -69,7 +73,7 @@ export default function LoginPage() {
         {/* rose radial glow bottom-left */}
         <div
           aria-hidden
-          className="pointer-events-none absolute -bottom-32 -left-32 size-[480px] rounded-full"
+          className="pointer-events-none absolute -bottom-32 -start-32 size-[480px] rounded-full"
           style={{
             background:
               "radial-gradient(circle, rgba(244,63,94,0.18) 0%, transparent 65%)",
@@ -79,7 +83,7 @@ export default function LoginPage() {
         {/* top: logo */}
         <div className="relative flex items-center gap-3">
           <span className="type-heading-03 font-semibold text-[#f4f4f4] tracking-tight">
-            RoseSystem
+            {t("common.appName")}
           </span>
         </div>
 
@@ -88,22 +92,22 @@ export default function LoginPage() {
 
 
           <h1 className="type-heading-05 text-[#f4f4f4] leading-tight">
-            Your billing.<br />
-            <span className="text-interactive">Fully in control.</span>
+            {t("auth.hero.headline")}<br />
+            <span className="text-interactive">{t("auth.hero.headlineAccent")}</span>
           </h1>
 
           <p className="type-body-01 text-[#a8a8a8] max-w-xs leading-relaxed">
-            Track EOBs, manage claims, and get paid faster — all from one clean workspace.
+            {t("auth.hero.subtitle")}
           </p>
 
           {/* stat row */}
           <div className="flex items-center gap-6 pt-2">
             {[
-              { value: "EOB", label: "Extraction" },
-              { value: "AR", label: "Tracking" },
-              { value: "Multi", label: "Payer" },
-            ].map(({ value, label }) => (
-              <div key={label} className="space-y-0.5">
+              { id: "extraction", value: t("auth.stat.extractionValue"), label: t("auth.stat.extractionLabel") },
+              { id: "tracking", value: t("auth.stat.trackingValue"), label: t("auth.stat.trackingLabel") },
+              { id: "payer", value: t("auth.stat.payerValue"), label: t("auth.stat.payerLabel") },
+            ].map(({ id, value, label }) => (
+              <div key={id} className="space-y-0.5">
                 <p className="type-heading-compact-02 text-[#f4f4f4]">{value}</p>
                 <p className="type-label-01 text-[#6f6f6f]">{label}</p>
               </div>
@@ -113,7 +117,7 @@ export default function LoginPage() {
 
         {/* bottom: footer note */}
         <p className="relative type-label-01 text-[#525252]">
-          Secure · Private · Built for billing teams
+          {t("auth.hero.footer")}
         </p>
       </div>
 
@@ -125,16 +129,16 @@ export default function LoginPage() {
             <span className="text-sm font-semibold text-white leading-none">R</span>
           </div>
           <span className="type-heading-03 font-semibold text-text-primary tracking-tight">
-            RoseSystem
+            {t("common.appName")}
           </span>
         </div>
 
         <div className="w-full max-w-sm space-y-8">
           {/* heading */}
           <div className="space-y-1">
-            <h2 className="type-heading-04 text-text-primary">Welcome back</h2>
+            <h2 className="type-heading-04 text-text-primary">{t("auth.form.title")}</h2>
             <p className="type-body-01 text-text-secondary">
-              Sign in to your account to continue.
+              {t("auth.form.subtitle")}
             </p>
           </div>
 
@@ -142,26 +146,26 @@ export default function LoginPage() {
           <form onSubmit={onSubmit} className="space-y-5" noValidate>
             <div className="space-y-1.5">
               <Label htmlFor="email" className="type-label-02 text-text-primary">
-                Email address
+                {t("auth.form.email")}
               </Label>
               <Input
                 id="email"
                 type="email"
                 autoComplete="email"
-                placeholder="you@company.com"
+                placeholder={t("auth.form.emailPlaceholder")}
                 {...register("email")}
                 className="h-11"
               />
-              {errors.email && (
+              {errors.email?.message && (
                 <p className="type-label-01 text-support-error">
-                  {errors.email.message}
+                  {t(errors.email.message)}
                 </p>
               )}
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="password" className="type-label-02 text-text-primary">
-                Password
+                {t("auth.form.password")}
               </Label>
               <Input
                 id="password"
@@ -171,9 +175,9 @@ export default function LoginPage() {
                 {...register("password")}
                 className="h-11"
               />
-              {errors.password && (
+              {errors.password?.message && (
                 <p className="type-label-01 text-support-error">
-                  {errors.password.message}
+                  {t(errors.password.message)}
                 </p>
               )}
             </div>
@@ -183,20 +187,25 @@ export default function LoginPage() {
               className="w-full h-11 type-body-compact-01 font-medium"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Signing in…" : "Sign in"}
+              {isSubmitting ? t("auth.form.signingIn") : t("auth.form.signIn")}
             </Button>
           </form>
 
           {/* divider */}
           <div className="flex items-center gap-3">
             <div className="h-px flex-1 bg-border-subtle" />
-            <span className="type-label-01 text-text-helper">RoseSystem</span>
+            <span className="type-label-01 text-text-helper">{t("common.appName")}</span>
             <div className="h-px flex-1 bg-border-subtle" />
           </div>
 
           <p className="text-center type-label-01 text-text-helper">
-            Contact your administrator to get access.
+            {t("auth.form.contactAdministrator")}
           </p>
+
+          {/* language */}
+          <div className="flex justify-center">
+            <LanguageSwitcher />
+          </div>
         </div>
       </div>
     </div>

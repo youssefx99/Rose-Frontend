@@ -60,7 +60,7 @@ export function Legend({
   );
 }
 
-export function Empty({ label = "No data yet" }: { label?: string }) {
+export function Empty({ label }: { label: string }) {
   return (
     <p className="py-8 text-center type-body-01 text-text-secondary">{label}</p>
   );

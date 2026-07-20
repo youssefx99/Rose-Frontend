@@ -1,35 +1,21 @@
 import { api } from "./api";
 import type { PaginatedResult } from "./payers";
 
-export type ClaimStatus =
-  | "OPEN"
-  | "PENDING"
-  | "PAID"
-  | "DEDUCTIBLE"
-  | "DENIED"
-  | "APPEALED"
-  | "WRITTEN_OFF";
+export type ClaimStatus = "OPEN" | "PARTIALLY_PAID" | "PAID";
 
 export const CLAIM_STATUSES: ClaimStatus[] = [
   "OPEN",
-  "PENDING",
+  "PARTIALLY_PAID",
   "PAID",
-  "DEDUCTIBLE",
-  "DENIED",
-  "APPEALED",
-  "WRITTEN_OFF",
 ];
 
-// Mirror of the backend state machine — used to render only valid actions.
-export const CLAIM_STATUS_TRANSITIONS: Record<ClaimStatus, ClaimStatus[]> = {
-  OPEN: ["PENDING"],
-  PENDING: ["PAID", "DENIED", "DEDUCTIBLE", "WRITTEN_OFF"],
-  DENIED: ["APPEALED", "WRITTEN_OFF"],
-  APPEALED: ["PAID", "DENIED", "WRITTEN_OFF"],
-  DEDUCTIBLE: ["PAID", "WRITTEN_OFF"],
-  PAID: [],
-  WRITTEN_OFF: [],
-};
+// Mirror of the backend state machine — any status may be set from any other.
+export const CLAIM_STATUS_TRANSITIONS = Object.fromEntries(
+  CLAIM_STATUSES.map((from) => [
+    from,
+    CLAIM_STATUSES.filter((to) => to !== from),
+  ]),
+) as Record<ClaimStatus, ClaimStatus[]>;
 
 interface ClientRef {
   id: string;
@@ -61,6 +47,11 @@ export interface ClaimPaymentLine {
   billedAmount: string;
   allowedAmount: string;
   paidAmount: string;
+  discountAmount: string;
+  deductibleAmount: string;
+  copayAmount: string;
+  coinsuranceAmount: string;
+  patientResponsibility: string;
   remittance: {
     checkNumber: string | null;
     checkDate: string;
@@ -85,10 +76,18 @@ export interface Claim {
   chargeAmount: string;
   payerPaidAmount: string;
   payPct: string | null;
+  discountAmount: string;
+  deductibleAmount: string;
+  copayAmount: string;
+  coinsuranceAmount: string;
+  patientResponsibility: string;
+  beforeNegotiationAmount: string;
+  afterNegotiationAmount: string;
   negoPct: string;
   allowedAmount: string;
   balanceNeeded: string;
   negotiationDate: string | null;
+  negotiationNote: string | null;
   inBankAmount: string;
   bankDate: string | null;
   notes: string | null;
@@ -123,8 +122,10 @@ export interface ClaimInput {
   chargeAmount: number;
   payerPaidAmount?: number;
   payPct?: number;
-  negoPct?: number;
+  beforeNegotiationAmount?: number;
+  afterNegotiationAmount?: number;
   negotiationDate?: string;
+  negotiationNote?: string;
   inBankAmount?: number;
   bankDate?: string;
   notes?: string;
@@ -210,26 +211,15 @@ export async function addClaimNote(
   return data;
 }
 
-// --- formatting helpers ---
+/** Collected or closed — no longer chased. Mirrors the backend's exclude set. */
+export const CLOSED_STATUSES: ClaimStatus[] = ["PAID"];
 
-export function formatMoney(value: string | number | null | undefined): string {
-  const n = Number(value ?? 0);
-  return n.toLocaleString(undefined, {
-    style: "currency",
-    currency: "USD",
-  });
-}
-
-export function formatDate(value: string | null | undefined): string {
-  return value ? new Date(value).toLocaleDateString() : "—";
-}
-
-const DESTRUCTIVE: ClaimStatus[] = ["DENIED", "WRITTEN_OFF"];
-
-export function statusVariant(
-  status: ClaimStatus,
-): "default" | "secondary" | "destructive" {
-  if (status === "PAID") return "default";
-  if (DESTRUCTIVE.includes(status)) return "destructive";
-  return "secondary";
+/**
+ * What a claim still owes us: the charge ABOVE the negotiated settlement is
+ * written off, never chased, so a deal shrinks the balance the moment it is
+ * agreed. A closed claim owes nothing at all.
+ */
+export function claimOutstanding(claim: Claim): number {
+  if (CLOSED_STATUSES.includes(claim.status)) return 0;
+  return Number(claim.chargeAmount) - Number(claim.allowedAmount);
 }

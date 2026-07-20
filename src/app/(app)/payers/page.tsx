@@ -18,6 +18,7 @@ import {
 import { CascadeDeleteDialog } from "@/components/ui/cascade-delete-dialog";
 import { BulkDeleteDialog } from "@/components/ui/bulk-delete-dialog";
 import { useAuth } from "@/lib/auth-context";
+import { useT } from "@/lib/i18n/provider";
 import { useRowSelection } from "@/lib/use-row-selection";
 import { deactivatePayer, listPayers, type Payer } from "@/lib/payers";
 import { PayerFormDialog } from "./payer-form-dialog";
@@ -25,6 +26,7 @@ import { useRouter } from "next/navigation";
 
 export default function PayersPage() {
   const { can } = useAuth();
+  const t = useT("payers");
   const router = useRouter();
   const [payers, setPayers] = useState<Payer[]>([]);
   const [search, setSearch] = useState("");
@@ -43,11 +45,11 @@ export default function PayersPage() {
       const { data } = await listPayers(term ? { search: term } : undefined);
       setPayers(data);
     } catch {
-      toast.error("Failed to load payers.");
+      toast.error(t("payers.toast.loadListFailed"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const timer = setTimeout(() => load(search), 300);
@@ -66,18 +68,15 @@ export default function PayersPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Payers"
-        description="Insurance companies and payer entities."
-      >
+      <PageHeader title={t("title")} description={t("description")}>
         {can("payers.create") && (
-          <Button onClick={handleNew}>New Payer</Button>
+          <Button onClick={handleNew}>{t("newPayer")}</Button>
         )}
       </PageHeader>
 
       <Input
-        placeholder="Search payers…"
-        aria-label="Search payers"
+        placeholder={t("searchPlaceholder")}
+        aria-label={t("searchLabel")}
         value={search}
         onChange={(event) => setSearch(event.target.value)}
         className="max-w-sm"
@@ -86,21 +85,21 @@ export default function PayersPage() {
       {canDelete && selection.selectedIds.size > 0 && (
         <div className="flex flex-wrap items-center gap-3 rounded-md border border-interactive bg-highlight px-4 py-2.5">
           <span className="type-body-compact-01 font-medium text-text-primary">
-            {selection.selectedIds.size} selected
+            {t("common.selectedCount", { count: selection.selectedIds.size })}
           </span>
           <Button
             variant="destructive"
             size="sm"
             onClick={() => setBulkOpen(true)}
           >
-            <Trash2 className="size-3.5" /> Delete
+            <Trash2 className="size-3.5" /> {t("common.delete")}
           </Button>
           <button
             type="button"
             onClick={selection.clear}
-            className="ml-auto type-label-01 text-text-secondary hover:text-text-primary"
+            className="ms-auto type-label-01 text-text-secondary hover:text-text-primary"
           >
-            Clear selection
+            {t("clearSelection")}
           </button>
         </div>
       )}
@@ -110,27 +109,27 @@ export default function PayersPage() {
           <TableHeader>
             <TableRow>
               {canDelete && (
-                <TableHead className="w-10 pr-0">
+                <TableHead className="w-10 pe-0">
                   <input
                     type="checkbox"
-                    aria-label="Select all payers"
+                    aria-label={t("selectAllLabel")}
                     checked={selection.allSelected}
                     onChange={selection.toggleAll}
                     className="size-4 rounded-sm border-border-strong accent-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                   />
                 </TableHead>
               )}
-              <TableHead>Name</TableHead>
-              <TableHead>Short Code</TableHead>
-              <TableHead>State</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t("common.name")}</TableHead>
+              <TableHead>{t("payers.field.shortCode")}</TableHead>
+              <TableHead>{t("payers.field.state")}</TableHead>
+              <TableHead className="text-end">{t("common.actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               [...Array(5)].map((_, i) => (
                 <TableRow key={i}>
-                  {canDelete && <TableCell className="w-10 pr-0" />}
+                  {canDelete && <TableCell className="w-10 pe-0" />}
                   <TableCell>
                     <div className="h-4 w-40 animate-pulse rounded bg-skeleton-background" />
                   </TableCell>
@@ -141,7 +140,7 @@ export default function PayersPage() {
                     <div className="h-4 w-10 animate-pulse rounded bg-skeleton-background" />
                   </TableCell>
                   <TableCell>
-                    <div className="ml-auto h-4 w-16 animate-pulse rounded bg-skeleton-background" />
+                    <div className="ms-auto h-4 w-16 animate-pulse rounded bg-skeleton-background" />
                   </TableCell>
                 </TableRow>
               ))
@@ -155,17 +154,15 @@ export default function PayersPage() {
                     />
                     <div className="space-y-1">
                       <p className="type-heading-02 text-text-primary">
-                        No payers found
+                        {t("payers.empty.title")}
                       </p>
                       <p className="type-body-01 text-text-secondary">
-                        {search
-                          ? "Try a different search term."
-                          : "Add your first payer to get started."}
+                        {search ? t("payers.empty.searchHint") : t("payers.empty.hint")}
                       </p>
                     </div>
                     {can("payers.create") && !search && (
                       <Button onClick={handleNew} className="mt-2">
-                        New Payer
+                        {t("newPayer")}
                       </Button>
                     )}
                   </div>
@@ -180,10 +177,10 @@ export default function PayersPage() {
                   data-state={selection.selectedIds.has(payer.id) ? "selected" : undefined}
                 >
                   {canDelete && (
-                    <TableCell className="w-10 pr-0" onClick={(e) => e.stopPropagation()}>
+                    <TableCell className="w-10 pe-0" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
-                        aria-label={`Select ${payer.name}`}
+                        aria-label={t("selectRowLabel", { name: payer.name })}
                         checked={selection.selectedIds.has(payer.id)}
                         onChange={() => selection.toggleOne(payer.id)}
                         className="size-4 rounded-sm border-border-strong accent-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
@@ -197,9 +194,9 @@ export default function PayersPage() {
                     {payer.shortCode}
                   </TableCell>
                   <TableCell className="text-text-secondary">
-                    {payer.state ?? "—"}
+                    {payer.state ?? t("common.emDash")}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-end">
                     <div
                       className="flex items-center justify-end gap-1"
                       onClick={(e) => e.stopPropagation()}
@@ -208,7 +205,7 @@ export default function PayersPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          aria-label={`Edit ${payer.name}`}
+                          aria-label={t("editRowLabel", { name: payer.name })}
                           onClick={() => handleEdit(payer)}
                         >
                           <Pencil className="size-4" />
@@ -218,7 +215,7 @@ export default function PayersPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          aria-label={`Delete ${payer.name}`}
+                          aria-label={t("deleteRowLabel", { name: payer.name })}
                           className="text-support-error hover:bg-support-error-bg hover:text-support-error"
                           onClick={() => setDeleting(payer)}
                         >
@@ -246,7 +243,7 @@ export default function PayersPage() {
         onOpenChange={(open) => !open && setDeleting(null)}
         type="payer"
         id={deleting?.id ?? null}
-        title="Delete payer"
+        title={t("deleteDialogTitle")}
         onDeactivate={deleting ? () => deactivatePayer(deleting.id) : undefined}
         onDone={() => load(search)}
       />

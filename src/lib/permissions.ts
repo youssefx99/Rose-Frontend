@@ -1,4 +1,5 @@
 import { api } from "./api";
+import type { TFunction } from "./i18n/translate";
 import type { UserRole } from "./users";
 
 /** A single permission `"<module>.<action>"` with display metadata. */
@@ -14,6 +15,13 @@ export interface PermissionModuleGroup {
   module: string;
   label: string;
   permissions: PermissionDefinition[];
+}
+
+// Catalog labels come from the API in English. Fall back to them so a permission
+// added to the backend later renders its server label instead of a raw key.
+export function catalogText(t: TFunction, key: string, fallback: string): string {
+  const value = t(key);
+  return value === key ? fallback : value;
 }
 
 /** One row of the Role × Permission matrix. */

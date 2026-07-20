@@ -8,13 +8,15 @@ import { Button } from "@/components/ui/button";
 import { SlideOver } from "@/components/ui/slide-over";
 import { cn } from "@/lib/utils";
 import {
+  catalogText,
   getCatalog,
   getRoleMatrix,
   getUserPermissions,
   setUserPermissions,
   type PermissionModuleGroup,
 } from "@/lib/permissions";
-import { roleLabel, type User, type UserRole } from "@/lib/users";
+import { roleLabelKey, type User, type UserRole } from "@/lib/users";
+import { useT } from "@/lib/i18n/provider";
 
 interface UserPermissionsDialogProps {
   open: boolean;
@@ -25,10 +27,10 @@ interface UserPermissionsDialogProps {
 
 type OverrideState = "allow" | "inherit" | "deny";
 
-const OPTIONS: { value: OverrideState; label: string }[] = [
-  { value: "allow", label: "Allow" },
-  { value: "inherit", label: "Inherit" },
-  { value: "deny", label: "Deny" },
+const OPTIONS: { value: OverrideState; labelKey: string }[] = [
+  { value: "allow", labelKey: "users.override.allow" },
+  { value: "inherit", labelKey: "users.override.inherit" },
+  { value: "deny", labelKey: "users.override.deny" },
 ];
 
 export function UserPermissionsDialog({
@@ -37,6 +39,7 @@ export function UserPermissionsDialog({
   user,
   onSaved,
 }: UserPermissionsDialogProps) {
+  const t = useT();
   const [groups, setGroups] = useState<PermissionModuleGroup[]>([]);
   const [baseline, setBaseline] = useState<Set<string>>(new Set());
   const [state, setState] = useState<Record<string, OverrideState>>({});
@@ -72,11 +75,11 @@ export function UserPermissionsDialog({
       }
       setState(next);
     } catch {
-      toast.error("Failed to load permissions.");
+      toast.error(t("users.toast.permissionsLoadFailed"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (open && user) load(user);
@@ -96,14 +99,14 @@ export function UserPermissionsDialog({
       const allow = Object.keys(state).filter((k) => state[k] === "allow");
       const deny = Object.keys(state).filter((k) => state[k] === "deny");
       await setUserPermissions(user.id, allow, deny);
-      toast.success("Permissions updated.");
+      toast.success(t("users.toast.permissionsUpdated"));
       onOpenChange(false);
       onSaved?.();
     } catch (error) {
       const message =
         isAxiosError(error) && typeof error.response?.data?.message === "string"
           ? error.response.data.message
-          : "Failed to update permissions.";
+          : t("users.toast.permissionsUpdateFailed");
       toast.error(message);
     } finally {
       setSaving(false);
@@ -115,10 +118,10 @@ export function UserPermissionsDialog({
       open={open}
       onOpenChange={onOpenChange}
       size="wide"
-      title="Permissions"
+      title={t("users.permissions.title")}
       description={
         user
-          ? `${user.firstName} ${user.lastName} · ${roleLabel(user.role)}`
+          ? `${user.firstName} ${user.lastName} · ${t(roleLabelKey(user.role))}`
           : ""
       }
       footer={
@@ -128,41 +131,44 @@ export function UserPermissionsDialog({
             variant="outline"
             onClick={() => onOpenChange(false)}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             type="button"
             onClick={save}
             disabled={saving || loading || isSuperAdmin}
           >
-            {saving ? "Saving…" : "Save Overrides"}
+            {saving ? t("common.saving") : t("users.permissions.saveOverrides")}
           </Button>
         </>
       }
     >
       {loading ? (
-        <p className="type-body-01 text-text-secondary">Loading…</p>
+        <p className="type-body-01 text-text-secondary">{t("common.loading")}</p>
       ) : isSuperAdmin ? (
         <p className="rounded-md bg-layer p-4 type-body-01 text-text-secondary">
-          This user is a Super Admin with full, unrestricted access. Per-user
-          overrides do not apply.
+          {t("users.permissions.superAdminNotice", {
+            role: t("users.role.SUPER_ADMIN"),
+          })}
         </p>
       ) : (
         <div className="space-y-6">
           <p className="type-label-01 leading-relaxed text-text-secondary">
-            Each permission defaults to the{" "}
-            <span className="font-medium text-text-primary">
-              {roleLabel(role)}
-            </span>{" "}
-            role. Set <span className="font-medium">Allow</span> or{" "}
-            <span className="font-medium">Deny</span> to override it for this
-            user only.
+            {t("users.permissions.hintDefault", { role: t(roleLabelKey(role)) })}{" "}
+            {t("users.permissions.hintOverride", {
+              allow: t("users.override.allow"),
+              deny: t("users.override.deny"),
+            })}
           </p>
 
           {groups.map((group) => (
             <div key={group.module} className="space-y-2">
               <h3 className="type-heading-compact-01 text-text-secondary">
-                {group.label}
+                {catalogText(
+                  t,
+                  `permissions.module.${group.module}.label`,
+                  group.label,
+                )}
               </h3>
               <div className="divide-y divide-border-subtle overflow-hidden rounded-md border border-border-subtle">
                 {group.permissions.map((p) => {
@@ -176,20 +182,26 @@ export function UserPermissionsDialog({
                     >
                       <div className="min-w-0">
                         <p className="type-body-compact-01 font-medium text-text-primary">
-                          {p.label}
+                          {catalogText(t, `permissions.${p.key}.label`, p.label)}
                           <span
                             className={cn(
-                              "ml-2 type-label-01",
+                              "ms-2 type-label-01",
                               effective
                                 ? "text-support-success"
                                 : "text-text-helper",
                             )}
                           >
-                            {effective ? "Granted" : "Not granted"}
+                            {effective
+                              ? t("users.permissions.granted")
+                              : t("users.permissions.notGranted")}
                           </span>
                         </p>
                         <p className="truncate type-label-01 text-text-secondary">
-                          {p.description}
+                          {catalogText(
+                            t,
+                            `permissions.${p.key}.description`,
+                            p.description,
+                          )}
                         </p>
                       </div>
                       <div className="flex shrink-0 rounded-md border border-border-subtle p-0.5">
@@ -222,7 +234,7 @@ export function UserPermissionsDialog({
                                   : "text-text-secondary hover:bg-layer",
                               )}
                             >
-                              {opt.label}
+                              {t(opt.labelKey)}
                               {inheritHint}
                             </button>
                           );

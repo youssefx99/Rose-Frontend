@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 
+import { useLocale } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 
 interface CollapsibleSectionProps {
@@ -26,6 +27,7 @@ export function CollapsibleSection({
   defaultOpen = true,
   children,
 }: CollapsibleSectionProps) {
+  const { isRtl } = useLocale();
   const storageKey = `rose-dash-${id}`;
   const [open, setOpen] = useState(defaultOpen);
 
@@ -52,12 +54,12 @@ export function CollapsibleSection({
         <ChevronDown
           className={cn(
             "size-4 transition-transform",
-            open ? "" : "-rotate-90",
+            open ? "" : isRtl ? "rotate-90" : "-rotate-90",
           )}
         />
         <span>{title}</span>
         {summary && (
-          <span className="ml-auto font-mono text-text-helper normal-case tracking-normal">
+          <span className="ms-auto font-mono text-text-helper normal-case tracking-normal">
             {summary}
           </span>
         )}

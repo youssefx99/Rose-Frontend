@@ -2,22 +2,22 @@ import { api } from "./api";
 
 export type UserRole = "SUPER_ADMIN" | "ADMIN" | "ACCOUNTANT" | "VIEWER";
 
-export const USER_ROLES: { value: UserRole; label: string }[] = [
-  { value: "ADMIN", label: "Admin" },
-  { value: "ACCOUNTANT", label: "Accountant" },
-  { value: "VIEWER", label: "Viewer" },
-  { value: "SUPER_ADMIN", label: "Super Admin" },
+export const USER_ROLES: { value: UserRole; labelKey: string }[] = [
+  { value: "ADMIN", labelKey: "users.role.ADMIN" },
+  { value: "ACCOUNTANT", labelKey: "users.role.ACCOUNTANT" },
+  { value: "VIEWER", labelKey: "users.role.VIEWER" },
+  { value: "SUPER_ADMIN", labelKey: "users.role.SUPER_ADMIN" },
 ];
 
-const ROLE_LABELS: Record<UserRole, string> = {
-  SUPER_ADMIN: "Super Admin",
-  ADMIN: "Admin",
-  ACCOUNTANT: "Accountant",
-  VIEWER: "Viewer",
+const ROLE_LABEL_KEYS: Record<UserRole, string> = {
+  SUPER_ADMIN: "users.role.SUPER_ADMIN",
+  ADMIN: "users.role.ADMIN",
+  ACCOUNTANT: "users.role.ACCOUNTANT",
+  VIEWER: "users.role.VIEWER",
 };
 
-export function roleLabel(role: string): string {
-  return ROLE_LABELS[role as UserRole] ?? role;
+export function roleLabelKey(role: string): string {
+  return ROLE_LABEL_KEYS[role as UserRole] ?? role;
 }
 
 // Role chip colors — rose marks the top role (sparing accent use).
@@ -33,17 +33,15 @@ export function roleColor(role: string): string {
 }
 
 // Plain-language summary of what each role can do (shown in the editor).
-const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
-  SUPER_ADMIN:
-    "Full access across the organization, including user management.",
-  ADMIN: "Full data access and user management. Can delete remittances.",
-  ACCOUNTANT:
-    "Create and edit clients, payers, and claims, and approve reviews. No user management; cannot delete remittances.",
-  VIEWER: "Read-only access to all data. Cannot make any changes.",
+const ROLE_DESCRIPTION_KEYS: Record<UserRole, string> = {
+  SUPER_ADMIN: "users.roleDescription.SUPER_ADMIN",
+  ADMIN: "users.roleDescription.ADMIN",
+  ACCOUNTANT: "users.roleDescription.ACCOUNTANT",
+  VIEWER: "users.roleDescription.VIEWER",
 };
 
-export function roleDescription(role: string): string {
-  return ROLE_DESCRIPTIONS[role as UserRole] ?? "";
+export function roleDescriptionKey(role: string): string {
+  return ROLE_DESCRIPTION_KEYS[role as UserRole] ?? "";
 }
 
 export interface User {

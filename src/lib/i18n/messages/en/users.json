@@ -1,0 +1,68 @@
+{
+  "title": "Users",
+  "description": "Manage who can access RoseSystem and what they can do.",
+  "newUser": "New user",
+  "noAccess": "You don't have access to user management.",
+  "you": "You",
+  "neverSignedIn": "Never",
+
+  "table.email": "Email",
+  "table.role": "Role",
+  "table.lastActive": "Last Active",
+
+  "empty.title": "No users yet",
+  "empty.description": "Add a teammate to give them access to RoseSystem.",
+
+  "role.SUPER_ADMIN": "Super Admin",
+  "role.ADMIN": "Admin",
+  "role.ACCOUNTANT": "Accountant",
+  "role.VIEWER": "Viewer",
+
+  "roleDescription.SUPER_ADMIN": "Full access across the organization, including user management.",
+  "roleDescription.ADMIN": "Full data access and user management. Can delete remittances.",
+  "roleDescription.ACCOUNTANT": "Create and edit clients, payers, and claims, and approve reviews. No user management; cannot delete remittances.",
+  "roleDescription.VIEWER": "Read-only access to all data. Cannot make any changes.",
+
+  "form.title": "New User",
+  "form.description": "Invite a teammate and assign their role.",
+  "form.firstName": "First Name",
+  "form.lastName": "Last Name",
+  "form.email": "Email",
+  "form.role": "Role",
+  "form.password": "Temporary Password",
+  "form.passwordHint": "Min 8 characters with upper, lower, and a number. Share it securely — the user can change it later.",
+  "form.creating": "Creating…",
+  "form.submit": "Create User",
+  "form.firstNameRequired": "First name is required.",
+  "form.lastNameRequired": "Last name is required.",
+  "form.emailInvalid": "Enter a valid email.",
+  "form.passwordTooShort": "At least 8 characters.",
+  "form.passwordWeak": "Needs an uppercase letter, a lowercase letter, and a number.",
+
+  "edit.title": "Edit User",
+  "edit.statusHint": "Disabled users are signed out within 15 minutes and cannot sign in.",
+
+  "permissions.title": "Permissions",
+  "permissions.superAdminNotice": "This user is a {role} with full, unrestricted access. Per-user overrides do not apply.",
+  "permissions.hintDefault": "Each permission defaults to the {role} role.",
+  "permissions.hintOverride": "Set {allow} or {deny} to override it for this user only.",
+  "permissions.granted": "Granted",
+  "permissions.notGranted": "Not granted",
+  "permissions.saveOverrides": "Save Overrides",
+
+  "override.allow": "Allow",
+  "override.inherit": "Inherit",
+  "override.deny": "Deny",
+
+  "toast.loadFailed": "Failed to load users.",
+  "toast.created": "User created.",
+  "toast.createFailed": "Failed to create user.",
+  "toast.updated": "User updated.",
+  "toast.updateFailed": "Failed to update user.",
+  "toast.permissionsLoadFailed": "Failed to load permissions.",
+  "toast.permissionsUpdated": "Permissions updated.",
+  "toast.permissionsUpdateFailed": "Failed to update permissions.",
+
+  "aria.editPermissions": "Edit permissions for {name}",
+  "aria.editUser": "Edit {name}"
+}

@@ -1,0 +1,8 @@
+{
+  "impactGroup.claim": "Claims",
+  "impactGroup.paymentLine": "Remittance payment lines",
+  "impactGroup.note": "AR notes",
+  "impactGroup.reviewItem": "Review-queue links",
+  "impactGroup.reviewItems": "Review queue items",
+  "impactGroup.remittance": "Deposits / remittances"
+}

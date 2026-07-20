@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SlideOver } from "@/components/ui/slide-over";
 import { ClaimForm } from "./claim-form";
+import { useT } from "@/lib/i18n/provider";
 import type { Claim } from "@/lib/claims";
 
 const FORM_ID = "claim-form";
@@ -24,6 +25,7 @@ export function ClaimFormPanel({
   claim,
   onSaved,
 }: ClaimFormPanelProps) {
+  const t = useT();
   const [submitting, setSubmitting] = useState(false);
 
   return (
@@ -31,11 +33,13 @@ export function ClaimFormPanel({
       open={open}
       onOpenChange={onOpenChange}
       size="wide"
-      title={mode === "create" ? "New Claim" : "Edit Claim"}
+      title={t(
+        mode === "create" ? "claims.action.newClaim" : "claims.action.editClaim",
+      )}
       description={
         mode === "edit"
           ? claim?.claimReference
-          : "Create a claim for a client and payer."
+          : t("claims.form.panelDescription")
       }
       footer={
         <>
@@ -44,14 +48,14 @@ export function ClaimFormPanel({
             variant="outline"
             onClick={() => onOpenChange(false)}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button type="submit" form={FORM_ID} disabled={submitting}>
             {submitting
-              ? "Saving…"
+              ? t("common.saving")
               : mode === "create"
-                ? "Create Claim"
-                : "Save Changes"}
+                ? t("claims.action.createClaim")
+                : t("common.saveChanges")}
           </Button>
         </>
       }

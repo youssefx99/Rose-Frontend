@@ -7,6 +7,7 @@ import { TriangleAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { SlideOver } from "@/components/ui/slide-over";
+import { useT } from "@/lib/i18n/provider";
 import { cascadeDelete, type DeletableType } from "@/lib/deletion";
 
 interface BulkDeleteDialogProps {
@@ -15,14 +16,11 @@ interface BulkDeleteDialogProps {
   type: DeletableType;
   /** Ids of the selected records to delete. */
   ids: string[];
-  /** Singular noun, e.g. "client" — pluralized with a trailing "s". */
+  /** Entity key, e.g. "client" — resolves the counted `ui.entityCount.*` label. */
   noun: string;
   /** Called after the run finishes (refresh the list + clear selection). */
   onDone: () => void;
 }
-
-const plural = (count: number, noun: string) =>
-  `${count} ${noun}${count === 1 ? "" : "s"}`;
 
 /**
  * Confirms and permanently deletes many selected records at once. There is no
@@ -39,6 +37,7 @@ export function BulkDeleteDialog({
   noun,
   onDone,
 }: BulkDeleteDialogProps) {
+  const t = useT();
   // `busy`/`done` are self-resetting: run() sets done=0 before it starts and
   // busy=false when it ends, and the footer only shows `done` while busy — so a
   // re-open always starts from a clean "Delete N" state without an effect.
@@ -46,6 +45,7 @@ export function BulkDeleteDialog({
   const [done, setDone] = useState(0);
 
   const count = ids.length;
+  const countLabel = t(`ui.entityCount.${noun}`, { count });
 
   const run = async () => {
     setBusy(true);
@@ -68,9 +68,13 @@ export function BulkDeleteDialog({
     }
     setBusy(false);
     if (failed === 0) {
-      toast.success(`Deleted ${plural(deleted, noun)}.`);
+      toast.success(
+        t("ui.bulkDelete.toastDeleted", {
+          subject: t(`ui.entityCount.${noun}`, { count: deleted }),
+        }),
+      );
     } else {
-      toast.warning(`Deleted ${deleted}, ${failed} failed.`);
+      toast.warning(t("ui.bulkDelete.toastPartial", { deleted, failed }));
     }
     onOpenChange(false);
     onDone();
@@ -81,8 +85,8 @@ export function BulkDeleteDialog({
       // Block dismissal mid-run so a half-finished delete can't be hidden.
       open={open}
       onOpenChange={(next) => !busy && onOpenChange(next)}
-      title={`Delete ${plural(count, noun)}`}
-      description="Bulk delete"
+      title={t("ui.bulkDelete.title", { subject: countLabel })}
+      description={t("ui.bulkDelete.description")}
       footer={
         <>
           <Button
@@ -91,7 +95,7 @@ export function BulkDeleteDialog({
             disabled={busy}
             onClick={() => onOpenChange(false)}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             type="button"
@@ -99,25 +103,22 @@ export function BulkDeleteDialog({
             disabled={busy || count === 0}
             onClick={run}
           >
-            {busy ? `Deleting… (${done}/${count})` : `Delete ${count}`}
+            {busy
+              ? t("ui.bulkDelete.deletingProgress", { done, total: count })
+              : t("ui.bulkDelete.deleteCount", { total: count })}
           </Button>
         </>
       }
     >
       <div className="space-y-4 type-body-01 text-text-secondary">
         <p>
-          Permanently delete{" "}
-          <span className="font-medium text-text-primary">
-            {plural(count, noun)}
-          </span>
-          ?
+          {t("ui.permanentDelete.prefix")}{" "}
+          <span className="font-medium text-text-primary">{countLabel}</span>
+          {t("ui.permanentDelete.suffix")}
         </p>
         <div className="flex gap-2 rounded-md border border-support-warning/50 bg-support-warning-bg p-3 text-text-primary">
           <TriangleAlert className="mt-0.5 size-4 shrink-0 text-support-caution" />
-          <span>
-            Each {noun} is removed along with everything linked to it — the same
-            cascade as a single delete. This cannot be undone.
-          </span>
+          <span>{t("ui.bulkDelete.cascadeWarning")}</span>
         </div>
       </div>
     </SlideOver>

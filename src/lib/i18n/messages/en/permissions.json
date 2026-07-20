@@ -1,0 +1,83 @@
+{
+  "title": "Permissions",
+  "subtitle": "Control what each role can do. Per-user exceptions are set from the Users page.",
+  "noAccess": "You don't have access to permission settings.",
+  "unsavedChanges": "Unsaved changes",
+
+  "table.permission": "Permission",
+
+  "aria.rolePermission": "{role} {permission}",
+
+  "toast.saved": "Permissions saved.",
+  "toast.loadFailed": "Failed to load permissions.",
+  "toast.saveFailed": "Failed to save permissions.",
+
+  "module.clients.label": "Clients",
+  "module.payers.label": "Payers",
+  "module.claims.label": "Claims",
+  "module.documents.label": "Documents",
+  "module.review.label": "Review Queue",
+  "module.remittances.label": "Remittances",
+  "module.dashboard.label": "Dashboard",
+  "module.users.label": "Users",
+  "module.settings.label": "Settings",
+
+  "clients.view.label": "View",
+  "clients.view.description": "View clients and their insurance policies.",
+  "clients.create.label": "Create",
+  "clients.create.description": "Add new clients.",
+  "clients.edit.label": "Edit",
+  "clients.edit.description": "Edit clients and manage their insurance policies.",
+  "clients.delete.label": "Delete",
+  "clients.delete.description": "Deactivate or permanently delete clients.",
+
+  "payers.view.label": "View",
+  "payers.view.description": "View payers.",
+  "payers.create.label": "Create",
+  "payers.create.description": "Add new payers.",
+  "payers.edit.label": "Edit",
+  "payers.edit.description": "Edit payer details.",
+  "payers.delete.label": "Delete",
+  "payers.delete.description": "Deactivate or permanently delete payers.",
+
+  "claims.view.label": "View",
+  "claims.view.description": "View claims and AR notes.",
+  "claims.create.label": "Create",
+  "claims.create.description": "Create new claims.",
+  "claims.edit.label": "Edit",
+  "claims.edit.description": "Edit claims, change status, and add AR notes.",
+  "claims.delete.label": "Delete",
+  "claims.delete.description": "Permanently delete claims.",
+
+  "documents.view.label": "View",
+  "documents.view.description": "View uploaded documents and ingestion jobs.",
+  "documents.upload.label": "Upload",
+  "documents.upload.description": "Upload EOB documents for AI extraction.",
+  "documents.delete.label": "Delete",
+  "documents.delete.description": "Permanently delete uploaded documents and their review items.",
+
+  "review.view.label": "View",
+  "review.view.description": "View the review queue and extracted items.",
+  "review.approve.label": "Approve",
+  "review.approve.description": "Approve extracted items (single and approve-all).",
+  "review.reject.label": "Reject",
+  "review.reject.description": "Reject extracted items.",
+
+  "remittances.view.label": "View",
+  "remittances.view.description": "View committed remittances.",
+  "remittances.delete.label": "Delete",
+  "remittances.delete.description": "Delete remittances and unwind their ledger entries.",
+
+  "dashboard.view.label": "View",
+  "dashboard.view.description": "View the organization dashboard.",
+
+  "users.view.label": "View",
+  "users.view.description": "View the users list.",
+  "users.manage.label": "Manage",
+  "users.manage.description": "Create users and edit their role and status.",
+
+  "settings.view.label": "View",
+  "settings.view.description": "View organization system settings.",
+  "settings.edit.label": "Edit",
+  "settings.edit.description": "Change organization settings (AI validation, duplicate guard, exchange rate)."
+}

@@ -1,14 +1,21 @@
 "use client";
 
-import { formatMoney } from "@/lib/format";
+import { useFormat } from "@/lib/i18n/format";
+import { useT } from "@/lib/i18n/provider";
 import type { PayerCollection } from "@/lib/dashboard";
 import { Empty, Panel } from "./dash-card";
 
 export function CollectionPayerCard({ data }: { data: PayerCollection[] }) {
+  const t = useT();
+  const { formatMoney } = useFormat();
+
   return (
-    <Panel title="Collection by payer" subtitle="paid ÷ billed">
+    <Panel
+      title={t("dashboard.payerCollection.title")}
+      subtitle={t("dashboard.payerCollection.subtitle")}
+    >
       {data.length === 0 ? (
-        <Empty label="No payer activity yet" />
+        <Empty label={t("dashboard.empty.payers")} />
       ) : (
         <ul className="space-y-4">
           {data.map((p) => (
@@ -28,7 +35,10 @@ export function CollectionPayerCard({ data }: { data: PayerCollection[] }) {
                 />
               </div>
               <p className="font-mono type-label-01 tabular-nums text-text-helper">
-                {formatMoney(p.collected)} of {formatMoney(p.billed)}
+                {t("dashboard.payerCollection.collectedOf", {
+                  collected: `⁨${formatMoney(p.collected)}⁩`,
+                  billed: `⁨${formatMoney(p.billed)}⁩`,
+                })}
               </p>
             </li>
           ))}

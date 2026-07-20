@@ -4,14 +4,15 @@ import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 
+import { useT } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 
 type SlideOverSize = "default" | "wide";
 
-// Default 480px; wide 640px for complex forms. Full width on mobile.
+// Default 640px; wide 880px for complex forms. Full width on mobile.
 const WIDTH: Record<SlideOverSize, string> = {
-  default: "sm:max-w-[480px]",
-  wide: "sm:max-w-[640px]",
+  default: "sm:max-w-[640px]",
+  wide: "sm:max-w-[880px]",
 };
 
 interface SlideOverProps {
@@ -38,6 +39,7 @@ export function SlideOver({
   footer,
   children,
 }: SlideOverProps) {
+  const t = useT();
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
@@ -51,9 +53,9 @@ export function SlideOver({
         <DialogPrimitive.Content
           {...(description ? {} : { "aria-describedby": undefined })}
           className={cn(
-            "fixed inset-y-0 right-0 z-50 flex h-screen w-screen flex-col bg-card shadow-2xl outline-none",
+            "fixed inset-y-0 end-0 z-50 flex h-screen w-screen flex-col bg-card shadow-2xl outline-none",
             "duration-[var(--dur-slow-01)] data-[state=open]:animate-in data-[state=closed]:animate-out",
-            "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right",
+            "data-[state=closed]:slide-out-to-end data-[state=open]:slide-in-from-end",
             WIDTH[size],
           )}
         >
@@ -69,7 +71,7 @@ export function SlideOver({
               )}
             </div>
             <DialogPrimitive.Close
-              aria-label="Close"
+              aria-label={t("common.close")}
               className="rounded-sm p-1.5 text-icon-secondary transition-colors hover:bg-layer-hover hover:text-icon-primary focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none"
             >
               <X className="size-4" />

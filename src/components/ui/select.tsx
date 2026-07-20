@@ -4,10 +4,12 @@ import * as React from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 
+import { useLocale } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 
 function Select(props: React.ComponentProps<typeof SelectPrimitive.Root>) {
-  return <SelectPrimitive.Root data-slot="select" {...props} />;
+  const { dir } = useLocale();
+  return <SelectPrimitive.Root data-slot="select" dir={dir} {...props} />;
 }
 
 function SelectGroup(props: React.ComponentProps<typeof SelectPrimitive.Group>) {
@@ -97,14 +99,14 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex w-full cursor-default items-center gap-2 rounded-sm py-2 pr-8 pl-3 text-sm text-text-primary outline-hidden select-none",
+        "relative flex w-full cursor-default items-center gap-2 rounded-sm py-2 pe-8 ps-3 text-sm text-text-primary outline-hidden select-none",
         "focus:bg-layer-hover data-[state=checked]:bg-layer-selected data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}
     >
-      <span className="absolute right-2.5 flex size-3.5 items-center justify-center">
+      <span className="absolute end-2.5 flex size-3.5 items-center justify-center">
         <SelectPrimitive.ItemIndicator>
           <CheckIcon className="size-4 text-interactive" />
         </SelectPrimitive.ItemIndicator>

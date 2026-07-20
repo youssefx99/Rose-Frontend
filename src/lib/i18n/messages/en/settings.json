@@ -1,0 +1,30 @@
+{
+  "title": "Settings",
+  "description": "Organization-wide system behavior. Changes apply to everyone.",
+
+  "language.title": "Language & region",
+  "language.description": "Personal display preferences. These apply to your account only.",
+  "language.displayLanguage": "Display language",
+  "language.displayLanguageDescription": "Changes the interface language and text direction for your account only. Applies immediately — it is not part of the organization settings below.",
+
+  "processing.title": "Document processing",
+  "processing.description": "How uploaded EOBs are checked before they reach the review queue.",
+  "processing.validation": "AI validation layer",
+  "processing.validationDescription": "Run a fast AI quality check after extraction. Surfaces a 0–100 score and field-level flags on the review page. Disabling skips the check (and its cost).",
+  "processing.strictDuplicates": "Strict duplicate detection",
+  "processing.strictDuplicatesDescription": "In addition to the content fingerprint, also block re-uploading a file with the same name, size, and type. Turn off to rely on content hash only.",
+  "processing.autoAccept": "Auto-accept review",
+  "processing.autoAcceptDescription": "Commit extracted claims straight to the ledger once processing finishes — no manual review. Turn off to approve or reject each upload by hand.",
+
+  "currency.title": "Cost & currency",
+  "currency.description": "Controls how AI extraction cost is shown to reviewers.",
+  "currency.rate": "USD → EGP exchange rate",
+  "currency.rateDescription": "1 US dollar equals this many Egyptian pounds. Used to convert the per-document AI cost shown on the review screen.",
+  "currency.rateFrom": "1 USD =",
+  "currency.rateTo": "EGP",
+  "currency.rateAriaLabel": "USD to EGP exchange rate",
+
+  "form.rateInvalid": "Exchange rate must be a positive number.",
+
+  "toast.saved": "Settings saved."
+}

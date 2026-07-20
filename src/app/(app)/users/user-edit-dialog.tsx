@@ -15,12 +15,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  roleDescription,
+  roleDescriptionKey,
   updateUser,
   USER_ROLES,
   type User,
   type UserRole,
 } from "@/lib/users";
+import { useT } from "@/lib/i18n/provider";
 
 interface UserEditDialogProps {
   open: boolean;
@@ -35,6 +36,7 @@ export function UserEditDialog({
   user,
   onSaved,
 }: UserEditDialogProps) {
+  const t = useT();
   const [role, setRole] = useState<UserRole>("VIEWER");
   const [active, setActive] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -51,14 +53,14 @@ export function UserEditDialog({
     setSaving(true);
     try {
       await updateUser(user.id, { role, isActive: active });
-      toast.success("User updated.");
+      toast.success(t("users.toast.updated"));
       onOpenChange(false);
       onSaved();
     } catch (error) {
       const message =
         isAxiosError(error) && typeof error.response?.data?.message === "string"
           ? error.response.data.message
-          : "Failed to update user.";
+          : t("users.toast.updateFailed");
       toast.error(message);
     } finally {
       setSaving(false);
@@ -69,7 +71,7 @@ export function UserEditDialog({
     <SlideOver
       open={open}
       onOpenChange={onOpenChange}
-      title="Edit User"
+      title={t("users.edit.title")}
       description={
         user ? `${user.firstName} ${user.lastName} · ${user.email}` : ""
       }
@@ -80,17 +82,17 @@ export function UserEditDialog({
             variant="outline"
             onClick={() => onOpenChange(false)}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button type="button" onClick={save} disabled={saving}>
-            {saving ? "Saving…" : "Save Changes"}
+            {saving ? t("common.saving") : t("common.saveChanges")}
           </Button>
         </>
       }
     >
       <div className="space-y-5">
         <div className="space-y-2">
-          <Label>Role</Label>
+          <Label>{t("users.form.role")}</Label>
           <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
             <SelectTrigger className="w-full">
               <SelectValue />
@@ -98,18 +100,18 @@ export function UserEditDialog({
             <SelectContent>
               {USER_ROLES.map((r) => (
                 <SelectItem key={r.value} value={r.value}>
-                  {r.label}
+                  {t(r.labelKey)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           <p className="rounded-md bg-layer p-3 type-label-01 leading-relaxed text-text-secondary">
-            {roleDescription(role)}
+            {t(roleDescriptionKey(role))}
           </p>
         </div>
 
         <div className="space-y-2">
-          <Label>Status</Label>
+          <Label>{t("common.status")}</Label>
           <Select
             value={active ? "active" : "disabled"}
             onValueChange={(v) => setActive(v === "active")}
@@ -118,12 +120,12 @@ export function UserEditDialog({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="disabled">Disabled</SelectItem>
+              <SelectItem value="active">{t("common.active")}</SelectItem>
+              <SelectItem value="disabled">{t("common.disabled")}</SelectItem>
             </SelectContent>
           </Select>
           <p className="type-label-01 text-text-helper">
-            Disabled users are signed out within 15 minutes and cannot sign in.
+            {t("users.edit.statusHint")}
           </p>
         </div>
       </div>
